@@ -71,7 +71,7 @@ func gracefulPanic(err error, message string) {
 }
 
 func loadConfig() {
-	yamlConfig, loadErr := ioutil.ReadFile("config1.yml")
+	yamlConfig, loadErr := ioutil.ReadFile("config.yml")
 	if loadErr != nil {
 		log.Fatal(loadErr)
 	}
