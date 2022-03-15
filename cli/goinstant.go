@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -13,7 +14,6 @@ import (
 //go:embed version
 var f embed.FS
 
-//go:embed config.yml
 var yamlConfig []byte
 var cfg Config
 
@@ -71,10 +71,28 @@ func gracefulPanic(err error, message string) {
 }
 
 func loadConfig() {
+	yamlConfig, loadErr := ioutil.ReadFile("config1.yml")
+	if loadErr != nil {
+		log.Fatal(loadErr)
+	}
+
 	err := yaml.Unmarshal(yamlConfig, &cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func showBanner() {
+	// Check for custom banner, otherwise use embedded
+	banner, err := ioutil.ReadFile("banner.txt")
+	if err != nil {
+		banner, err = f.ReadFile("banner.txt")
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	color.Green(string(banner))
 }
 
 func getHelpText(interactive bool, options string) string {
@@ -163,15 +181,10 @@ func getHelpText(interactive bool, options string) string {
 
 func main() {
 	loadConfig()
+	showBanner()
 
 	//Need to set the default here as we declare the struct before the config is loaded in.
 	customOptions.targetLauncher = cfg.DefaultTargetLauncher
-
-	data, err := f.ReadFile("banner.txt")
-	if err != nil {
-		log.Println(err)
-	}
-	color.Green(string(data))
 
 	version, err := f.ReadFile("version")
 	if err != nil {
