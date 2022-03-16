@@ -1,10 +1,10 @@
 # go-instant
 *-packr.go
 packrd
-goinstant/bin/goinstant*
-goinstant/data
-goinstant/hapi.properties
-goinstant/pkged.go
+cli/bin/goinstant*
+cli/data
+cli/hapi.properties
+cli/pkged.go
 
 # Logs
 logs
@@ -85,6 +85,7 @@ typings/
 .vscode
 
 # test binaries
-/goinstant/features/test-platform-linux
-/goinstant/features/test-platform-macos
-/goinstant/features/test-platform.exe
+/cli/features/test-platform-linux
+/cli/features/test-platform-macos
+/cli/features/test-platform.exe
+/cli/goinstant
