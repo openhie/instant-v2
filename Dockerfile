@@ -1,6 +1,6 @@
-FROM node:fermium-buster AS base
+FROM node:gallium-bullseye-slim AS base
 
-WORKDIR /package-starter-kit
+WORKDIR /instant
 
 # install curl
 RUN apt-get update; apt-get install -y curl
@@ -15,14 +15,12 @@ RUN chmod +x /usr/local/bin/docker-compose
 # remove orphan container warning
 ENV COMPOSE_IGNORE_ORPHANS=1
 
-# install node dependencies
+# install node deps
 ADD package.json .
 ADD yarn.lock .
-RUN yarn
+RUN yarn --prod
 
 # add entrypoint script
 ADD instant.ts .
 
 ENTRYPOINT [ "yarn", "instant" ]
-
-FROM base as instant-build
