@@ -1,3 +1,17 @@
+# Package start kit
+
+This houses the 2 base components necessary for starting up a health information exchange infrastructure using docker:
+
+`package-base`: A docker container with the base configuration for standing up containers and running tests on mwhich which implementations can base their images.
+
+`goinstant`: A Go CLI app for coordinating the deployment and configuration of packages.
+
+# package-base
+
+## Releases
+
+Docker image will be built on tag using github actions and pushed to dockerhub repo `openhie/package-base`
+
 # goinstant
 
 This is a Go CLI app and is provided as a native binary for the AMD64 architecture on Windows, macOS, and Linux.
@@ -11,8 +25,9 @@ Download Golang version 1.17.x or higher.
 On Unix-like operating systems, you must add execute permissions, ie. `chmod +x goinstant-linux`.
 
 Without arguments, the CLI defaults to interactive mode. The CLI can also be used non-interactively as so:
+
 ```txt
-Commands: 
+Commands:
 	help 		this menu
 	docker		manage package in docker, usage: docker <package> <state> e.g. docker core init
 	kubernetes	manage package in kubernetes, usage: k8s/kubernetes <package> <state>, e.g. k8s core init
@@ -29,9 +44,9 @@ Therefore, this app is not meant to be used for container and cluster management
 
 ### Dev prerequisites
 
-* Install go, [see here](https://golang.org/doc/install). For Ubuntu you might want to use the go snap package, [see here](https://snapcraft.io/install/go/ubuntu).
-* Add go binaries to you system $PATH, on ubuntu: Add `export PATH=$PATH:$HOME/go/bin` to the end of your ~/.bashrc file. To use this change immediately source it: `source ~/.bashrc`
-* Install dependencies, run this from the goinstant folder: `go mod tidy`
+- Install go, [see here](https://golang.org/doc/install). For Ubuntu you might want to use the go snap package, [see here](https://snapcraft.io/install/go/ubuntu).
+- Add go binaries to you system \$PATH, on ubuntu: Add `export PATH=$PATH:$HOME/go/bin` to the end of your ~/.bashrc file. To use this change immediately source it: `source ~/.bashrc`
+- Install dependencies, run this from the goinstant folder: `go mod tidy`
 
 ### Running
 
