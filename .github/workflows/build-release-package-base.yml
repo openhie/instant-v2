@@ -3,7 +3,7 @@ name: Build and Push package-base image
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "*.*.*"
 
 jobs:
   package-base:
