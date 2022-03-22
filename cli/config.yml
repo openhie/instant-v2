@@ -1,5 +1,5 @@
 ---
-image: openhie/instant
+image: jembi/go-cli-test-image
 defaultTargetLauncher: docker
 disableKubernetes: false
 disableIG: false
