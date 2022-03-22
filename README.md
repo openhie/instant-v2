@@ -11,6 +11,8 @@ This houses the 2 base components necessary for starting up a health information
 ## Releases
 
 Docker image will be built on tag using github actions and pushed to dockerhub repo `openhie/package-base`
+Tag format: '0.0.1'
+
 
 # goinstant
 
