@@ -20,7 +20,7 @@ ENV COMPOSE_IGNORE_ORPHANS=1
 # install node deps
 ADD package.json .
 ADD yarn.lock .
-RUN yarn --prod
+RUN yarn --production --frozen-lockfile
 
 # add entrypoint script
 ADD instant.ts .
