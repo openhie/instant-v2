@@ -1,16 +1,15 @@
-# docker volume data folders
-**/data
-
 # cli client
-goinstant
-./deploy.sh
+cli/
 
 # vscode config
 .vscode
 
-# Docs
-docs
-
 # Dependency directories
 node_modules/
 .editorconfig
+
+# github actions
+.github/
+
+#Readme
+README.md
