@@ -1,5 +1,5 @@
 {
-  "name": "instant",
+  "name": "package-starter-kit",
   "version": "0.0.12",
   "main": "instant.ts",
   "repository": "git@github.com:openhie/package-starter-kit.git",
