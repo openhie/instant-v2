@@ -1,6 +1,6 @@
 {
   "name": "package-starter-kit",
-  "version": "0.0.12",
+  "version": "0.1.0",
   "main": "instant.ts",
   "repository": "git@github.com:openhie/package-starter-kit.git",
   "author": "Jembi and IntraHealth",
@@ -20,9 +20,7 @@
     "docker:build": "docker build -t openhie/package-base:latest ."
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^7.0.0",
     "axios": "^0.21.4",
-    "chai": "^4.2.0",
     "prettier": "^2.0.5"
   }
 }
