@@ -29,26 +29,26 @@ interface PackagesMap {
 function getInstantOHIEPackages(): PackagesMap {
   const packages: PackagesMap = {}
   let metaPathRegex = 'package-metadata.json'
-  let pathRegex = 'instant.json'//Keeping the instant.json logic to ensure backward compatibility
+  let pathRegex = 'instant.json' //Keeping the instant.json logic to ensure backward compatibility
   let paths = []
   let nestingLevel = 0
 
   while (nestingLevel < 5) {
-    metaPathRegex = "*/" + metaPathRegex
-    pathRegex = "*/" + pathRegex
+    metaPathRegex = '*/' + metaPathRegex
+    pathRegex = '*/' + pathRegex
     paths = paths.concat(glob.sync(metaPathRegex), glob.sync(pathRegex))
     nestingLevel += 1
   }
 
   for (const path of paths) {
     const metadata = JSON.parse(fs.readFileSync(path).toString())
-    packages[metadata.id] = 
-    {
+    packages[metadata.id] = {
       metadata,
-      path: path.includes('instant.json') === true ?
-              path.replace('instant.json', '') :
-              path.replace('package-metadata.json', '')
-    };
+      path:
+        path.includes('instant.json') === true
+          ? path.replace('instant.json', '')
+          : path.replace('package-metadata.json', '')
+    }
   }
 
   return packages
@@ -91,14 +91,16 @@ async function runTests(path: string) {
 
 const orderPackageIds = (allPackages, chosenPackageIds) => {
   function resolveDeps(id, currentStack) {
-    if (currentStack.includes(id)) throw Error(`Circular dependency present for id ${id}`)
+    if (currentStack.includes(id))
+      throw Error(`Circular dependency present for id ${id}`)
     currentStack.push(id)
 
     if (allPackages[id] && allPackages[id].metadata) {
       if (
         !allPackages[id].metadata.dependencies ||
         !allPackages[id].metadata.dependencies.length
-      ) return [id]
+      )
+        return [id]
     } else {
       throw Error(`Package ${id} does not exist or the metadata is invalid`)
     }
@@ -106,7 +108,7 @@ const orderPackageIds = (allPackages, chosenPackageIds) => {
     const orderedIds = []
     const currentStackClone = currentStack.slice()
 
-    allPackages[id].metadata.dependencies.forEach(dependency => {
+    allPackages[id].metadata.dependencies.forEach((dependency) => {
       const ids = resolveDeps(dependency, currentStackClone)
       orderedIds.push(...ids)
     })
@@ -115,18 +117,26 @@ const orderPackageIds = (allPackages, chosenPackageIds) => {
   }
 
   let orderedPackageIds = []
-  chosenPackageIds.forEach(packageId => {
+  chosenPackageIds.forEach((packageId) => {
     let packageIds = orderedPackageIds.concat(resolveDeps(packageId, []))
-    orderedPackageIds = packageIds.filter((id, index) => packageIds.indexOf(id) == index)
+    orderedPackageIds = packageIds.filter(
+      (id, index) => packageIds.indexOf(id) == index
+    )
   })
   return orderedPackageIds
 }
 
 const logPackageDetails = (packageInfo: PackageInfo) => {
-  console.log(`------------------------------------------------------------\nConfig Details: ${packageInfo.metadata.name} (${packageInfo.metadata.id})\n------------------------------------------------------------`)
+  console.log(
+    `------------------------------------------------------------\nConfig Details: ${packageInfo.metadata.name} (${packageInfo.metadata.id})\n------------------------------------------------------------`
+  )
   const envVars = []
-  for(let envVar in packageInfo.metadata.environmentVariables) {
-    envVars.push({"Environment Variable": envVar, "Default Value": packageInfo.metadata.environmentVariables[envVar], "Updated Value": env[envVar]})
+  for (let envVar in packageInfo.metadata.environmentVariables) {
+    envVars.push({
+      'Environment Variable': envVar,
+      'Default Value': packageInfo.metadata.environmentVariables[envVar],
+      'Updated Value': env[envVar]
+    })
   }
   console.table(envVars)
 }
@@ -187,7 +197,9 @@ const main = async () => {
     if (
       !chosenPackageIds.every((id) => Object.keys(allPackages).includes(id))
     ) {
-      throw new Error(`Deploy - Unknown package id in list: ${chosenPackageIds}`)
+      throw new Error(
+        `Deploy - Unknown package id in list: ${chosenPackageIds}`
+      )
     }
 
     if (chosenPackageIds.length < 1) {
@@ -225,6 +237,7 @@ const main = async () => {
       case 'k8s':
       case 'kubernetes':
         for (const id of chosenPackageIds) {
+          logPackageDetails(allPackages[id])
           await runBashScript(
             `${allPackages[id].path}kubernetes/main/`,
             'k8s.sh',
@@ -234,6 +247,7 @@ const main = async () => {
         break
       case 'swarm':
         for (const id of chosenPackageIds) {
+          logPackageDetails(allPackages[id])
           await runBashScript(`${allPackages[id].path}/`, 'swarm.sh', [
             main.command,
             mainOptions.mode
@@ -269,7 +283,9 @@ const main = async () => {
     if (
       !chosenPackageIds.every((id) => Object.keys(allPackages).includes(id))
     ) {
-      throw new Error(`Testing - Unknown package id in list: ${chosenPackageIds}`)
+      throw new Error(
+        `Testing - Unknown package id in list: ${chosenPackageIds}`
+      )
     }
 
     if (chosenPackageIds.length < 1) {
@@ -292,8 +308,9 @@ const main = async () => {
 // Entry point IIFE with base error handling
 ;(async () => {
   try {
-  await main()
-} catch (error) {
-  console.log(error)
-  process.exit(1)
-}})()
+    await main()
+  } catch (error) {
+    console.log(error)
+    process.exit(1)
+  }
+})()
