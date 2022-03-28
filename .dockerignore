@@ -1,0 +1,15 @@
+# cli client
+cli/
+
+# vscode config
+.vscode
+
+# Dependency directories
+node_modules/
+.editorconfig
+
+# github actions
+.github/
+
+#Readme
+README.md
