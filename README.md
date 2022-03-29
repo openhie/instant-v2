@@ -13,7 +13,6 @@ This houses the 2 base components necessary for starting up a health information
 Docker image will be built on tag using github actions and pushed to dockerhub repo `openhie/package-base`
 Tag format: '0.0.1'
 
-
 # goinstant
 
 This is a Go CLI app and is provided as a native binary for the AMD64 architecture on Windows, macOS, and Linux.
@@ -30,10 +29,10 @@ Without arguments, the CLI defaults to interactive mode. The CLI can also be use
 
 ```txt
 Commands:
-	help 		this menu
-	docker		manage package in docker, usage: docker <package> <state> e.g. docker core init
-	kubernetes	manage package in kubernetes, usage: k8s/kubernetes <package> <state>, e.g. k8s core init
-	install		install fhir npm package on fhir server, usage: install <ig_url> <fhir_server>, e.g. install https://intrahealth.github.io/simple-hiv-ig/ http://hapi.fhir.org/baseR4
+ help   this menu
+ docker  manage package in docker, usage: docker <package> <state> e.g. docker core init
+ kubernetes manage package in kubernetes, usage: k8s/kubernetes <package> <state>, e.g. k8s core init
+ install  install fhir npm package on fhir server, usage: install <ig_url> <fhir_server>, e.g. install https://intrahealth.github.io/simple-hiv-ig/ http://hapi.fhir.org/baseR4
 ```
 
 ## Security
