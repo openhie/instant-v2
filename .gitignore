@@ -1,7 +1,7 @@
 # go-instant
 *-packr.go
 packrd
-cli/bin/goinstant*
+cli/bin/go*
 cli/data
 cli/hapi.properties
 cli/pkged.go
@@ -88,4 +88,3 @@ typings/
 /cli/features/test-platform-linux
 /cli/features/test-platform-macos
 /cli/features/test-platform.exe
-/cli/goinstant
