@@ -17,15 +17,15 @@ jobs:
         go-version: 1.17
 
     - name: Build Releases
-      run:  cd ./goinstant && ./buildreleases.sh
+      run:  cd ./cli && ./buildreleases.sh
 
     - name: Test binaries
-      run: ./goinstant/bin/goinstant-linux help
+      run: ./cli/bin/goinstant-linux help
 
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./goinstant/bin/goinstant-linux
-          ./goinstant/bin/goinstant-macos
-          ./goinstant/bin/goinstant.exe
+          ./cli/bin/goinstant-linux
+          ./cli/bin/goinstant-macos
+          ./cli/bin/goinstant.exe
