@@ -1,0 +1,36 @@
+name: Run Go CLI unit tests and Godog functional tests
+
+on:
+  pull_request:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Working Branch 
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Run Go CLI unit tests
+      run: cd ./cli && go test . 
+
+  functional-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Working Branch 
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Install Godog
+      run: cd ./cli && go get github.com/cucumber/godog/cmd/godog
+
+    - name: Run Godog tests
+      run: cd ./cli && godog
