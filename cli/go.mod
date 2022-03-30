@@ -1,4 +1,4 @@
-module github.com/openhie/instant/goinstant
+module github.com/openhie/package-starter-kit/cli
 
 go 1.16
 

@@ -20,12 +20,12 @@ jobs:
       run:  cd ./cli && ./buildreleases.sh
 
     - name: Test binaries
-      run: ./cli/bin/goinstant-linux help
+      run: ./cli/bin/gocli-linux help
 
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./cli/bin/goinstant-linux
-          ./cli/bin/goinstant-macos
-          ./cli/bin/goinstant.exe
+          ./cli/bin/gocli-linux
+          ./cli/bin/gocli-macos
+          ./cli/bin/gocli.exe
