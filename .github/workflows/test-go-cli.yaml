@@ -16,7 +16,7 @@ jobs:
         go-version: 1.17
 
     - name: Run Go CLI unit tests
-      run: cd ./cli && go test -v .
+      run: cd ./cli && go test .
 
   functional-tests:
     runs-on: ubuntu-latest
