@@ -20,7 +20,7 @@ jobs:
       run:  cd ./cli && ./buildreleases.sh
 
     - name: Test binaries
-      run: ./cli/bin/gocli-linux help
+      run: cd ./cli/bin && ./gocli-linux help
 
     - name: Release
       uses: softprops/action-gh-release@v1
