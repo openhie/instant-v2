@@ -3,14 +3,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/openhie/package-starter-kit/cli/v2/cli/pkg"
 	"github.com/spf13/cobra"
 )
-
-func logError(err error) {
-	if err != nil {
-		fmt.Println(err)
-	}
-}
 
 func handleGenerate() {
 	fmt.Println("GENERATE")
@@ -42,13 +37,13 @@ var projectCmd = &cobra.Command{
 
 		if cmd.Flag("init").Changed || cmd.Flag("up").Changed || cmd.Flag("down").Changed || cmd.Flag("remove").Changed {
 			init, err := cmd.Flags().GetBool("init")
-			logError(err)
+			pkg.LogError(err)
 			up, err := cmd.Flags().GetBool("up")
-			logError(err)
+			pkg.LogError(err)
 			down, err := cmd.Flags().GetBool("down")
-			logError(err)
+			pkg.LogError(err)
 			remove, err := cmd.Flags().GetBool("remove")
-			logError(err)
+			pkg.LogError(err)
 
 			handleAction(init, up, down, remove)
 		}
@@ -59,11 +54,10 @@ var projectCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(projectCmd)
 
-	projectCmd.Flags().StringP("generate", "g", "project", "Generate a new project")
 	projectCmd.Flags().BoolP("init", "i", false, "Initialize all packages in the project")
 	projectCmd.Flags().BoolP("up", "u", false, "Up all packages in the project")
 	projectCmd.Flags().BoolP("down", "d", false, "Down all packages in the project")
 	projectCmd.Flags().BoolP("remove", "r", false, "Remove all packages in the project")
-	projectCmd.MarkFlagsMutuallyExclusive("init", "up", "down", "remove", "generate")
+	projectCmd.MarkFlagsMutuallyExclusive("init", "up", "down", "remove")
 
 }
