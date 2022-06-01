@@ -10,17 +10,18 @@ import (
 func InitUpCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "up",
-		Aliases: []string{"i"},
+		Aliases: []string{"u"},
 		Short:   "Stand a package back up after it has been brought down",
 		Run: func(cmd *cobra.Command, args []string) {
-			name := util.GetFlagOrDefaultString(cmd, "name")
-			fmt.Printf("Up %s", name)
+			name, err := cmd.Flags().GetStringSlice("name")
+			util.LogError(err)
+			fmt.Printf("Init %s", name)
 		},
 	}
 
 	flags := cmd.Flags()
 
-	flags.StringP("name", "n", "package", "The name(s) of the package(s)")
+	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
 
 	return cmd
 }

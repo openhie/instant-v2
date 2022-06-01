@@ -13,14 +13,15 @@ func InitDownCommand() *cobra.Command {
 		Aliases: []string{"d"},
 		Short:   "Bring a package down without removing volumes or configs",
 		Run: func(cmd *cobra.Command, args []string) {
-			name := util.GetFlagOrDefaultString(cmd, "name")
-			fmt.Printf("Down %s", name)
+			name, err := cmd.Flags().GetStringSlice("name")
+			util.LogError(err)
+			fmt.Printf("Init %s", name)
 		},
 	}
 
 	flags := cmd.Flags()
 
-	flags.StringP("name", "n", "package", "The name(s) of the package(s)")
+	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
 
 	return cmd
 }
