@@ -9,18 +9,23 @@ import (
 
 func handleGenerate() {
 	fmt.Println("GENERATE")
+	fmt.Println("To be implemented")
 }
 
 func handleAction(init, up, down, remove bool) {
 	switch true {
 	case init:
 		fmt.Println("INIT")
+		fmt.Println("To be implemented")
 	case up:
 		fmt.Println("UP")
+		fmt.Println("To be implemented")
 	case down:
 		fmt.Println("DOWN")
+		fmt.Println("To be implemented")
 	case remove:
 		fmt.Println("REMOVE")
+		fmt.Println("To be implemented")
 	default:
 		panic("Invalid action entered")
 	}
@@ -47,7 +52,6 @@ var projectCmd = &cobra.Command{
 
 			handleAction(init, up, down, remove)
 		}
-		fmt.Println("project called")
 	},
 }
 

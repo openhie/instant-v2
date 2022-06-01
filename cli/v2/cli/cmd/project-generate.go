@@ -8,7 +8,7 @@ import (
 )
 
 func generateProject(name string) {
-	fmt.Println("generate called")
+	fmt.Println("To be implemented")
 	fmt.Println(name)
 }
 
