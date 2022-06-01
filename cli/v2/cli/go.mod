@@ -3,7 +3,7 @@ module github.com/openhie/package-starter-kit/cli/v2/cli
 go 1.18
 
 require (
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.4.1-0.20220518005708-5b11656e45a6
 	github.com/spf13/viper v1.12.0
 )
 
