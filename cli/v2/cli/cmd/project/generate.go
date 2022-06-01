@@ -25,6 +25,7 @@ func InitGenerateCommand() *cobra.Command {
 	flags := cmd.Flags()
 
 	flags.String("name", "project", "The name of the new project")
+	flags.String("base-project", "", "A url link to a project to base the new project instance of")
 
 	return cmd
 }
