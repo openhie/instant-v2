@@ -99,7 +99,7 @@ func sliceContains(slice []string, element string) bool {
 	return false
 }
 
-func extractCommands(startupCommands []string) (environmentVariables []string, deployCommand string, otherFlags []string, packages []string, customPackagePaths []string, instantVersion string, targetLauncher string) {
+func extractCommands(startupCommands []string) (environmentVariables []string, deployCommand string, otherFlags []string, packages []string, customPackagePaths []string, instantVersion string, targetLauncher string, logPath string) {
 	instantVersion = "latest"
 
 	for _, option := range startupCommands {
@@ -112,6 +112,8 @@ func extractCommands(startupCommands []string) (environmentVariables []string, d
 			environmentVariables = append(environmentVariables, option)
 		case strings.HasPrefix(option, "--instant-version="):
 			instantVersion = strings.Split(option, "--instant-version=")[1]
+		case strings.HasPrefix(option, "--log-path="):
+			logPath = strings.Split(option, "--log-path=")[1]
 		case strings.HasPrefix(option, "-t="):
 			targetLauncher = strings.Split(option, "-t=")[1]
 		case strings.HasPrefix(option, "-") || strings.HasPrefix(option, "--"):
@@ -139,7 +141,7 @@ func extractCommands(startupCommands []string) (environmentVariables []string, d
 func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Note: Initial setup takes 1-5 minutes.\nWait for the DONE message.\n--------------------------")
 
-	environmentVariables, deployCommand, otherFlags, packages, customPackagePaths, instantVersion, targetLauncher := extractCommands(startupCommands)
+	environmentVariables, deployCommand, otherFlags, packages, customPackagePaths, instantVersion, targetLauncher, logPath := extractCommands(startupCommands)
 
 	fmt.Println("Action:", deployCommand)
 	fmt.Println("Package IDs:", packages)
@@ -160,11 +162,17 @@ func RunDeployCommand(startupCommands []string) error {
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--network", "host",
 	}
+
+	if logPath != "" {
+		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", logPath))
+	}
+
 	commandSlice = append(commandSlice, environmentVariables...)
 	commandSlice = append(commandSlice, []string{instantImage, deployCommand}...)
 	commandSlice = append(commandSlice, otherFlags...)
 	commandSlice = append(commandSlice, []string{"-t", targetLauncher}...)
 	commandSlice = append(commandSlice, packages...)
+
 	_, err := RunCommand("docker", nil, commandSlice...)
 	if err != nil {
 		return err
