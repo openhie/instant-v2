@@ -132,6 +132,7 @@ func Test_extractCommands(t *testing.T) {
 		packages             []string
 		customPackagePaths   []string
 		instantVersion       string
+		logPath	             string
 	}
 
 	testCases := []struct {
@@ -204,11 +205,25 @@ func Test_extractCommands(t *testing.T) {
 			},
 			name: "Extract commands test 4 - should return the expected commands",
 		},
+		{
+			startupCommands: []string{"init", "-t=docker", "--instant-version=v2.0.1", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "--log-path=/tmp/logs", "-onlyFlag", "core"},
+			expectedResults: resultStruct{
+				environmentVariables: []string{"-e", "NODE_ENV=dev"},
+				deployCommand:        "init",
+				otherFlags:           []string{"-onlyFlag"},
+				targetLauncher:       "docker",
+				packages:             []string{"core"},
+				customPackagePaths:   []string{"../test", "../test1"},
+				instantVersion:       "v2.0.1",
+				logPath:              "/tmp/logs",
+			},
+			name: "Extract commands test 5 - replica of test 1 with additional testing of logPath attribute extraction",
+		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			environmentVariables, deployCommand, otherFlags, packages, customPackagePaths, instantVersion, targetLauncher := extractCommands(tt.startupCommands)
+			environmentVariables, deployCommand, otherFlags, packages, customPackagePaths, instantVersion, targetLauncher, logPath := extractCommands(tt.startupCommands)
 
 			if !assert.Equal(t, tt.expectedResults.environmentVariables, environmentVariables) {
 				t.Fatal("ExtractCommands should return the correct environment variables")
@@ -230,6 +245,9 @@ func Test_extractCommands(t *testing.T) {
 			}
 			if !assert.Equal(t, tt.expectedResults.instantVersion, instantVersion) {
 				t.Fatal("ExtractCommands should return the correct instant version")
+			}
+			if !assert.Equal(t, tt.expectedResults.logPath, logPath) {
+				t.Fatal("ExtractCommands should return the correct logPath")
 			}
 			t.Log(tt.name + " passed!")
 		})
