@@ -196,12 +196,6 @@ func RunDeployCommand(startupCommands []string) error {
 		return nil
 	}
 
-	if deployCommand == "destroy" {
-		fmt.Println("Delete instant volume...")
-		commandSlice := []string{"volume", "rm", "instant"}
-		_, err = RunCommand("docker", nil, commandSlice...)
-	}
-
 	fmt.Println("\n\nRemoving instant volume...")
 	commandSlice = []string{"volume", "rm", "instant"}
 	_, err = RunCommand("docker", []string{"Error: No such volume: instant"}, commandSlice...)
