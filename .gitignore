@@ -81,9 +81,6 @@ typings/
 /docs/.docusaurus
 /docs/.cache-loader
 
-# vscode config
-.vscode
-
 # test binaries
 /cli/features/test-platform-linux
 /cli/features/test-platform-macos
