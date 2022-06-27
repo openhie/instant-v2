@@ -132,7 +132,7 @@ func Test_extractCommands(t *testing.T) {
 		packages             []string
 		customPackagePaths   []string
 		instantVersion       string
-		logPath	             string
+		logPath              string
 	}
 
 	testCases := []struct {
@@ -223,30 +223,30 @@ func Test_extractCommands(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			environmentVariables, deployCommand, otherFlags, packages, customPackagePaths, instantVersion, targetLauncher, logPath := extractCommands(tt.startupCommands)
+			commandOptions := extractCommands(tt.startupCommands)
 
-			if !assert.Equal(t, tt.expectedResults.environmentVariables, environmentVariables) {
+			if !assert.Equal(t, tt.expectedResults.environmentVariables, commandOptions.environmentVariables) {
 				t.Fatal("ExtractCommands should return the correct environment variables")
 			}
-			if !assert.Equal(t, tt.expectedResults.deployCommand, deployCommand) {
+			if !assert.Equal(t, tt.expectedResults.deployCommand, commandOptions.deployCommand) {
 				t.Fatal("ExtractCommands should return the correct deploy command")
 			}
-			if !assert.Equal(t, tt.expectedResults.otherFlags, otherFlags) {
+			if !assert.Equal(t, tt.expectedResults.otherFlags, commandOptions.otherFlags) {
 				t.Fatal("ExtractCommands should return the correct 'otherFlags'")
 			}
-			if !assert.Equal(t, tt.expectedResults.targetLauncher, targetLauncher) {
+			if !assert.Equal(t, tt.expectedResults.targetLauncher, commandOptions.targetLauncher) {
 				t.Fatal("ExtractCommands should return the correct targetLauncher")
 			}
-			if !assert.Equal(t, tt.expectedResults.packages, packages) {
+			if !assert.Equal(t, tt.expectedResults.packages, commandOptions.packages) {
 				t.Fatal("ExtractCommands should return the correct packages")
 			}
-			if !assert.Equal(t, tt.expectedResults.customPackagePaths, customPackagePaths) {
+			if !assert.Equal(t, tt.expectedResults.customPackagePaths, commandOptions.customPackagePaths) {
 				t.Fatal("ExtractCommands should return the correct custom package paths")
 			}
-			if !assert.Equal(t, tt.expectedResults.instantVersion, instantVersion) {
+			if !assert.Equal(t, tt.expectedResults.instantVersion, commandOptions.instantVersion) {
 				t.Fatal("ExtractCommands should return the correct instant version")
 			}
-			if !assert.Equal(t, tt.expectedResults.logPath, logPath) {
+			if !assert.Equal(t, tt.expectedResults.logPath, commandOptions.logPath) {
 				t.Fatal("ExtractCommands should return the correct logPath")
 			}
 			t.Log(tt.name + " passed!")

@@ -36,6 +36,17 @@ var (
 	MountCustomPackage = mountCustomPackage
 )
 
+type commandsOptions struct {
+	environmentVariables []string
+	deployCommand        string
+	otherFlags           []string
+	packages             []string
+	customPackagePaths   []string
+	instantVersion       string
+	targetLauncher       string
+	logPath              string
+}
+
 func debugDocker() error {
 	fmt.Printf("...checking your Docker setup")
 
@@ -99,59 +110,60 @@ func sliceContains(slice []string, element string) bool {
 	return false
 }
 
-func extractCommands(startupCommands []string) (environmentVariables []string, deployCommand string, otherFlags []string, packages []string, customPackagePaths []string, instantVersion string, targetLauncher string, logPath string) {
-	instantVersion = "latest"
+func extractCommands(startupCommands []string) commandsOptions {
+	var commandOptions commandsOptions
+	commandOptions.instantVersion = "latest"
 
 	for _, option := range startupCommands {
 		switch {
 		case sliceContains([]string{"init", "up", "down", "destroy"}, option):
-			deployCommand = option
+			commandOptions.deployCommand = option
 		case strings.HasPrefix(option, "-c=") || strings.HasPrefix(option, "--custom-package="):
-			customPackagePaths = append(customPackagePaths, option)
+			commandOptions.customPackagePaths = append(commandOptions.customPackagePaths, option)
 		case strings.HasPrefix(option, "-e=") || strings.HasPrefix(option, "--env-file="):
-			environmentVariables = append(environmentVariables, option)
+			commandOptions.environmentVariables = append(commandOptions.environmentVariables, option)
 		case strings.HasPrefix(option, "--instant-version="):
-			instantVersion = strings.Split(option, "--instant-version=")[1]
+			commandOptions.instantVersion = strings.Split(option, "--instant-version=")[1]
 		case strings.HasPrefix(option, "--log-path="):
-			logPath = strings.Split(option, "--log-path=")[1]
+			commandOptions.logPath = strings.Split(option, "--log-path=")[1]
 		case strings.HasPrefix(option, "-t="):
-			targetLauncher = strings.Split(option, "-t=")[1]
+			commandOptions.targetLauncher = strings.Split(option, "-t=")[1]
 		case strings.HasPrefix(option, "-") || strings.HasPrefix(option, "--"):
-			otherFlags = append(otherFlags, option)
+			commandOptions.otherFlags = append(commandOptions.otherFlags, option)
 		default:
-			packages = append(packages, option)
+			commandOptions.packages = append(commandOptions.packages, option)
 		}
 	}
 
-	if len(customPackagePaths) > 0 {
-		customPackagePaths = getPackagePaths(customPackagePaths, []string{"-c=", "--custom-package="})
+	if len(commandOptions.customPackagePaths) > 0 {
+		commandOptions.customPackagePaths = getPackagePaths(commandOptions.customPackagePaths, []string{"-c=", "--custom-package="})
 	}
 
-	if len(environmentVariables) > 0 {
-		environmentVariables = getEnvironmentVariables(environmentVariables, []string{"-e=", "--env-file="})
+	if len(commandOptions.environmentVariables) > 0 {
+		commandOptions.environmentVariables = getEnvironmentVariables(commandOptions.environmentVariables, []string{"-e=", "--env-file="})
 	}
 
-	if targetLauncher == "" {
-		targetLauncher = customOptions.targetLauncher
+	if commandOptions.targetLauncher == "" {
+		commandOptions.targetLauncher = customOptions.targetLauncher
 	}
 
-	return
+	return commandOptions
 }
 
 func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Note: Initial setup takes 1-5 minutes.\nWait for the DONE message.\n--------------------------")
 
-	environmentVariables, deployCommand, otherFlags, packages, customPackagePaths, instantVersion, targetLauncher, logPath := extractCommands(startupCommands)
+	commandOptions := extractCommands(startupCommands)
 
-	fmt.Println("Action:", deployCommand)
-	fmt.Println("Package IDs:", packages)
-	fmt.Println("Custom package paths:", customPackagePaths)
-	fmt.Println("Environment Variables:", environmentVariables)
-	fmt.Println("Other Flags:", otherFlags)
-	fmt.Println("InstantVersion:", instantVersion)
-	fmt.Println("Target Launcher:", targetLauncher)
+	fmt.Println("Action:", commandOptions.deployCommand)
+	fmt.Println("Package IDs:", commandOptions.packages)
+	fmt.Println("Custom package paths:", commandOptions.customPackagePaths)
+	fmt.Println("Environment Variables:", commandOptions.environmentVariables)
+	fmt.Println("Other Flags:", commandOptions.otherFlags)
+	fmt.Println("InstantVersion:", commandOptions.instantVersion)
+	fmt.Println("Target Launcher:", commandOptions.targetLauncher)
 
-	instantImage := cfg.Image + ":" + instantVersion
+	instantImage := cfg.Image + ":" + commandOptions.instantVersion
 
 	fmt.Println("Creating fresh instant container with volumes...")
 	commandSlice := []string{
@@ -163,15 +175,15 @@ func RunDeployCommand(startupCommands []string) error {
 		"--network", "host",
 	}
 
-	if logPath != "" {
-		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", logPath))
+	if commandOptions.logPath != "" {
+		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", commandOptions.logPath))
 	}
 
-	commandSlice = append(commandSlice, environmentVariables...)
-	commandSlice = append(commandSlice, []string{instantImage, deployCommand}...)
-	commandSlice = append(commandSlice, otherFlags...)
-	commandSlice = append(commandSlice, []string{"-t", targetLauncher}...)
-	commandSlice = append(commandSlice, packages...)
+	commandSlice = append(commandSlice, commandOptions.environmentVariables...)
+	commandSlice = append(commandSlice, []string{instantImage, commandOptions.deployCommand}...)
+	commandSlice = append(commandSlice, commandOptions.otherFlags...)
+	commandSlice = append(commandSlice, []string{"-t", commandOptions.targetLauncher}...)
+	commandSlice = append(commandSlice, commandOptions.packages...)
 
 	_, err := RunCommand("docker", nil, commandSlice...)
 	if err != nil {
@@ -180,7 +192,7 @@ func RunDeployCommand(startupCommands []string) error {
 
 	fmt.Println("Adding 3rd party packages to instant volume:")
 
-	for _, c := range customPackagePaths {
+	for _, c := range commandOptions.customPackagePaths {
 		fmt.Print("- " + c)
 		err = MountCustomPackage(c)
 		if err != nil {
@@ -197,7 +209,7 @@ func RunDeployCommand(startupCommands []string) error {
 		return nil
 	}
 
-	if deployCommand == "destroy" {
+	if commandOptions.deployCommand == "destroy" {
 		fmt.Println("Delete instant volume...")
 		commandSlice := []string{"volume", "rm", "instant"}
 		_, err = RunCommand("docker", nil, commandSlice...)
