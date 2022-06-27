@@ -362,7 +362,7 @@ func Test_runCommand(t *testing.T) {
 			suppressErrors:  nil,
 			commandSlice:    []string{"volume", "rm", "test-volume"},
 			pathToPackage:   "",
-			errorString:     fmt.Errorf("Error waiting for Cmd. Error: No such volume: test-volume\n: exit status 1"),
+			errorString:     fmt.Errorf("Error waiting for Cmd. Error: No such volume: test-volume: exit status 1"),
 			name:            "runCommand - removing nonexistant volume should return error",
 			mockExecCommand: exec.Command,
 		},
@@ -401,6 +401,8 @@ func Test_runCommand(t *testing.T) {
 			}
 
 			if (err != nil && tt.errorString == nil) || (err == nil && tt.errorString != nil) {
+				t.Log("Expected:", tt.errorString)
+				t.Log("Actual:", err.Error())
 				t.Fatal("RunCommand failed - error returned incorrect")
 			}
 
