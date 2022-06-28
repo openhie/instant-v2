@@ -44,7 +44,6 @@ type commandsOptions struct {
 	customPackagePaths   []string
 	instantVersion       string
 	targetLauncher       string
-	logPath              string
 }
 
 func debugDocker() error {
@@ -124,8 +123,6 @@ func extractCommands(startupCommands []string) commandsOptions {
 			commandOptions.environmentVariables = append(commandOptions.environmentVariables, option)
 		case strings.HasPrefix(option, "--instant-version="):
 			commandOptions.instantVersion = strings.Split(option, "--instant-version=")[1]
-		case strings.HasPrefix(option, "--log-path="):
-			commandOptions.logPath = strings.Split(option, "--log-path=")[1]
 		case strings.HasPrefix(option, "-t="):
 			commandOptions.targetLauncher = strings.Split(option, "-t=")[1]
 		case strings.HasPrefix(option, "-") || strings.HasPrefix(option, "--"):
@@ -175,8 +172,8 @@ func RunDeployCommand(startupCommands []string) error {
 		"--network", "host",
 	}
 
-	if commandOptions.logPath != "" {
-		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", commandOptions.logPath))
+	if cfg.LogPath != "" {
+		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", cfg.LogPath))
 	}
 
 	commandSlice = append(commandSlice, commandOptions.environmentVariables...)

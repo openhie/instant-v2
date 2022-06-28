@@ -205,20 +205,6 @@ func Test_extractCommands(t *testing.T) {
 			},
 			name: "Extract commands test 4 - should return the expected commands",
 		},
-		{
-			startupCommands: []string{"init", "-t=docker", "--instant-version=v2.0.1", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "--log-path=/tmp/logs", "-onlyFlag", "core"},
-			expectedResults: resultStruct{
-				environmentVariables: []string{"-e", "NODE_ENV=dev"},
-				deployCommand:        "init",
-				otherFlags:           []string{"-onlyFlag"},
-				targetLauncher:       "docker",
-				packages:             []string{"core"},
-				customPackagePaths:   []string{"../test", "../test1"},
-				instantVersion:       "v2.0.1",
-				logPath:              "/tmp/logs",
-			},
-			name: "Extract commands test 5 - replica of test 1 with additional testing of logPath attribute extraction",
-		},
 	}
 
 	for _, tt := range testCases {
@@ -245,9 +231,6 @@ func Test_extractCommands(t *testing.T) {
 			}
 			if !assert.Equal(t, tt.expectedResults.instantVersion, commandOptions.instantVersion) {
 				t.Fatal("ExtractCommands should return the correct instant version")
-			}
-			if !assert.Equal(t, tt.expectedResults.logPath, commandOptions.logPath) {
-				t.Fatal("ExtractCommands should return the correct logPath")
 			}
 			t.Log(tt.name + " passed!")
 		})
