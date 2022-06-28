@@ -110,8 +110,9 @@ func sliceContains(slice []string, element string) bool {
 }
 
 func extractCommands(startupCommands []string) commandsOptions {
-	var commandOptions commandsOptions
-	commandOptions.instantVersion = "latest"
+	commandOptions := commandsOptions{
+		instantVersion: "latest",
+	}
 
 	for _, option := range startupCommands {
 		switch {
