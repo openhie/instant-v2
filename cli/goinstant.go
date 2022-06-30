@@ -29,6 +29,7 @@ type Config struct {
 	DisableKubernetes            bool      `yaml:"disableKubernetes"`
 	DisableIG                    bool      `yaml:"disableIG"`
 	DisableCustomTargetSelection bool      `yaml:"disableCustomTargetSelection"`
+	LogPath                      string    `yaml:"logPath"`
 }
 
 type customOption struct {
