@@ -66,7 +66,7 @@ async function runBashScript(path: string, filename: string, args: string[]) {
     }
     await promise
   } catch (err) {
-    process.exit(1)
+    console.error(`Error: Script ${path}${filename} returned an error`)
   }
 }
 
