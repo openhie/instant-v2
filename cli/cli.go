@@ -37,7 +37,7 @@ func CLI() error {
 	default:
 		if len(startupCommands) < 2 {
 			fmt.Println("The deploy command is not recognized: ", startupCommands)
-			return errors.New("Incorrect arguments list passed to CLI. Requires at least 2 arguments when in non-interactive mode")
+			return errors.New("incorrect arguments list passed to CLI. Requires at least 2 arguments when in non-interactive mode")
 		}
 
 		err = RunDeployCommand(startupCommands)

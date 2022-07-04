@@ -14,7 +14,6 @@ import (
 //go:embed version
 var f embed.FS
 
-var yamlConfig []byte
 var cfg Config
 
 type Package struct {
