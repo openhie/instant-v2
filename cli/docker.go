@@ -186,6 +186,7 @@ func RunDeployCommand(startupCommands []string) error {
 	if err != nil {
 		return err
 	}
+	defer removeInstantVolume()
 
 	fmt.Println("Adding 3rd party packages to instant volume:")
 
@@ -206,14 +207,15 @@ func RunDeployCommand(startupCommands []string) error {
 		return nil
 	}
 
-	fmt.Println("\n\nRemoving instant volume...")
-	commandSlice = []string{"volume", "rm", "instant"}
-	_, err = RunCommand("docker", []string{"Error: No such volume: instant"}, commandSlice...)
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
-	return err
+func removeInstantVolume() {
+	fmt.Println("\n\nRemoving instant volume...")
+	_, err := RunCommand("docker", []string{"Error: No such volume: instant"}, []string{"volume", "rm", "instant"}...)
+	if err != nil {
+		fmt.Println(errors.Wrap(err, "[Error] Failed to remove instant volume."))
+	}
 }
 
 var runCommand = func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
