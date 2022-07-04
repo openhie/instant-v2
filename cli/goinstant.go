@@ -29,6 +29,7 @@ type Config struct {
 	DisableKubernetes            bool      `yaml:"disableKubernetes"`
 	DisableIG                    bool      `yaml:"disableIG"`
 	DisableCustomTargetSelection bool      `yaml:"disableCustomTargetSelection"`
+	LogPath                      string    `yaml:"logPath"`
 }
 
 type customOption struct {
@@ -191,7 +192,7 @@ func main() {
 		log.Println(err)
 	}
 
-	color.Cyan("Version: " + string(version))
+	color.Cyan("Go Cli Version: " + string(version))
 	color.Blue("Remember to stop applications or they will continue to run and have an adverse impact on performance.")
 
 	if len(os.Args) > 1 {
