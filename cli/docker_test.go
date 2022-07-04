@@ -862,30 +862,6 @@ func TestRunDeployCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "Test case receive error from final call to RunCommand()",
-			args: args{
-				startupCommands: []string{"destroy", "core", "--instant-version=latest", "-t=docker"},
-			},
-			wantErr: true,
-			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
-				var match bool
-				for i, cs := range commandSlice {
-					if cs != []string{"volume", "rm", "instant"}[i] {
-						return "", nil
-					} else {
-						match = true
-					}
-				}
-				if match {
-					return "", errors.New("test error")
-				}
-				return "", nil
-			},
-			mockMountCustomPackage: func(pathToPackage string) error {
-				return nil
-			},
-		},
-		{
 			name: "Test case verify commandSlice append",
 			args: args{
 				startupCommands: []string{"up", "hmis", "mcsd", "--env-file=./home/bin", "-e=NODE_ENV=DEV",
