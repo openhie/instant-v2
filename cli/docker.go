@@ -35,7 +35,7 @@ var (
 	MountCustomPackage = mountCustomPackage
 )
 
-type commandsOptions struct {
+type CommandsOptions struct {
 	environmentVariables []string
 	deployCommand        string
 	otherFlags           []string
@@ -108,8 +108,8 @@ func sliceContains(slice []string, element string) bool {
 	return false
 }
 
-func extractCommands(startupCommands []string) commandsOptions {
-	commandOptions := commandsOptions{
+func extractCommands(startupCommands []string) CommandsOptions {
+	commandOptions := CommandsOptions{
 		instantVersion: "latest",
 	}
 
