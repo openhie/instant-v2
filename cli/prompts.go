@@ -740,13 +740,10 @@ func selectFHIR() (result_url string, params *Params, err error) {
 
 	case "Quit":
 		quit()
-		params := &Params{}
-		return "", params, nil
+		return "", &Params{}, nil
 
 	case "Back":
-		err = selectUtil()
-		params := &Params{}
-		return "", params, nil
+		return "", &Params{}, selectUtil()
 
 	}
 	return result_url, params, nil
@@ -762,7 +759,7 @@ type Params struct {
 }
 
 func selectParams() (*Params, error) {
-	a := &Params{}
+	params := &Params{}
 
 	prompt := promptui.Select{
 		Label: "Choose authentication type",
@@ -779,11 +776,11 @@ func selectParams() (*Params, error) {
 	switch result {
 
 	case "None":
-		a.TypeAuth = "None"
-		return a, nil
+		params.TypeAuth = "None"
+		return params, nil
 
 	case "Basic":
-		a.TypeAuth = "Basic"
+		params.TypeAuth = "Basic"
 
 		prompt_basic_user := promptui.Prompt{
 			Label: "Basic User",
@@ -792,7 +789,7 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Basic' in selectParams() prompt failed")
 		}
-		a.BasicUser = result_basic_user
+		params.BasicUser = result_basic_user
 
 		prompt_basic_pass := promptui.Prompt{
 			Label: "Basic Password",
@@ -801,12 +798,12 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Basic' in selectParams() prompt failed")
 		}
-		a.BasicPass = result_basic_pass
+		params.BasicPass = result_basic_pass
 
-		return a, nil
+		return params, nil
 
 	case "Token":
-		a.TypeAuth = "Token"
+		params.TypeAuth = "Token"
 
 		prompt_token := promptui.Prompt{
 			Label: "Bearer Token",
@@ -815,11 +812,11 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Token' in selectParams() prompt failed")
 		}
-		a.Token = result_token
-		return a, nil
+		params.Token = result_token
+		return params, nil
 
 	case "Custom":
-		a.TypeAuth = "Custom"
+		params.TypeAuth = "Custom"
 
 		prompt_ctoken := promptui.Prompt{
 			Label: "Custom Token",
@@ -828,17 +825,16 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Custom' in selectParams() prompt failed")
 		}
-		a.Token = result_ctoken
-		return a, nil
+		params.Token = result_ctoken
+		return params, nil
 
 	case "Quit":
 		quit()
-		return a, nil
+		return params, nil
 
 	case "Back":
-		err = selectUtil()
-		return a, nil
+		return params, selectUtil()
 	}
 
-	return a, err
+	return params, err
 }

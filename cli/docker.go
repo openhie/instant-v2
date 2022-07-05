@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bufio"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -36,7 +35,7 @@ var (
 	MountCustomPackage = mountCustomPackage
 )
 
-type commandsOptions struct {
+type CommandsOptions struct {
 	environmentVariables []string
 	deployCommand        string
 	otherFlags           []string
@@ -102,15 +101,15 @@ func getEnvironmentVariables(inputArr []string, flags []string) (environmentVari
 
 func sliceContains(slice []string, element string) bool {
 	for _, e := range slice {
-		if e == element {
+		if strings.Contains(e, element) {
 			return true
 		}
 	}
 	return false
 }
 
-func extractCommands(startupCommands []string) commandsOptions {
-	commandOptions := commandsOptions{
+func extractCommands(startupCommands []string) CommandsOptions {
+	commandOptions := CommandsOptions{
 		instantVersion: "latest",
 	}
 
@@ -187,6 +186,7 @@ func RunDeployCommand(startupCommands []string) error {
 	if err != nil {
 		return err
 	}
+	defer removeInstantVolume()
 
 	fmt.Println("Adding 3rd party packages to instant volume:")
 
@@ -207,58 +207,60 @@ func RunDeployCommand(startupCommands []string) error {
 		return nil
 	}
 
-	if commandOptions.deployCommand == "destroy" {
-		fmt.Println("Delete instant volume...")
-		commandSlice := []string{"volume", "rm", "instant"}
-		_, err = RunCommand("docker", nil, commandSlice...)
-	}
+	return nil
+}
 
+func removeInstantVolume() {
 	fmt.Println("\n\nRemoving instant volume...")
-	commandSlice = []string{"volume", "rm", "instant"}
-	_, err = RunCommand("docker", []string{"Error: No such volume: instant"}, commandSlice...)
+	_, err := RunCommand("docker", []string{"Error: No such volume: instant"}, []string{"volume", "rm", "instant"}...)
 	if err != nil {
-		return err
+		fmt.Println(errors.Wrap(err, "[Error] Failed to remove instant volume."))
 	}
-
-	return err
 }
 
 var runCommand = func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
 	cmd := execCommand(commandName, commandSlice...)
-	cmdReader, err := cmd.StdoutPipe()
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
+	stdOutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, strings.TrimSpace(stderr.String())) {
-			return pathToPackage, nil
-		}
-
-		return pathToPackage, errors.Wrap(err, "Error creating StdoutPipe for Cmd.")
+		return pathToPackage, errors.Wrap(err, "Error creating stdOutPipe for Cmd.")
 	}
 
-	scanner := bufio.NewScanner(cmdReader)
+	stdErrReader, err := cmd.StderrPipe()
+	if err != nil {
+		return pathToPackage, errors.Wrap(err, "Error creating stdErrPipe for Cmd.")
+	}
+
+	stdOutScanner := bufio.NewScanner(stdOutReader)
 	go func() {
-		for scanner.Scan() {
-			fmt.Printf("\t > %s\n", scanner.Text())
+		for stdOutScanner.Scan() {
+			fmt.Printf("\t > %s\n", stdOutScanner.Text())
+		}
+	}()
+
+	var stderr string
+	stdErrScanner := bufio.NewScanner(stdErrReader)
+	go func() {
+		for stdErrScanner.Scan() {
+			if stdErrScanner.Text() != "" {
+				stderr = stdErrScanner.Text()
+				fmt.Printf("\t > [ERROR] %s\n", stderr)
+			}
 		}
 	}()
 
 	err = cmd.Start()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, strings.TrimSpace(stderr.String())) {
-
+		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
 		} else {
-			return pathToPackage, errors.Wrap(err, "Error starting Cmd. "+stderr.String())
+			return pathToPackage, errors.Wrap(err, "Error starting Cmd. "+stderr)
 		}
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, strings.TrimSpace(stderr.String())) {
-
+		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
 		} else {
-			return pathToPackage, errors.Wrap(err, "Error waiting for Cmd. "+stderr.String())
+			return pathToPackage, errors.Wrap(err, "Error waiting for Cmd. "+stderr)
 		}
 	}
 

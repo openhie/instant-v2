@@ -124,25 +124,15 @@ func Test_getEnvironmentVariables(t *testing.T) {
 
 func Test_extractCommands(t *testing.T) {
 	customOptions.targetLauncher = "docker"
-	type resultStruct struct {
-		environmentVariables []string
-		deployCommand        string
-		otherFlags           []string
-		targetLauncher       string
-		packages             []string
-		customPackagePaths   []string
-		instantVersion       string
-		logPath              string
-	}
 
 	testCases := []struct {
 		startupCommands []string
-		expectedResults resultStruct
+		expectedResults CommandsOptions
 		name            string
 	}{
 		{
 			startupCommands: []string{"init", "-t=docker", "--instant-version=v2.0.1", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "-onlyFlag", "core"},
-			expectedResults: resultStruct{
+			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "init",
 				otherFlags:           []string{"-onlyFlag"},
@@ -155,7 +145,7 @@ func Test_extractCommands(t *testing.T) {
 		},
 		{
 			startupCommands: []string{"up", "-t=kubernetes", "--instant-version=v2.0.2", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "-onlyFlag", "core"},
-			expectedResults: resultStruct{
+			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "up",
 				otherFlags:           []string{"-onlyFlag"},
@@ -168,7 +158,7 @@ func Test_extractCommands(t *testing.T) {
 		},
 		{
 			startupCommands: []string{"down", "-t=k8s", "--instant-version=v2.0.2", "-c=../test", "-c=../test1", "--env-file=../test.env", "-onlyFlag", "core", "hapi-fhir"},
-			expectedResults: resultStruct{
+			expectedResults: CommandsOptions{
 				environmentVariables: []string{"--env-file", "../test.env"},
 				deployCommand:        "down",
 				otherFlags:           []string{"-onlyFlag"},
@@ -181,7 +171,7 @@ func Test_extractCommands(t *testing.T) {
 		},
 		{
 			startupCommands: []string{"destroy", "-t=swarm", "--instant-version=v2.0.2", "--custom-package=../test", "-c=../test1", "-e=NODE_ENV=dev", "--onlyFlag", "core", "hapi-fhir"},
-			expectedResults: resultStruct{
+			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "destroy",
 				otherFlags:           []string{"--onlyFlag"},
@@ -194,7 +184,7 @@ func Test_extractCommands(t *testing.T) {
 		},
 		{
 			startupCommands: []string{"destroy", "--instant-version=v2.0.2", "--custom-package=../test", "-c=../test1", "-e=NODE_ENV=dev", "--onlyFlag", "core", "hapi-fhir"},
-			expectedResults: resultStruct{
+			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "destroy",
 				otherFlags:           []string{"--onlyFlag"},
@@ -345,7 +335,7 @@ func Test_runCommand(t *testing.T) {
 			suppressErrors:  nil,
 			commandSlice:    []string{"volume", "rm", "test-volume"},
 			pathToPackage:   "",
-			errorString:     fmt.Errorf("Error waiting for Cmd. Error: No such volume: test-volume\n: exit status 1"),
+			errorString:     fmt.Errorf("Error waiting for Cmd. Error: No such volume: test-volume: exit status 1"),
 			name:            "runCommand - removing nonexistant volume should return error",
 			mockExecCommand: exec.Command,
 		},
@@ -384,6 +374,8 @@ func Test_runCommand(t *testing.T) {
 			}
 
 			if (err != nil && tt.errorString == nil) || (err == nil && tt.errorString != nil) {
+				t.Log("Expected:", tt.errorString)
+				t.Log("Actual:", err.Error())
 				t.Fatal("RunCommand failed - error returned incorrect")
 			}
 
@@ -861,30 +853,6 @@ func TestRunDeployCommand(t *testing.T) {
 			wantErr: false,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
 				if commandSlice[0] == "start" {
-					return "", errors.New("test error")
-				}
-				return "", nil
-			},
-			mockMountCustomPackage: func(pathToPackage string) error {
-				return nil
-			},
-		},
-		{
-			name: "Test case receive error from final call to RunCommand()",
-			args: args{
-				startupCommands: []string{"destroy", "core", "--instant-version=latest", "-t=docker"},
-			},
-			wantErr: true,
-			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
-				var match bool
-				for i, cs := range commandSlice {
-					if cs != []string{"volume", "rm", "instant"}[i] {
-						return "", nil
-					} else {
-						match = true
-					}
-				}
-				if match {
 					return "", errors.New("test error")
 				}
 				return "", nil
