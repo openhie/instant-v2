@@ -11,5 +11,8 @@ node_modules/
 # github actions
 .github/
 
+# .git
+.git
+
 #Readme
 README.md
