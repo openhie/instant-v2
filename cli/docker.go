@@ -152,6 +152,12 @@ func RunDeployCommand(startupCommands []string) error {
 
 	commandOptions := extractCommands(startupCommands)
 
+	if len(commandOptions.packages) == 0 {
+		for _, p := range cfg.Packages {
+			commandOptions.packages = append(commandOptions.packages, p.ID)
+		}
+	}
+
 	fmt.Println("Action:", commandOptions.deployCommand)
 	fmt.Println("Package IDs:", commandOptions.packages)
 	fmt.Println("Custom package paths:", commandOptions.customPackagePaths)
