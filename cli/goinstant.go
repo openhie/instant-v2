@@ -38,7 +38,7 @@ type customOption struct {
 	envVars                    []string
 	customPackageFileLocations []string
 	onlyFlag                   bool
-	instantVersion             string
+	imageVersion               string
 	targetLauncher             string
 	devMode                    bool
 }
@@ -47,7 +47,7 @@ var customOptions = customOption{
 	startupAction:      "init",
 	envVarFileLocation: "",
 	onlyFlag:           false,
-	instantVersion:     "latest",
+	imageVersion:       "latest",
 	targetLauncher:     "docker",
 	devMode:            false,
 }
@@ -123,7 +123,7 @@ func getHelpText(interactive bool, options string) string {
 
 				Toggle only flag - for specifying the only flag, which specifies that actions are to be taken on a single package and not on its dependencies
 
-				Specify Instant Version - for specifying the version of the instant or platform image to use. Default is latest
+				Specify Image Version - for specifying the version of the instant or platform image to use. Default is latest
 
 				Toggle dev mode - for enabling the development mode in which the service ports are exposed
 
@@ -159,7 +159,7 @@ func getHelpText(interactive bool, options string) string {
 						--dev:									specifies the development mode in which all service ports are exposed
 						-e:											for specifying an environment variable
 						--env-file: 						for specifying the path to an environment variables file
-						--instant-version:			the version of the project used for the deploy. Defaults to 'latest'
+						--image-version:			the version of the project used for the deploy. Defaults to 'latest'
 						-*, --*:								unrecognised flags are passed through uninterpreted
 					usage:
 						<deploy command> <custom flags> <package ids>

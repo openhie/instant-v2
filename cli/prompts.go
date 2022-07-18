@@ -31,7 +31,7 @@ func selectSetup() error {
 	}
 
 	prompt := promptui.Select{
-		Label: "Please choose how you want to run Instant. \nChoose Docker if you're running on your PC. \nIf you want to run Instant on Kubernetes, then you have should been provided credentials or have Kubernetes running on your PC.",
+		Label: "Please choose how you want to run the setup. \nChoose Docker if you're running on your PC. \nIf you want to run Instant on Kubernetes, then you have should been provided credentials or have Kubernetes running on your PC.",
 		Items: items,
 		Size:  12,
 	}
@@ -132,7 +132,7 @@ func selectCustomOptions() error {
 		"Specify environment variables",
 		"Specify custom package locations",
 		"Toggle only flag",
-		"Specify Instant Version",
+		"Specify Image Version",
 		"Toggle dev mode (default mode is prod)",
 		"Execute with current options",
 		"View current options set",
@@ -175,8 +175,8 @@ func selectCustomOptions() error {
 		err = toggleOnlyFlag()
 	case "Toggle dev mode (default mode is prod)":
 		err = toggleDevMode()
-	case "Specify Instant Version":
-		err = setInstantVersion()
+	case "Specify Image Version":
+		err = setImageVersion()
 	case "Execute with current options":
 		err = printAll(false)
 		if err != nil {
@@ -207,7 +207,7 @@ func resetAll() {
 	customOptions.envVars = make([]string, 0)
 	customOptions.customPackageFileLocations = make([]string, 0)
 	customOptions.onlyFlag = false
-	customOptions.instantVersion = "latest"
+	customOptions.imageVersion = "latest"
 	customOptions.targetLauncher = cfg.DefaultTargetLauncher
 	customOptions.devMode = false
 	fmt.Println("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\nAll custom options have been reset to default.\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
@@ -302,7 +302,7 @@ func executeCommand() error {
 	if customOptions.devMode {
 		DeployCommands = append(DeployCommands, "--dev")
 	}
-	DeployCommands = append(DeployCommands, "--instant-version="+customOptions.instantVersion)
+	DeployCommands = append(DeployCommands, "--image-version="+customOptions.imageVersion)
 	DeployCommands = append(DeployCommands, "-t="+customOptions.targetLauncher)
 	return runDeployCommand(DeployCommands)
 }
@@ -336,8 +336,8 @@ func printAll(loopback bool) error {
 		fmt.Println("Custom Packages:")
 		printSlice(customOptions.customPackageFileLocations)
 	}
-	fmt.Println("Instant Image Version:")
-	fmt.Printf("-%q\n", customOptions.instantVersion)
+	fmt.Println("Image Version:")
+	fmt.Printf("-%q\n", customOptions.imageVersion)
 
 	fmt.Println("Only Flag Setting:")
 	if customOptions.onlyFlag {
@@ -449,21 +449,21 @@ func setEnvVarFileLocation() error {
 	return selectCustomOptions()
 }
 
-func setInstantVersion() error {
-	if customOptions.instantVersion != "latest" && len(customOptions.instantVersion) > 0 {
-		fmt.Println("Current Instant OpenHIE Image Version Specified:")
-		fmt.Printf("-%q\n", customOptions.instantVersion)
+func setImageVersion() error {
+	if customOptions.imageVersion != "latest" && len(customOptions.imageVersion) > 0 {
+		fmt.Println("Current Image Version Specified:")
+		fmt.Printf("-%q\n", customOptions.imageVersion)
 	}
 	prompt := promptui.Prompt{
-		Label: "Instant OpenHIE Image Version e.g. 0.0.9",
+		Label: "Image Version e.g. 0.0.9",
 	}
-	instantVersion, err := prompt.Run()
+	imageVersion, err := prompt.Run()
 
 	if err != nil {
-		return errors.Wrap(err, "setInstantVersion() prompt failed")
+		return errors.Wrap(err, "setImageVersion() prompt failed")
 	}
 
-	customOptions.instantVersion = instantVersion
+	customOptions.imageVersion = imageVersion
 	return selectCustomOptions()
 }
 

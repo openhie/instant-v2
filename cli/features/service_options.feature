@@ -31,5 +31,5 @@ Feature: Test Deploy Options Commands
     Then check the CLI output is "-e TEST=ME"
 
   Scenario: Initialise Core Service on specific image version
-    When the command "init core -t=docker --instant-version=alt-v" is run
-    Then check the CLI output is "InstantVersion: alt-v"
+    When the command "init core -t=docker --image-version=alt-v" is run
+    Then check the CLI output is "imageVersion: alt-v"

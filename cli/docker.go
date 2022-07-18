@@ -41,7 +41,7 @@ type CommandsOptions struct {
 	otherFlags           []string
 	packages             []string
 	customPackagePaths   []string
-	instantVersion       string
+	imageVersion         string
 	targetLauncher       string
 }
 
@@ -110,7 +110,7 @@ func sliceContains(slice []string, element string) bool {
 
 func extractCommands(startupCommands []string) CommandsOptions {
 	commandOptions := CommandsOptions{
-		instantVersion: "latest",
+		imageVersion: "latest",
 	}
 
 	for _, option := range startupCommands {
@@ -121,8 +121,8 @@ func extractCommands(startupCommands []string) CommandsOptions {
 			commandOptions.customPackagePaths = append(commandOptions.customPackagePaths, option)
 		case strings.HasPrefix(option, "-e=") || strings.HasPrefix(option, "--env-file="):
 			commandOptions.environmentVariables = append(commandOptions.environmentVariables, option)
-		case strings.HasPrefix(option, "--instant-version="):
-			commandOptions.instantVersion = strings.Split(option, "--instant-version=")[1]
+		case strings.HasPrefix(option, "--image-version="):
+			commandOptions.imageVersion = strings.Split(option, "--image-version=")[1]
 		case strings.HasPrefix(option, "-t="):
 			commandOptions.targetLauncher = strings.Split(option, "-t=")[1]
 		case strings.HasPrefix(option, "-") || strings.HasPrefix(option, "--"):
@@ -163,10 +163,10 @@ func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Custom package paths:", commandOptions.customPackagePaths)
 	fmt.Println("Environment Variables:", commandOptions.environmentVariables)
 	fmt.Println("Other Flags:", commandOptions.otherFlags)
-	fmt.Println("InstantVersion:", commandOptions.instantVersion)
+	fmt.Println("Image Version:", commandOptions.imageVersion)
 	fmt.Println("Target Launcher:", commandOptions.targetLauncher)
 
-	instantImage := cfg.Image + ":" + commandOptions.instantVersion
+	image := cfg.Image + ":" + commandOptions.imageVersion
 
 	fmt.Println("Creating fresh instant container with volumes...")
 	commandSlice := []string{
@@ -183,7 +183,7 @@ func RunDeployCommand(startupCommands []string) error {
 	}
 
 	commandSlice = append(commandSlice, commandOptions.environmentVariables...)
-	commandSlice = append(commandSlice, []string{instantImage, commandOptions.deployCommand}...)
+	commandSlice = append(commandSlice, []string{image, commandOptions.deployCommand}...)
 	commandSlice = append(commandSlice, commandOptions.otherFlags...)
 	commandSlice = append(commandSlice, []string{"-t", commandOptions.targetLauncher}...)
 	commandSlice = append(commandSlice, commandOptions.packages...)

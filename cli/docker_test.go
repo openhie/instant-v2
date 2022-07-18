@@ -131,7 +131,7 @@ func Test_extractCommands(t *testing.T) {
 		name            string
 	}{
 		{
-			startupCommands: []string{"init", "-t=docker", "--instant-version=v2.0.1", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "-onlyFlag", "core"},
+			startupCommands: []string{"init", "-t=docker", "--image-version=v2.0.1", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "-onlyFlag", "core"},
 			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "init",
@@ -139,12 +139,12 @@ func Test_extractCommands(t *testing.T) {
 				targetLauncher:       "docker",
 				packages:             []string{"core"},
 				customPackagePaths:   []string{"../test", "../test1"},
-				instantVersion:       "v2.0.1",
+				imageVersion:         "v2.0.1",
 			},
 			name: "Extract commands test 1 - should return the expected commands",
 		},
 		{
-			startupCommands: []string{"up", "-t=kubernetes", "--instant-version=v2.0.2", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "-onlyFlag", "core"},
+			startupCommands: []string{"up", "-t=kubernetes", "--image-version=v2.0.2", "-c=../test", "-c=../test1", "-e=NODE_ENV=dev", "-onlyFlag", "core"},
 			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "up",
@@ -152,12 +152,12 @@ func Test_extractCommands(t *testing.T) {
 				targetLauncher:       "kubernetes",
 				packages:             []string{"core"},
 				customPackagePaths:   []string{"../test", "../test1"},
-				instantVersion:       "v2.0.2",
+				imageVersion:         "v2.0.2",
 			},
 			name: "Extract commands test 2 - should return the expected commands",
 		},
 		{
-			startupCommands: []string{"down", "-t=k8s", "--instant-version=v2.0.2", "-c=../test", "-c=../test1", "--env-file=../test.env", "-onlyFlag", "core", "hapi-fhir"},
+			startupCommands: []string{"down", "-t=k8s", "--image-version=v2.0.2", "-c=../test", "-c=../test1", "--env-file=../test.env", "-onlyFlag", "core", "hapi-fhir"},
 			expectedResults: CommandsOptions{
 				environmentVariables: []string{"--env-file", "../test.env"},
 				deployCommand:        "down",
@@ -165,12 +165,12 @@ func Test_extractCommands(t *testing.T) {
 				targetLauncher:       "k8s",
 				packages:             []string{"core", "hapi-fhir"},
 				customPackagePaths:   []string{"../test", "../test1"},
-				instantVersion:       "v2.0.2",
+				imageVersion:         "v2.0.2",
 			},
 			name: "Extract commands test 3 - should return the expected commands",
 		},
 		{
-			startupCommands: []string{"destroy", "-t=swarm", "--instant-version=v2.0.2", "--custom-package=../test", "-c=../test1", "-e=NODE_ENV=dev", "--onlyFlag", "core", "hapi-fhir"},
+			startupCommands: []string{"destroy", "-t=swarm", "--image-version=v2.0.2", "--custom-package=../test", "-c=../test1", "-e=NODE_ENV=dev", "--onlyFlag", "core", "hapi-fhir"},
 			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "destroy",
@@ -178,12 +178,12 @@ func Test_extractCommands(t *testing.T) {
 				targetLauncher:       "swarm",
 				packages:             []string{"core", "hapi-fhir"},
 				customPackagePaths:   []string{"../test", "../test1"},
-				instantVersion:       "v2.0.2",
+				imageVersion:         "v2.0.2",
 			},
 			name: "Extract commands test 4 - should return the expected commands",
 		},
 		{
-			startupCommands: []string{"destroy", "--instant-version=v2.0.2", "--custom-package=../test", "-c=../test1", "-e=NODE_ENV=dev", "--onlyFlag", "core", "hapi-fhir"},
+			startupCommands: []string{"destroy", "--image-version=v2.0.2", "--custom-package=../test", "-c=../test1", "-e=NODE_ENV=dev", "--onlyFlag", "core", "hapi-fhir"},
 			expectedResults: CommandsOptions{
 				environmentVariables: []string{"-e", "NODE_ENV=dev"},
 				deployCommand:        "destroy",
@@ -191,7 +191,7 @@ func Test_extractCommands(t *testing.T) {
 				targetLauncher:       "docker",
 				packages:             []string{"core", "hapi-fhir"},
 				customPackagePaths:   []string{"../test", "../test1"},
-				instantVersion:       "v2.0.2",
+				imageVersion:         "v2.0.2",
 			},
 			name: "Extract commands test 4 - should return the expected commands",
 		},
@@ -219,8 +219,8 @@ func Test_extractCommands(t *testing.T) {
 			if !assert.Equal(t, tt.expectedResults.customPackagePaths, commandOptions.customPackagePaths) {
 				t.Fatal("ExtractCommands should return the correct custom package paths")
 			}
-			if !assert.Equal(t, tt.expectedResults.instantVersion, commandOptions.instantVersion) {
-				t.Fatal("ExtractCommands should return the correct instant version")
+			if !assert.Equal(t, tt.expectedResults.imageVersion, commandOptions.imageVersion) {
+				t.Fatal("ExtractCommands should return the correct image version")
 			}
 			t.Log(tt.name + " passed!")
 		})
@@ -809,7 +809,7 @@ func TestRunDeployCommand(t *testing.T) {
 		{
 			name: "Test case expect no errors",
 			args: args{
-				startupCommands: []string{"init", "core", "-c=./local/cPack", "--instant-version=latest", "-t=docker"},
+				startupCommands: []string{"init", "core", "-c=./local/cPack", "--image-version=latest", "-t=docker"},
 			},
 			wantErr: false,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
@@ -822,7 +822,7 @@ func TestRunDeployCommand(t *testing.T) {
 		{
 			name: "Test case receive error from first call to RunCommand()",
 			args: args{
-				startupCommands: []string{"init", "core", "-c=./local/cPack", "--instant-version=latest", "-t=docker"},
+				startupCommands: []string{"init", "core", "-c=./local/cPack", "--image-version=latest", "-t=docker"},
 			},
 			wantErr: true,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
@@ -835,7 +835,7 @@ func TestRunDeployCommand(t *testing.T) {
 		{
 			name: "Test case receive error from second call to RunCommand()",
 			args: args{
-				startupCommands: []string{"down", "--instant-version=latest", "-t=docker"},
+				startupCommands: []string{"down", "--image-version=latest", "-t=docker"},
 			},
 			wantErr: true,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
@@ -848,7 +848,7 @@ func TestRunDeployCommand(t *testing.T) {
 		{
 			name: "Test case ignore error from third call to RunCommand()",
 			args: args{
-				startupCommands: []string{"down", "--instant-version=latest", "-t=docker"},
+				startupCommands: []string{"down", "--image-version=latest", "-t=docker"},
 			},
 			wantErr: false,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
@@ -865,7 +865,7 @@ func TestRunDeployCommand(t *testing.T) {
 			name: "Test case verify commandSlice append",
 			args: args{
 				startupCommands: []string{"up", "hmis", "mcsd", "--env-file=./home/bin", "-e=NODE_ENV=DEV",
-					"-e=DOMAIN_NAME=instant.com", "-c=./usr/local/cPack", "--only", "--dev", "--instant-version=v1.03a", "-t=k8s"},
+					"-e=DOMAIN_NAME=instant.com", "-c=./usr/local/cPack", "--only", "--dev", "--image-version=v1.03a", "-t=k8s"},
 			},
 			wantErr: false,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
@@ -898,7 +898,7 @@ func TestRunDeployCommand(t *testing.T) {
 		{
 			name: "Test case receive error from MountCustomPackage()",
 			args: args{
-				startupCommands: []string{"init", "core", "-c=./local/cPack", "--instant-version=latest", "-t=docker"},
+				startupCommands: []string{"init", "core", "-c=./local/cPack", "--image-version=latest", "-t=docker"},
 			},
 			wantErr: true,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
