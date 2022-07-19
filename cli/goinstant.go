@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	yaml "gopkg.in/yaml.v3"
@@ -185,6 +186,10 @@ func main() {
 
 	//Need to set the default here as we declare the struct before the config is loaded in.
 	customOptions.targetLauncher = cfg.DefaultTargetLauncher
+
+	if strings.Contains(cfg.Image, ":") {
+		customOptions.imageVersion = strings.Split(cfg.Image, ":")[1]
+	}
 
 	version, err := f.ReadFile("version")
 	if err != nil {

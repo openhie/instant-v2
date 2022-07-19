@@ -109,8 +109,14 @@ func sliceContains(slice []string, element string) bool {
 }
 
 func extractCommands(startupCommands []string) CommandsOptions {
+	imageVersion := "latest"
+
+	if strings.Contains(cfg.Image, ":") {
+		imageVersion = strings.Split(cfg.Image, ":")[1]
+	}
+
 	commandOptions := CommandsOptions{
-		imageVersion: "latest",
+		imageVersion: imageVersion,
 	}
 
 	for _, option := range startupCommands {
