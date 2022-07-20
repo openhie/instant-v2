@@ -172,7 +172,12 @@ func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Image Version:", commandOptions.imageVersion)
 	fmt.Println("Target Launcher:", commandOptions.targetLauncher)
 
-	image := cfg.Image + ":" + commandOptions.imageVersion
+	image := ""
+	if strings.Contains(cfg.Image, ":") {
+		image = strings.Split(cfg.Image, ":")[0] + ":" + commandOptions.imageVersion
+	} else {
+		image = cfg.Image + ":" + commandOptions.imageVersion
+	}
 
 	fmt.Println("Creating fresh instant container with volumes...")
 	commandSlice := []string{
