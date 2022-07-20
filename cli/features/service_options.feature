@@ -32,4 +32,4 @@ Feature: Test Deploy Options Commands
 
   Scenario: Initialise Core Service on specific image version
     When the command "init core -t=docker --image-version=alt-v" is run
-    Then check the CLI output is "imageVersion: alt-v"
+    Then check the CLI output is "Image Version: alt-v"
