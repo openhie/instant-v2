@@ -4,7 +4,7 @@ This houses the 2 base components necessary for starting up a health information
 
 `package-base`: A docker container with the base configuration for standing up containers and running tests on which implementations can base their images.
 
-`goinstant`: A Go CLI app for coordinating the deployment and configuration of packages.
+`cli`: A Go CLI app for coordinating the deployment and configuration of packages.
 
 # package-base
 
@@ -13,7 +13,7 @@ This houses the 2 base components necessary for starting up a health information
 Docker image will be built on tag using github actions and pushed to dockerhub repo `openhie/package-base`
 Tag format: '0.0.1'
 
-# goinstant
+# cli
 
 This is a Go CLI app and is provided as a native binary for the AMD64 architecture on Windows, macOS, and Linux.
 
@@ -23,7 +23,7 @@ This is a Go CLI app and is provided as a native binary for the AMD64 architectu
 
 Download Golang version 1.17.x or higher.
 
-On Unix-like operating systems, you must add execute permissions, ie. `chmod +x goinstant-linux`.
+On Unix-like operating systems, you must add execute permissions, ie. `chmod +x gocli-linux`.
 
 Without arguments, the CLI defaults to interactive mode. The CLI can also be used non-interactively as so:
 
@@ -47,7 +47,7 @@ Therefore, this app is not meant to be used for container and cluster management
 
 - Install go, [see here](https://golang.org/doc/install). For Ubuntu you might want to use the go snap package, [see here](https://snapcraft.io/install/go/ubuntu).
 - Add go binaries to you system \$PATH, on ubuntu: Add `export PATH=$PATH:$HOME/go/bin` to the end of your ~/.bashrc file. To use this change immediately source it: `source ~/.bashrc`
-- Install dependencies, run this from the goinstant folder: `go mod tidy`
+- Install dependencies, run this from the cli folder: `go mod tidy`
 
 ### Running
 
@@ -55,7 +55,7 @@ For development, run the app using `go run .`.
 
 ### Testing
 
-To run the unit tests, ensure you're in the goinstant directory, then do
+To run the unit tests, ensure you're in the cli directory, then do
 
 ```
 go test . -v
@@ -83,7 +83,7 @@ The [godog library](https://github.com/cucumber/godog), which provides us with t
 go install github.com/cucumber/godog/cmd/godog@v0.12.0
 ```
 
-Then, navigate to the `goinstant` root folder and run the command below.
+Then, navigate to the `cli` root folder and run the command below.
 
 ```bash
 godog
