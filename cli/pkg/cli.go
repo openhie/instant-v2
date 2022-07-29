@@ -19,20 +19,20 @@ func CLI() error {
 		switch startupCommands[3] {
 		case "none", "None":
 			params.TypeAuth = "None"
-			err = loadIGpackage(startupCommands[1], startupCommands[2], params)
+			err = LoadIGpackage(startupCommands[1], startupCommands[2], params)
 		case "basic", "Basic":
 			params.TypeAuth = "Basic"
 			params.BasicUser = startupCommands[4]
 			params.BasicPass = startupCommands[5]
-			err = loadIGpackage(startupCommands[1], startupCommands[2], params)
+			err = LoadIGpackage(startupCommands[1], startupCommands[2], params)
 		case "token", "Token":
 			params.TypeAuth = "Token"
 			params.Token = startupCommands[4]
-			err = loadIGpackage(startupCommands[1], startupCommands[2], params)
+			err = LoadIGpackage(startupCommands[1], startupCommands[2], params)
 		case "custom", "Custom":
 			params.TypeAuth = "Custom"
 			params.Token = startupCommands[4]
-			err = loadIGpackage(startupCommands[1], startupCommands[2], params)
+			err = LoadIGpackage(startupCommands[1], startupCommands[2], params)
 		}
 	default:
 		if len(startupCommands) < 2 {

@@ -89,7 +89,7 @@ func selectUtil() error {
 		return err
 	}
 	fmt.Println("FHIR Server target:", fhir_server)
-	err = loadIGpackage(ig_url, fhir_server, params)
+	err = LoadIGpackage(ig_url, fhir_server, params)
 	if err != nil {
 		return err
 	}

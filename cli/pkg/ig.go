@@ -32,7 +32,7 @@ type filesRep struct {
 	Type         string `json:"type"`
 }
 
-func loadIGpackage(url_entry string, fhir_server string, params *Params) error {
+func LoadIGpackage(url_entry string, fhir_server string, params *Params) error {
 	trimmed := strings.Replace(url_entry, "index.html", "", -1)
 	u, err := url.Parse(trimmed)
 	if err != nil {
