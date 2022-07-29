@@ -1,4 +1,4 @@
-# go-instant
+# go-cli
 *-packr.go
 packrd
 cli/bin/go*
@@ -80,9 +80,6 @@ typings/
 # generated files
 /docs/.docusaurus
 /docs/.cache-loader
-
-# vscode config
-.vscode
 
 # test binaries
 /cli/features/test-platform-linux

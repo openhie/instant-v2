@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bufio"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -35,6 +34,16 @@ var (
 	RunCommand         = runCommand
 	MountCustomPackage = mountCustomPackage
 )
+
+type CommandsOptions struct {
+	environmentVariables []string
+	deployCommand        string
+	otherFlags           []string
+	packages             []string
+	customPackagePaths   []string
+	imageVersion         string
+	targetLauncher       string
+}
 
 func debugDocker() error {
 	fmt.Printf("...checking your Docker setup")
@@ -92,64 +101,83 @@ func getEnvironmentVariables(inputArr []string, flags []string) (environmentVari
 
 func sliceContains(slice []string, element string) bool {
 	for _, e := range slice {
-		if e == element {
+		if strings.Contains(e, element) {
 			return true
 		}
 	}
 	return false
 }
 
-func extractCommands(startupCommands []string) (environmentVariables []string, deployCommand string, otherFlags []string, packages []string, customPackagePaths []string, instantVersion string, targetLauncher string) {
-	instantVersion = "latest"
+func extractCommands(startupCommands []string) CommandsOptions {
+	imageVersion := "latest"
+
+	if strings.Contains(cfg.Image, ":") {
+		imageVersion = strings.Split(cfg.Image, ":")[1]
+	}
+
+	commandOptions := CommandsOptions{
+		imageVersion: imageVersion,
+	}
 
 	for _, option := range startupCommands {
 		switch {
 		case sliceContains([]string{"init", "up", "down", "destroy"}, option):
-			deployCommand = option
+			commandOptions.deployCommand = option
 		case strings.HasPrefix(option, "-c=") || strings.HasPrefix(option, "--custom-package="):
-			customPackagePaths = append(customPackagePaths, option)
+			commandOptions.customPackagePaths = append(commandOptions.customPackagePaths, option)
 		case strings.HasPrefix(option, "-e=") || strings.HasPrefix(option, "--env-file="):
-			environmentVariables = append(environmentVariables, option)
-		case strings.HasPrefix(option, "--instant-version="):
-			instantVersion = strings.Split(option, "--instant-version=")[1]
+			commandOptions.environmentVariables = append(commandOptions.environmentVariables, option)
+		case strings.HasPrefix(option, "--image-version="):
+			commandOptions.imageVersion = strings.Split(option, "--image-version=")[1]
 		case strings.HasPrefix(option, "-t="):
-			targetLauncher = strings.Split(option, "-t=")[1]
+			commandOptions.targetLauncher = strings.Split(option, "-t=")[1]
 		case strings.HasPrefix(option, "-") || strings.HasPrefix(option, "--"):
-			otherFlags = append(otherFlags, option)
+			commandOptions.otherFlags = append(commandOptions.otherFlags, option)
 		default:
-			packages = append(packages, option)
+			commandOptions.packages = append(commandOptions.packages, option)
 		}
 	}
 
-	if len(customPackagePaths) > 0 {
-		customPackagePaths = getPackagePaths(customPackagePaths, []string{"-c=", "--custom-package="})
+	if len(commandOptions.customPackagePaths) > 0 {
+		commandOptions.customPackagePaths = getPackagePaths(commandOptions.customPackagePaths, []string{"-c=", "--custom-package="})
 	}
 
-	if len(environmentVariables) > 0 {
-		environmentVariables = getEnvironmentVariables(environmentVariables, []string{"-e=", "--env-file="})
+	if len(commandOptions.environmentVariables) > 0 {
+		commandOptions.environmentVariables = getEnvironmentVariables(commandOptions.environmentVariables, []string{"-e=", "--env-file="})
 	}
 
-	if targetLauncher == "" {
-		targetLauncher = customOptions.targetLauncher
+	if commandOptions.targetLauncher == "" {
+		commandOptions.targetLauncher = customOptions.targetLauncher
 	}
 
-	return
+	return commandOptions
 }
 
 func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Note: Initial setup takes 1-5 minutes.\nWait for the DONE message.\n--------------------------")
 
-	environmentVariables, deployCommand, otherFlags, packages, customPackagePaths, instantVersion, targetLauncher := extractCommands(startupCommands)
+	commandOptions := extractCommands(startupCommands)
 
-	fmt.Println("Action:", deployCommand)
-	fmt.Println("Package IDs:", packages)
-	fmt.Println("Custom package paths:", customPackagePaths)
-	fmt.Println("Environment Variables:", environmentVariables)
-	fmt.Println("Other Flags:", otherFlags)
-	fmt.Println("InstantVersion:", instantVersion)
-	fmt.Println("Target Launcher:", targetLauncher)
+	if len(commandOptions.packages) == 0 {
+		for _, p := range cfg.Packages {
+			commandOptions.packages = append(commandOptions.packages, p.ID)
+		}
+	}
 
-	instantImage := cfg.Image + ":" + instantVersion
+	fmt.Println("Action:", commandOptions.deployCommand)
+	fmt.Println("Package IDs:", commandOptions.packages)
+	fmt.Println("Custom package paths:", commandOptions.customPackagePaths)
+	fmt.Println("Environment Variables:", commandOptions.environmentVariables)
+	fmt.Println("Other Flags:", commandOptions.otherFlags)
+	fmt.Println("Image Version:", commandOptions.imageVersion)
+	fmt.Println("Target Launcher:", commandOptions.targetLauncher)
+
+	image := ""
+	if strings.Contains(cfg.Image, ":") {
+		image = strings.Split(cfg.Image, ":")[0] + ":" + commandOptions.imageVersion
+	} else {
+		image = cfg.Image + ":" + commandOptions.imageVersion
+	}
 
 	fmt.Println("Creating fresh instant container with volumes...")
 	commandSlice := []string{
@@ -160,19 +188,26 @@ func RunDeployCommand(startupCommands []string) error {
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--network", "host",
 	}
-	commandSlice = append(commandSlice, environmentVariables...)
-	commandSlice = append(commandSlice, []string{instantImage, deployCommand}...)
-	commandSlice = append(commandSlice, otherFlags...)
-	commandSlice = append(commandSlice, []string{"-t", targetLauncher}...)
-	commandSlice = append(commandSlice, packages...)
+
+	if cfg.LogPath != "" {
+		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", cfg.LogPath))
+	}
+
+	commandSlice = append(commandSlice, commandOptions.environmentVariables...)
+	commandSlice = append(commandSlice, []string{image, commandOptions.deployCommand}...)
+	commandSlice = append(commandSlice, commandOptions.otherFlags...)
+	commandSlice = append(commandSlice, []string{"-t", commandOptions.targetLauncher}...)
+	commandSlice = append(commandSlice, commandOptions.packages...)
+
 	_, err := RunCommand("docker", nil, commandSlice...)
 	if err != nil {
 		return err
 	}
+	defer removeInstantVolume()
 
 	fmt.Println("Adding 3rd party packages to instant volume:")
 
-	for _, c := range customPackagePaths {
+	for _, c := range commandOptions.customPackagePaths {
 		fmt.Print("- " + c)
 		err = MountCustomPackage(c)
 		if err != nil {
@@ -189,58 +224,60 @@ func RunDeployCommand(startupCommands []string) error {
 		return nil
 	}
 
-	if deployCommand == "destroy" {
-		fmt.Println("Delete instant volume...")
-		commandSlice := []string{"volume", "rm", "instant"}
-		_, err = RunCommand("docker", nil, commandSlice...)
-	}
+	return nil
+}
 
+func removeInstantVolume() {
 	fmt.Println("\n\nRemoving instant volume...")
-	commandSlice = []string{"volume", "rm", "instant"}
-	_, err = RunCommand("docker", []string{"Error: No such volume: instant"}, commandSlice...)
+	_, err := RunCommand("docker", []string{"Error: No such volume: instant"}, []string{"volume", "rm", "instant"}...)
 	if err != nil {
-		return err
+		fmt.Println(errors.Wrap(err, "[Error] Failed to remove instant volume."))
 	}
-
-	return err
 }
 
 var runCommand = func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
 	cmd := execCommand(commandName, commandSlice...)
-	cmdReader, err := cmd.StdoutPipe()
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
+	stdOutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, strings.TrimSpace(stderr.String())) {
-			return pathToPackage, nil
-		}
-
-		return pathToPackage, errors.Wrap(err, "Error creating StdoutPipe for Cmd.")
+		return pathToPackage, errors.Wrap(err, "Error creating stdOutPipe for Cmd.")
 	}
 
-	scanner := bufio.NewScanner(cmdReader)
+	stdErrReader, err := cmd.StderrPipe()
+	if err != nil {
+		return pathToPackage, errors.Wrap(err, "Error creating stdErrPipe for Cmd.")
+	}
+
+	stdOutScanner := bufio.NewScanner(stdOutReader)
 	go func() {
-		for scanner.Scan() {
-			fmt.Printf("\t > %s\n", scanner.Text())
+		for stdOutScanner.Scan() {
+			fmt.Printf("\t > %s\n", stdOutScanner.Text())
+		}
+	}()
+
+	var stderr string
+	stdErrScanner := bufio.NewScanner(stdErrReader)
+	go func() {
+		for stdErrScanner.Scan() {
+			if stdErrScanner.Text() != "" {
+				stderr = stdErrScanner.Text()
+				fmt.Printf("\t > [ERROR] %s\n", stderr)
+			}
 		}
 	}()
 
 	err = cmd.Start()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, strings.TrimSpace(stderr.String())) {
-
+		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
 		} else {
-			return pathToPackage, errors.Wrap(err, "Error starting Cmd. "+stderr.String())
+			return pathToPackage, errors.Wrap(err, "Error starting Cmd. "+stderr)
 		}
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, strings.TrimSpace(stderr.String())) {
-
+		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
 		} else {
-			return pathToPackage, errors.Wrap(err, "Error waiting for Cmd. "+stderr.String())
+			return pathToPackage, errors.Wrap(err, "Error waiting for Cmd. "+stderr)
 		}
 	}
 

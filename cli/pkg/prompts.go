@@ -15,7 +15,7 @@ func quit() {
 	os.Exit(0)
 }
 
-func selectSetup() error {
+func SelectSetup() error {
 	items := []string{"Use Docker on your PC", "Help", "Quit"}
 
 	index := 1
@@ -31,14 +31,14 @@ func selectSetup() error {
 	}
 
 	prompt := promptui.Select{
-		Label: "Please choose how you want to run Instant. \nChoose Docker if you're running on your PC. \nIf you want to run Instant on Kubernetes, then you have should been provided credentials or have Kubernetes running on your PC.",
+		Label: "Please choose how you want to run the setup. \nChoose Docker if you're running on your PC. \nIf you want to run Instant on Kubernetes, then you have should been provided credentials or have Kubernetes running on your PC.",
 		Items: items,
 		Size:  12,
 	}
 
 	_, result, err := prompt.Run()
 	if err != nil {
-		return errors.Wrap(err, "selectSetup() prompt failed")
+		return errors.Wrap(err, "SelectSetup() prompt failed")
 	}
 
 	fmt.Printf("You chose %q\n========================================\n", result)
@@ -63,7 +63,7 @@ func selectSetup() error {
 
 	case "Help":
 		fmt.Println(getHelpText(true, ""))
-		selectSetup()
+		SelectSetup()
 
 	case "Quit":
 		quit()
@@ -93,7 +93,7 @@ func selectUtil() error {
 	if err != nil {
 		return err
 	}
-	return selectSetup()
+	return SelectSetup()
 }
 
 func selectDefaultOrCustom() error {
@@ -117,7 +117,7 @@ func selectDefaultOrCustom() error {
 	case "Quit":
 		quit()
 	case "Back":
-		err = selectSetup()
+		err = SelectSetup()
 	}
 
 	return err
@@ -132,7 +132,7 @@ func selectCustomOptions() error {
 		"Specify environment variables",
 		"Specify custom package locations",
 		"Toggle only flag",
-		"Specify Instant Version",
+		"Specify Image Version",
 		"Toggle dev mode (default mode is prod)",
 		"Execute with current options",
 		"View current options set",
@@ -175,8 +175,8 @@ func selectCustomOptions() error {
 		err = toggleOnlyFlag()
 	case "Toggle dev mode (default mode is prod)":
 		err = toggleDevMode()
-	case "Specify Instant Version":
-		err = setInstantVersion()
+	case "Specify Image Version":
+		err = setImageVersion()
 	case "Execute with current options":
 		err = printAll(false)
 		if err != nil {
@@ -207,7 +207,7 @@ func resetAll() {
 	customOptions.envVars = make([]string, 0)
 	customOptions.customPackageFileLocations = make([]string, 0)
 	customOptions.onlyFlag = false
-	customOptions.instantVersion = "latest"
+	customOptions.imageVersion = "latest"
 	customOptions.targetLauncher = cfg.DefaultTargetLauncher
 	customOptions.devMode = false
 	fmt.Println("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\nAll custom options have been reset to default.\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
@@ -302,7 +302,7 @@ func executeCommand() error {
 	if customOptions.devMode {
 		DeployCommands = append(DeployCommands, "--dev")
 	}
-	DeployCommands = append(DeployCommands, "--instant-version="+customOptions.instantVersion)
+	DeployCommands = append(DeployCommands, "--image-version="+customOptions.imageVersion)
 	DeployCommands = append(DeployCommands, "-t="+customOptions.targetLauncher)
 	return runDeployCommand(DeployCommands)
 }
@@ -336,8 +336,8 @@ func printAll(loopback bool) error {
 		fmt.Println("Custom Packages:")
 		printSlice(customOptions.customPackageFileLocations)
 	}
-	fmt.Println("Instant Image Version:")
-	fmt.Printf("-%q\n", customOptions.instantVersion)
+	fmt.Println("Image Version:")
+	fmt.Printf("-%q\n", customOptions.imageVersion)
 
 	fmt.Println("Only Flag Setting:")
 	if customOptions.onlyFlag {
@@ -449,21 +449,21 @@ func setEnvVarFileLocation() error {
 	return selectCustomOptions()
 }
 
-func setInstantVersion() error {
-	if customOptions.instantVersion != "latest" && len(customOptions.instantVersion) > 0 {
-		fmt.Println("Current Instant OpenHIE Image Version Specified:")
-		fmt.Printf("-%q\n", customOptions.instantVersion)
+func setImageVersion() error {
+	if customOptions.imageVersion != "latest" && len(customOptions.imageVersion) > 0 {
+		fmt.Println("Current Image Version Specified:")
+		fmt.Printf("-%q\n", customOptions.imageVersion)
 	}
 	prompt := promptui.Prompt{
-		Label: "Instant OpenHIE Image Version e.g. 0.0.9",
+		Label: "Image Version e.g. 0.0.9",
 	}
-	instantVersion, err := prompt.Run()
+	imageVersion, err := prompt.Run()
 
 	if err != nil {
-		return errors.Wrap(err, "setInstantVersion() prompt failed")
+		return errors.Wrap(err, "setImageVersion() prompt failed")
 	}
 
-	customOptions.instantVersion = instantVersion
+	customOptions.imageVersion = imageVersion
 	return selectCustomOptions()
 }
 
@@ -684,7 +684,7 @@ func selectPackageCluster() error {
 		quit()
 
 	case "Back":
-		err = selectSetup()
+		err = SelectSetup()
 	}
 
 	return err
@@ -740,13 +740,10 @@ func selectFHIR() (result_url string, params *Params, err error) {
 
 	case "Quit":
 		quit()
-		params := &Params{}
-		return "", params, nil
+		return "", &Params{}, nil
 
 	case "Back":
-		err = selectUtil()
-		params := &Params{}
-		return "", params, nil
+		return "", &Params{}, selectUtil()
 
 	}
 	return result_url, params, nil
@@ -762,7 +759,7 @@ type Params struct {
 }
 
 func selectParams() (*Params, error) {
-	a := &Params{}
+	params := &Params{}
 
 	prompt := promptui.Select{
 		Label: "Choose authentication type",
@@ -779,11 +776,11 @@ func selectParams() (*Params, error) {
 	switch result {
 
 	case "None":
-		a.TypeAuth = "None"
-		return a, nil
+		params.TypeAuth = "None"
+		return params, nil
 
 	case "Basic":
-		a.TypeAuth = "Basic"
+		params.TypeAuth = "Basic"
 
 		prompt_basic_user := promptui.Prompt{
 			Label: "Basic User",
@@ -792,7 +789,7 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Basic' in selectParams() prompt failed")
 		}
-		a.BasicUser = result_basic_user
+		params.BasicUser = result_basic_user
 
 		prompt_basic_pass := promptui.Prompt{
 			Label: "Basic Password",
@@ -801,12 +798,12 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Basic' in selectParams() prompt failed")
 		}
-		a.BasicPass = result_basic_pass
+		params.BasicPass = result_basic_pass
 
-		return a, nil
+		return params, nil
 
 	case "Token":
-		a.TypeAuth = "Token"
+		params.TypeAuth = "Token"
 
 		prompt_token := promptui.Prompt{
 			Label: "Bearer Token",
@@ -815,11 +812,11 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Token' in selectParams() prompt failed")
 		}
-		a.Token = result_token
-		return a, nil
+		params.Token = result_token
+		return params, nil
 
 	case "Custom":
-		a.TypeAuth = "Custom"
+		params.TypeAuth = "Custom"
 
 		prompt_ctoken := promptui.Prompt{
 			Label: "Custom Token",
@@ -828,17 +825,16 @@ func selectParams() (*Params, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Case 'Custom' in selectParams() prompt failed")
 		}
-		a.Token = result_ctoken
-		return a, nil
+		params.Token = result_ctoken
+		return params, nil
 
 	case "Quit":
 		quit()
-		return a, nil
+		return params, nil
 
 	case "Back":
-		err = selectUtil()
-		return a, nil
+		return params, selectUtil()
 	}
 
-	return a, err
+	return params, err
 }
