@@ -256,11 +256,13 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		}
 	}()
 
+	var stderr string
 	stdErrScanner := bufio.NewScanner(stdErrReader)
 	go func() {
 		for stdErrScanner.Scan() {
 			if stdErrScanner.Text() != "" {
-				messages <- fmt.Sprintf("\t > [ERROR] %s", stdErrScanner.Text())
+				stderr = stdErrScanner.Text()
+				messages <- fmt.Sprintf("\t > [ERROR] %s", stderr)
 			}
 		}
 	}()
@@ -277,12 +279,18 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 
 	err = cmd.Start()
 	if err != nil {
-		return pathToPackage, errors.Wrap(err, "Error starting Cmd")
+		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
+		} else {
+			return pathToPackage, errors.Wrap(err, "Error starting Cmd. "+stderr)
+		}
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		return pathToPackage, errors.Wrap(err, "Error waiting for Cmd")
+		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
+		} else {
+			return pathToPackage, errors.Wrap(err, "Error waiting for Cmd. "+stderr)
+		}
 	}
 
 	if commandName == "git" {
