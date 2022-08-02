@@ -67,7 +67,7 @@ func gracefulPanic(err error, message string) {
 	panic(err)
 }
 
-func loadConfig() {
+func LoadConfig() {
 	yamlConfig, loadErr := ioutil.ReadFile("config.yml")
 	if loadErr != nil {
 		log.Fatal(loadErr)
@@ -79,7 +79,7 @@ func loadConfig() {
 	}
 }
 
-func showBanner() {
+func ShowBanner() {
 	// Check for custom banner, otherwise use embedded
 	banner, err := ioutil.ReadFile("banner.txt")
 	if err != nil {

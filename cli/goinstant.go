@@ -2,14 +2,12 @@ package main
 
 import (
 	"embed"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/openhie/package-starter-kit/cli/pkg"
-	"gopkg.in/yaml.v2"
 )
 
 //go:embed banner.txt
@@ -70,31 +68,6 @@ func gracefulPanic(err error, message string) {
 		panic(message)
 	}
 	panic(err)
-}
-
-func loadConfig() {
-	yamlConfig, loadErr := ioutil.ReadFile("config.yml")
-	if loadErr != nil {
-		log.Fatal(loadErr)
-	}
-
-	err := yaml.Unmarshal(yamlConfig, &cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func showBanner() {
-	// Check for custom banner, otherwise use embedded
-	banner, err := ioutil.ReadFile("banner.txt")
-	if err != nil {
-		banner, err = f.ReadFile("banner.txt")
-		if err != nil {
-			log.Println(err)
-		}
-	}
-
-	color.Green(string(banner))
 }
 
 func getHelpText(interactive bool, options string) string {
@@ -182,8 +155,8 @@ func getHelpText(interactive bool, options string) string {
 }
 
 func main() {
-	loadConfig()
-	showBanner()
+	pkg.LoadConfig()
+	pkg.ShowBanner()
 
 	//Need to set the default here as we declare the struct before the config is loaded in.
 	customOptions.targetLauncher = cfg.DefaultTargetLauncher
