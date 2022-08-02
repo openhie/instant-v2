@@ -247,38 +247,42 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		return pathToPackage, errors.Wrap(err, "Error creating stdErrPipe for Cmd.")
 	}
 
+	messages := make(chan string)
+
 	stdOutScanner := bufio.NewScanner(stdOutReader)
 	go func() {
 		for stdOutScanner.Scan() {
-			fmt.Printf("\t > %s\n", stdOutScanner.Text())
+			messages <- fmt.Sprintf("\t > %s", stdOutScanner.Text())
 		}
 	}()
 
-	var stderr string
 	stdErrScanner := bufio.NewScanner(stdErrReader)
 	go func() {
 		for stdErrScanner.Scan() {
 			if stdErrScanner.Text() != "" {
-				stderr = stdErrScanner.Text()
-				fmt.Printf("\t > [ERROR] %s\n", stderr)
+				messages <- fmt.Sprintf("\t > [ERROR] %s", stdErrScanner.Text())
+			}
+		}
+	}()
+
+	go func() {
+		for message := range messages {
+			if strings.Contains(message, "ERROR") {
+				color.Red("%s", message)
+			} else {
+				fmt.Println(message)
 			}
 		}
 	}()
 
 	err = cmd.Start()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
-		} else {
-			return pathToPackage, errors.Wrap(err, "Error starting Cmd. "+stderr)
-		}
+		return pathToPackage, errors.Wrap(err, "Error starting Cmd")
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
-		} else {
-			return pathToPackage, errors.Wrap(err, "Error waiting for Cmd. "+stderr)
-		}
+		return pathToPackage, errors.Wrap(err, "Error waiting for Cmd")
 	}
 
 	if commandName == "git" {
