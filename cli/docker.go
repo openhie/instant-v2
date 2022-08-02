@@ -241,14 +241,12 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 	if err != nil {
 		return pathToPackage, errors.Wrap(err, "Error creating stdOutPipe for Cmd.")
 	}
-
 	stdErrReader, err := cmd.StderrPipe()
 	if err != nil {
 		return pathToPackage, errors.Wrap(err, "Error creating stdErrPipe for Cmd.")
 	}
 
 	messages := make(chan string)
-
 	stdOutScanner := bufio.NewScanner(stdOutReader)
 	go func() {
 		for stdOutScanner.Scan() {
