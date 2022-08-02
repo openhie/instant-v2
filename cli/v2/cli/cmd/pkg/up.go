@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func InitUpCommand() *cobra.Command {
+func PackageUpCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "up",
 		Aliases: []string{"u"},

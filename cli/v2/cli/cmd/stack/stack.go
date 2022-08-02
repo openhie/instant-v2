@@ -3,10 +3,11 @@ package stack
 import (
 	"fmt"
 
+	"github.com/openhie/package-starter-kit/cli/v2/cli/cmd/types"
 	"github.com/spf13/cobra"
 )
 
-func InitStackCommand() *cobra.Command {
+func DeclareStackCommand(global *types.Global) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stack",
 		Short: "Stack level commands",

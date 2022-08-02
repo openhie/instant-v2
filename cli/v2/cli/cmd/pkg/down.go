@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func InitDownCommand() *cobra.Command {
+func PackageDownCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "down",
 		Aliases: []string{"d"},

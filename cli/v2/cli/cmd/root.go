@@ -1,23 +1,25 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/openhie/package-starter-kit/cli/v2/cli/cmd/commands"
+	"github.com/openhie/package-starter-kit/cli/v2/cli/cmd/types"
+	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var configFile string
+var configViper viper.Viper
+
+var envFiles []string
+var envVarViper viper.Viper
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cli",
 	Short: "A cli to assist with package deployment and management",
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -30,41 +32,58 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig, initEnvironmentVariables)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
+	rootCmd.PersistentFlags().StringSliceVarP(&envFiles, "env-file", "e", nil, "env file (default is $WORKING_DIR/.env)")
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
+	global := &types.Global{
+		ConfigViper: &configViper,
+		EnvVarViper: &envVarViper,
+	}
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
-	commands.AddCommands(rootCmd)
+	commands.AddCommands(rootCmd, global)
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+	configViper := viper.New()
+	if configFile != "" {
+		configViper.SetConfigFile(configFile)
 	} else {
-		// Find home directory.
 		wd, err := os.Getwd()
 		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".v2" (without extension).
-		viper.AddConfigPath(wd)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("config")
+		configViper.AddConfigPath(wd)
+		configViper.SetConfigType("yaml")
+		configViper.SetConfigName("config")
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	err := configViper.ReadInConfig()
+	util.LogError(err)
+}
 
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+func initEnvironmentVariables() {
+	envVarViper := viper.New()
+
+	if envFiles != nil {
+		for i, envFile := range envFiles {
+			envVarViper.SetConfigType("env")
+			envVarViper.SetConfigFile(envFile)
+			if i == 0 {
+				err := envVarViper.ReadInConfig()
+				util.LogError(err)
+			} else {
+				err := envVarViper.MergeInConfig()
+				util.LogError(err)
+			}
+		}
+	} else {
+		wd, err := os.Getwd()
+		cobra.CheckErr(err)
+		envVarViper.AddConfigPath(wd)
+		envVarViper.SetConfigType("env")
+		envVarViper.SetConfigName(".env")
+		err = envVarViper.ReadInConfig()
+		util.LogError(err)
 	}
 }

@@ -3,10 +3,11 @@ package config
 import (
 	"fmt"
 
+	"github.com/openhie/package-starter-kit/cli/v2/cli/cmd/types"
 	"github.com/spf13/cobra"
 )
 
-func InitConfigCommand() *cobra.Command {
+func DeclareConfigCommand(global *types.Global) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Config management commands",

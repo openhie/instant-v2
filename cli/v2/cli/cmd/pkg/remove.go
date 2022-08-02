@@ -1,12 +1,13 @@
 package pkg
 
 import (
+	"github.com/openhie/package-starter-kit/cli/v2/cli/cmd/types"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
 )
 
-func InitRemoveCommand() *cobra.Command {
+func PackageRemoveCommand(global *types.Global) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove",
 		Aliases: []string{"r"},
@@ -23,7 +24,9 @@ func InitRemoveCommand() *cobra.Command {
 				IsOnly:        isOnly,
 			}
 
-			config := core.LoadConfig("config.yml")
+			var config core.Config
+			err = global.ConfigViper.Unmarshal(&config)
+			util.LogError(err)
 
 			core.LaunchPackage(packageSpec, config)
 		},
@@ -33,6 +36,7 @@ func InitRemoveCommand() *cobra.Command {
 
 	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
 	flags.Bool("only", false, "Only remove the package(s) provided and not their dependency packages")
+	flags.StringSliceP("env-file", "e", nil, "The path to the env file(s)")
 
 	return cmd
 }
