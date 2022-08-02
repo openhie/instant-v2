@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/openhie/package-starter-kit/cli/v2/cli/cmd/types"
+	viperUtil "github.com/openhie/package-starter-kit/cli/v2/cli/cmd/util"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
 )
 
-func PackageInitCommand(global *types.Global) *cobra.Command {
+func PackageInitCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "init",
 		Aliases: []string{"i"},
@@ -23,11 +23,21 @@ func PackageInitCommand(global *types.Global) *cobra.Command {
 			isOnly, err := cmd.Flags().GetBool("only")
 			util.LogError(err)
 
+			envFiles, err := cmd.Flags().GetStringSlice("env-file")
+			util.LogError(err)
+			envViper := viperUtil.GetEnvironmentVariableViper(envFiles)
 			var envVariables []string
-			allEnvVars := global.EnvVarViper.AllSettings()
+			allEnvVars := envViper.AllSettings()
 			for key, element := range allEnvVars {
 				envVariables = append(envVariables, fmt.Sprintf("%v=%v", strings.ToUpper(key), element))
 			}
+
+			configFile, err := cmd.Flags().GetString("config")
+			util.LogError(err)
+			configViper := viperUtil.GetConfigViper(configFile)
+			var config core.Config
+			err = configViper.Unmarshal(&config)
+			util.PanicError(err)
 
 			packageSpec := core.PackageSpec{
 				Packages:             packageNames,
@@ -36,10 +46,6 @@ func PackageInitCommand(global *types.Global) *cobra.Command {
 				IsOnly:               isOnly,
 				DeployCommand:        cmd.Use,
 			}
-
-			var config core.Config
-			err = global.ConfigViper.Unmarshal(&config)
-			util.PanicError(err)
 
 			core.LaunchPackage(packageSpec, config)
 		},

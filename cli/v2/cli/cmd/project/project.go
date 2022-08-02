@@ -3,7 +3,6 @@ package project
 import (
 	"fmt"
 
-	"github.com/openhie/package-starter-kit/cli/v2/cli/cmd/types"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +26,7 @@ func handleProjectAction(init, up, down, remove bool) {
 	}
 }
 
-func DeclareProjectCommand(global *types.Global) *cobra.Command {
+func DeclareProjectCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "project",
 		Short: "Project level commands",
