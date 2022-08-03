@@ -45,6 +45,15 @@ type CommandsOptions struct {
 	targetLauncher       string
 }
 
+var logsToSuppress = []string{
+	"Already exists",
+	"Pulling fs layer",
+	"Verifying Checksum",
+	"Download complete",
+	"Waiting",
+	"Pull complete",
+}
+
 func debugDocker() error {
 	fmt.Printf("...checking your Docker setup")
 
@@ -100,8 +109,17 @@ func getEnvironmentVariables(inputArr []string, flags []string) (environmentVari
 }
 
 func sliceContains(slice []string, element string) bool {
-	for _, e := range slice {
-		if strings.Contains(e, element) {
+	for _, s := range slice {
+		if s == element {
+			return true
+		}
+	}
+	return false
+}
+
+func sliceContainsSubstr(slice []string, element string) bool {
+	for _, s := range slice {
+		if strings.Contains(element, s) {
 			return true
 		}
 	}
@@ -260,7 +278,17 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		for stdErrScanner.Scan() {
 			if stdErrScanner.Text() != "" {
 				stderr = stdErrScanner.Text()
-				messages <- fmt.Sprintf("\t > [ERROR] %s", stderr)
+				if sliceContainsSubstr(logsToSuppress, stderr) {
+				} else if sliceContainsSubstr([]string{
+					"Unable to find image",
+					"Pulling from",
+					"Downloaded newer image",
+					"Digest",
+				}, stderr) {
+					messages <- fmt.Sprintf("\t > %s", stderr)
+				} else {
+					messages <- fmt.Sprintf("\t > [ERROR] %s", stderr)
+				}
 			}
 		}
 	}()
