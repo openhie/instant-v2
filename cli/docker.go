@@ -241,16 +241,16 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 	if err != nil {
 		return pathToPackage, errors.Wrap(err, "Error creating stdOutPipe for Cmd.")
 	}
-
 	stdErrReader, err := cmd.StderrPipe()
 	if err != nil {
 		return pathToPackage, errors.Wrap(err, "Error creating stdErrPipe for Cmd.")
 	}
 
+	messages := make(chan string)
 	stdOutScanner := bufio.NewScanner(stdOutReader)
 	go func() {
 		for stdOutScanner.Scan() {
-			fmt.Printf("\t > %s\n", stdOutScanner.Text())
+			messages <- fmt.Sprintf("\t > %s", stdOutScanner.Text())
 		}
 	}()
 
@@ -260,7 +260,17 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		for stdErrScanner.Scan() {
 			if stdErrScanner.Text() != "" {
 				stderr = stdErrScanner.Text()
-				fmt.Printf("\t > [ERROR] %s\n", stderr)
+				messages <- fmt.Sprintf("\t > [ERROR] %s", stderr)
+			}
+		}
+	}()
+
+	go func() {
+		for message := range messages {
+			if strings.Contains(message, "ERROR") {
+				color.Red("%s", message)
+			} else {
+				fmt.Println(message)
 			}
 		}
 	}()
