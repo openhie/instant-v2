@@ -110,6 +110,15 @@ func getEnvironmentVariables(inputArr []string, flags []string) (environmentVari
 
 func sliceContains(slice []string, element string) bool {
 	for _, s := range slice {
+		if s == element {
+			return true
+		}
+	}
+	return false
+}
+
+func sliceContainsSubstr(slice []string, element string) bool {
+	for _, s := range slice {
 		if strings.Contains(element, s) {
 			return true
 		}
@@ -269,13 +278,13 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		for stdErrScanner.Scan() {
 			if stdErrScanner.Text() != "" {
 				stderr = stdErrScanner.Text()
-				if logsToSuppress != nil && sliceContains(logsToSuppress, stdErrScanner.Text()) {
-				} else if sliceContains([]string{
+				if sliceContainsSubstr(logsToSuppress, stderr) {
+				} else if sliceContainsSubstr([]string{
 					"Unable to find image",
 					"Pulling from",
 					"Downloaded newer image",
 					"Digest",
-				}, stdErrScanner.Text()) {
+				}, stderr) {
 					messages <- fmt.Sprintf("\t > %s", stderr)
 				} else {
 					messages <- fmt.Sprintf("\t > [ERROR] %s", stderr)
