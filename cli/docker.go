@@ -41,7 +41,7 @@ type CommandsOptions struct {
 	otherFlags           []string
 	packages             []string
 	customPackagePaths   []string
-	instantVersion       string
+	imageVersion         string
 	targetLauncher       string
 }
 
@@ -118,8 +118,14 @@ func sliceContains(slice []string, element string) bool {
 }
 
 func extractCommands(startupCommands []string) CommandsOptions {
+	imageVersion := "latest"
+
+	if strings.Contains(cfg.Image, ":") {
+		imageVersion = strings.Split(cfg.Image, ":")[1]
+	}
+
 	commandOptions := CommandsOptions{
-		instantVersion: "latest",
+		imageVersion: imageVersion,
 	}
 
 	for _, option := range startupCommands {
@@ -130,8 +136,8 @@ func extractCommands(startupCommands []string) CommandsOptions {
 			commandOptions.customPackagePaths = append(commandOptions.customPackagePaths, option)
 		case strings.HasPrefix(option, "-e=") || strings.HasPrefix(option, "--env-file="):
 			commandOptions.environmentVariables = append(commandOptions.environmentVariables, option)
-		case strings.HasPrefix(option, "--instant-version="):
-			commandOptions.instantVersion = strings.Split(option, "--instant-version=")[1]
+		case strings.HasPrefix(option, "--image-version="):
+			commandOptions.imageVersion = strings.Split(option, "--image-version=")[1]
 		case strings.HasPrefix(option, "-t="):
 			commandOptions.targetLauncher = strings.Split(option, "-t=")[1]
 		case strings.HasPrefix(option, "-") || strings.HasPrefix(option, "--"):
@@ -172,10 +178,15 @@ func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Custom package paths:", commandOptions.customPackagePaths)
 	fmt.Println("Environment Variables:", commandOptions.environmentVariables)
 	fmt.Println("Other Flags:", commandOptions.otherFlags)
-	fmt.Println("InstantVersion:", commandOptions.instantVersion)
+	fmt.Println("Image Version:", commandOptions.imageVersion)
 	fmt.Println("Target Launcher:", commandOptions.targetLauncher)
 
-	instantImage := cfg.Image + ":" + commandOptions.instantVersion
+	image := ""
+	if strings.Contains(cfg.Image, ":") {
+		image = strings.Split(cfg.Image, ":")[0] + ":" + commandOptions.imageVersion
+	} else {
+		image = cfg.Image + ":" + commandOptions.imageVersion
+	}
 
 	fmt.Println("Creating fresh instant container with volumes...")
 	commandSlice := []string{
@@ -192,7 +203,7 @@ func RunDeployCommand(startupCommands []string) error {
 	}
 
 	commandSlice = append(commandSlice, commandOptions.environmentVariables...)
-	commandSlice = append(commandSlice, []string{instantImage, commandOptions.deployCommand}...)
+	commandSlice = append(commandSlice, []string{image, commandOptions.deployCommand}...)
 	commandSlice = append(commandSlice, commandOptions.otherFlags...)
 	commandSlice = append(commandSlice, []string{"-t", commandOptions.targetLauncher}...)
 	commandSlice = append(commandSlice, commandOptions.packages...)
@@ -239,16 +250,16 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 	if err != nil {
 		return pathToPackage, errors.Wrap(err, "Error creating stdOutPipe for Cmd.")
 	}
-
 	stdErrReader, err := cmd.StderrPipe()
 	if err != nil {
 		return pathToPackage, errors.Wrap(err, "Error creating stdErrPipe for Cmd.")
 	}
 
+	messages := make(chan string)
 	stdOutScanner := bufio.NewScanner(stdOutReader)
 	go func() {
 		for stdOutScanner.Scan() {
-			fmt.Printf("\t > %s\n", stdOutScanner.Text())
+			messages <- fmt.Sprintf("\t > %s", stdOutScanner.Text())
 		}
 	}()
 
@@ -265,10 +276,20 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 					"Downloaded newer image",
 					"Digest",
 				}, stdErrScanner.Text()) {
-					fmt.Printf("\t > %s\n", stderr)
+					messages <- fmt.Sprintf("\t > %s", stderr)
 				} else {
-					fmt.Printf("\t > [ERROR] %s\n", stderr)
+					messages <- fmt.Sprintf("\t > [ERROR] %s", stderr)
 				}
+			}
+		}
+	}()
+
+	go func() {
+		for message := range messages {
+			if strings.Contains(message, "ERROR") {
+				color.Red("%s", message)
+			} else {
+				fmt.Println(message)
 			}
 		}
 	}()
