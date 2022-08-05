@@ -3,7 +3,7 @@ name: Create and release go binaries for linux, windows and mac
 on:
   release:
     types:
-      - created
+      - published
 
 jobs:
   build:
