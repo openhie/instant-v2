@@ -1,7 +1,9 @@
 package util
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
@@ -50,4 +52,13 @@ func GetEnvironmentVariableViper(envFiles []string) *viper.Viper {
 		util.LogError(err)
 	}
 	return envVarViper
+}
+
+func GetEnvVariableString(envViper *viper.Viper) []string {
+	var envVariables []string
+	allEnvVars := envViper.AllSettings()
+	for key, element := range allEnvVars {
+		envVariables = append(envVariables, fmt.Sprintf("%v=%v", strings.ToUpper(key), element))
+	}
+	return envVariables
 }
