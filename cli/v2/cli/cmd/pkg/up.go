@@ -1,9 +1,6 @@
 package pkg
 
 import (
-	"fmt"
-	"strings"
-
 	viperUtil "github.com/openhie/package-starter-kit/cli/v2/cli/cmd/util"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
@@ -22,11 +19,7 @@ func PackageUpCommand() *cobra.Command {
 			envFiles, err := cmd.Flags().GetStringSlice("env-file")
 			util.LogError(err)
 			envViper := viperUtil.GetEnvironmentVariableViper(envFiles)
-			var envVariables []string
-			allEnvVars := envViper.AllSettings()
-			for key, element := range allEnvVars {
-				envVariables = append(envVariables, fmt.Sprintf("%v=%v", strings.ToUpper(key), element))
-			}
+			envVariables := viperUtil.GetEnvVariableString(envViper)
 
 			configFile, err := cmd.Flags().GetString("config")
 			util.LogError(err)
