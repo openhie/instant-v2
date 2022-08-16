@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"io"
 	"os"
 	"time"
 
@@ -21,9 +20,11 @@ type Package struct {
 }
 
 type Config struct {
-	Image    string    `yaml:"image"`
-	LogPath  string    `yaml:"logPath"`
-	Packages []Package `yaml:"packages"`
+	Image         string    `yaml:"image"`
+	LogPath       string    `yaml:"logPath"`
+	Packages      []Package `yaml:"packages"`
+	ProjectName   string    `yaml:"projectName"`
+	PlatformImage string    `yaml:"platformImage"`
 }
 
 type PackageSpec struct {
@@ -85,12 +86,12 @@ func LaunchPackage(packageSpec PackageSpec, config Config) {
 	removeStaleInstantContainer(cli, ctx)
 	removeStaleInstantVolume(cli, ctx)
 
-	reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
-	util.PanicError(err)
-	defer reader.Close()
-	if os.Getenv("LOG") == "true" {
-		io.Copy(os.Stdout, reader)
-	}
+	// reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+	// util.PanicError(err)
+	// defer reader.Close()
+	// if os.Getenv("LOG") == "true" {
+	// 	io.Copy(os.Stdout, reader)
+	// }
 
 	mounts := []mount.Mount{
 		{

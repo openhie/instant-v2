@@ -55,7 +55,7 @@ func DeclareProjectCommand() *cobra.Command {
 	cmd.MarkFlagsMutuallyExclusive("init", "up", "down", "remove")
 
 	cmd.AddCommand(
-		InitGenerateCommand(),
+		ProjectGenerateCommand(),
 	)
 
 	return cmd

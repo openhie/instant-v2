@@ -1,31 +1,25 @@
 package project
 
 import (
-	"fmt"
-
-	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
+	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
+	prompt "github.com/openhie/package-starter-kit/cli/v2/cli/prompt/project"
 	"github.com/spf13/cobra"
 )
 
-func generateProject(name string) {
-	fmt.Println("To be implemented")
-	fmt.Println(name)
-}
-
-func InitGenerateCommand() *cobra.Command {
+func ProjectGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate",
 		Short: "Generate a new project",
 		Run: func(cmd *cobra.Command, args []string) {
-			name := util.GetFlagOrDefaultString(cmd, "name")
-			generateProject(name)
+			resp := prompt.GenerateProjectPrompt()
+			config := core.Config{
+				Image:         resp.ProjectImage,
+				ProjectName:   resp.ProjectName,
+				PlatformImage: resp.PlatformImage,
+			}
+			core.GenerateConfigFile(&config)
 		},
 	}
-
-	flags := cmd.Flags()
-
-	flags.String("name", "project", "The name of the new project")
-	flags.String("base-project", "", "A url link to a project to base the new project instance of")
 
 	return cmd
 }
