@@ -69,6 +69,13 @@ func removeStaleInstantVolume(cli *client.Client, ctx context.Context) {
 	}
 }
 
+func attachStdoutToInstantOutput(cli *client.Client, ctx context.Context, instantContainerId string) {
+	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, types.ContainerAttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
+	util.PanicError(err)
+	defer attachResponse.Close()
+	os.Stdout.ReadFrom(attachResponse.Reader)
+}
+
 func LaunchPackage(packageSpec PackageSpec, config Config) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -131,8 +138,9 @@ func LaunchPackage(packageSpec PackageSpec, config Config) {
 	err = cli.ContainerStart(ctx, instantContainer.ID, types.ContainerStartOptions{})
 	util.PanicError(err)
 
-	successC, errC := cli.ContainerWait(ctx, instantContainer.ID, "exited")
+	attachStdoutToInstantOutput(cli, ctx, instantContainer.ID)
 
+	successC, errC := cli.ContainerWait(ctx, instantContainer.ID, "exited")
 	select {
 	case <-successC:
 		err = cli.ContainerRemove(ctx, instantContainer.ID, types.ContainerRemoveOptions{})
