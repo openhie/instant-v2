@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"io"
 	"os"
 	"time"
 
@@ -86,12 +87,12 @@ func LaunchPackage(packageSpec PackageSpec, config Config) {
 	removeStaleInstantContainer(cli, ctx)
 	removeStaleInstantVolume(cli, ctx)
 
-	// reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
-	// util.PanicError(err)
-	// defer reader.Close()
-	// if os.Getenv("LOG") == "true" {
-	// 	io.Copy(os.Stdout, reader)
-	// }
+	reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+	util.PanicError(err)
+	defer reader.Close()
+	if os.Getenv("LOG") == "true" {
+		io.Copy(os.Stdout, reader)
+	}
 
 	mounts := []mount.Mount{
 		{
