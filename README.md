@@ -93,7 +93,7 @@ godog
 
 ### Schema
 
-Should you wish to view documentation of the available configurations files, inclue the provided schemas in your project.
+Should you wish to view documentation of the available configurations files, include the provided schemas in your project.
  
 To include the provided schemas in your project, add the following to your `.vscode/settings.json` file:
 
