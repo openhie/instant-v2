@@ -90,3 +90,21 @@ godog
 ```
 
 > These functional tests can only be run when the `instant` docker volume does not exist on the machine being used for running the tests. These tests make use of the mock image of the instant project `jembi/go-cli-test-image`.
+
+### Schema
+
+Should you wish to view documentation of the available configurations files, include the provided schemas in your project.
+ 
+To include the provided schemas in your project, add the following to your `.vscode/settings.json` file:
+
+```json
+"json.schemas": [
+    {
+      "fileMatch": ["package-metadata.json"],
+      "url": "https://raw.githubusercontent.com/openhie/package-starter-kit/main/schema/package-metadata.schema.json"
+    }
+],
+"yaml.schemas": {
+    "https://raw.githubusercontent.com/openhie/package-starter-kit/main/schema/config.schema.json": "config.yml"
+},
+```
