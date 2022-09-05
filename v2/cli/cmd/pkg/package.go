@@ -10,7 +10,7 @@ func DeclarePackageCommand() *cobra.Command {
 		Short: "Package level commands",
 	}
 
-	flags := cmd.Flags()
+	flags := cmd.PersistentFlags()
 	flags.Bool("dev", false, "For development related functionality (Passes `dev` as the second argument to your swarm file)")
 	flags.Bool("only", false, "Ignore package dependencies")
 
