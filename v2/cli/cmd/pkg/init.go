@@ -46,8 +46,6 @@ func PackageInitCommand() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
-	flags.Bool("dev", false, "Should the package launch in dev mode")
-	flags.Bool("only", false, "Should the package launch without launching it's dependency packages")
 
 	return cmd
 }

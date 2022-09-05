@@ -43,8 +43,6 @@ func PackageRemoveCommand() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
-	flags.Bool("only", false, "Only remove the package(s) provided and not their dependency packages")
-	flags.StringSliceP("env-file", "e", nil, "The path to the env file(s)")
 
 	return cmd
 }
