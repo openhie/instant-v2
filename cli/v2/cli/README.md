@@ -27,3 +27,6 @@ commands:
 - config
   - ls
   - -generate, -g \<name>
+
+## Build
+`go build .`

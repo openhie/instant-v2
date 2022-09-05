@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 )
 
@@ -75,7 +76,8 @@ func attachStdoutToInstantOutput(cli *client.Client, ctx context.Context, instan
 	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, types.ContainerAttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
 	util.PanicError(err)
 	defer attachResponse.Close()
-	os.Stdout.ReadFrom(attachResponse.Reader)
+	_, err = stdcopy.StdCopy(os.Stdout, os.Stdout, attachResponse.Reader)
+	util.PanicError(err)
 }
 
 func LaunchPackage(packageSpec PackageSpec, config Config) {
