@@ -136,7 +136,9 @@ const logPackageDetails = (packageInfo: PackageInfo) => {
       'Updated Value': env[envVar]
     })
   }
-  console.table(envVars)
+  if (envVars?.length > 0) {
+    console.table(envVars)
+  }
 }
 
 // Main script execution
