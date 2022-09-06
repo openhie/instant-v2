@@ -30,3 +30,9 @@ commands:
 
 ## Build
 `go build .`
+
+## Additional Features over V1
+- Auto removes instant container and volume before performing a package action
+- Support for multiple env files
+- Support for predefined profiles to load in when performing a package action
+- Generate a new project prompt

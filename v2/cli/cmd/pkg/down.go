@@ -1,9 +1,7 @@
 package pkg
 
 import (
-	viperUtil "github.com/openhie/package-starter-kit/cli/v2/cli/cmd/util"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
-	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -13,33 +11,19 @@ func PackageDownCommand() *cobra.Command {
 		Aliases: []string{"d"},
 		Short:   "Bring a package down without removing volumes or configs",
 		Run: func(cmd *cobra.Command, args []string) {
-			packageNames, err := cmd.Flags().GetStringSlice("name")
-			util.LogError(err)
+			config := getConfigFromParams(cmd)
+			packageSpec := getPackageSpecFromParams(cmd)
+			packageSpec = loadInProfileParams(cmd, *config, *packageSpec)
 
-			envFiles, err := cmd.Flags().GetStringSlice("env-file")
-			util.LogError(err)
-			envViper := viperUtil.GetEnvironmentVariableViper(envFiles)
-			envVariables := viperUtil.GetEnvVariableString(envViper)
-
-			configFile, err := cmd.Flags().GetString("config")
-			util.LogError(err)
-			configViper := viperUtil.GetConfigViper(configFile)
-			var config core.Config
-			err = configViper.Unmarshal(&config)
-			util.PanicError(err)
-
-			packageSpec := core.PackageSpec{
-				Packages:             packageNames,
-				DeployCommand:        cmd.Use,
-				EnvironmentVariables: envVariables,
-			}
-
-			core.LaunchPackage(packageSpec, config)
+			core.LaunchPackage(*packageSpec, *config)
 		},
 	}
 
 	flags := cmd.Flags()
 	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
+	flags.Bool("dev", false, "For development related functionality (Passes `dev` as the second argument to your swarm file)")
+	flags.Bool("only", false, "Ignore package dependencies")
+	flags.String("profile", "", "The profile name to load parameters from (defined in config.yml)")
 
 	return cmd
 }

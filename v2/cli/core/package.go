@@ -21,10 +21,19 @@ type Package struct {
 	ID   string `yaml:"id"`
 }
 
+type Profile struct {
+	Name     string   `yaml:"name"`
+	EnvFiles []string `yaml:"envFiles"`
+	Dev      bool     `yaml:"dev"`
+	Only     bool     `yaml:"only"`
+	Packages []string `yaml:"packages"`
+}
+
 type Config struct {
 	Image         string    `yaml:"image"`
 	LogPath       string    `yaml:"logPath"`
 	Packages      []Package `yaml:"packages"`
+	Profiles      []Profile `yaml:"profiles"`
 	ProjectName   string    `yaml:"projectName"`
 	PlatformImage string    `yaml:"platformImage"`
 }
