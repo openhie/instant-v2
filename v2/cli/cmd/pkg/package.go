@@ -7,44 +7,74 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getConfigFromParams(cmd *cobra.Command) *core.Config {
-	var config core.Config
-	configFile, err := cmd.Flags().GetString("config")
-	util.LogError(err)
-	configViper := viperUtil.GetConfigViper(configFile)
-	err = configViper.Unmarshal(&config)
-	util.PanicError(err)
-	return &config
+func setPackageActionFlags(cmd *cobra.Command) {
+	flags := cmd.Flags()
+	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
+	flags.StringSliceP("custom-path", "c", nil, "Path(s) to custom package(s)")
+	flags.Bool("dev", false, "For development related functionality (Passes `dev` as the second argument to your swarm file)")
+	flags.Bool("only", false, "Ignore package dependencies")
+	flags.String("profile", "", "The profile name to load parameters from (defined in config.yml)")
 }
 
-func getPackageSpecFromParams(cmd *cobra.Command) *core.PackageSpec {
+func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
+	var config core.Config
+	configFile, err := cmd.Flags().GetString("config")
+	if err != nil {
+		return nil, err
+	}
+	configViper := viperUtil.GetConfigViper(configFile)
+	err = configViper.Unmarshal(&config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+func getPackageSpecFromParams(cmd *cobra.Command) (*core.PackageSpec, error) {
+	packageSpec := core.PackageSpec{}
+
 	packageNames, err := cmd.Flags().GetStringSlice("name")
-	util.LogError(err)
+	if err != nil {
+		return nil, err
+	}
+	customPackages, err := cmd.Flags().GetStringSlice("custom-path")
+	if err != nil {
+		return nil, err
+	}
 	isDev, err := cmd.Flags().GetBool("dev")
-	util.LogError(err)
+	if err != nil {
+		return nil, err
+	}
 	isOnly, err := cmd.Flags().GetBool("only")
-	util.LogError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	envFiles, err := cmd.Flags().GetStringSlice("env-file")
-	util.LogError(err)
-
+	if err != nil {
+		return nil, err
+	}
 	envViper := viperUtil.GetEnvironmentVariableViper(envFiles)
 	envVariables := viperUtil.GetEnvVariableString(envViper)
 
-	packageSpec := core.PackageSpec{
+	packageSpec = core.PackageSpec{
 		Packages:             packageNames,
+		CustomPackagePaths:   customPackages,
 		EnvironmentVariables: envVariables,
 		IsDev:                isDev,
 		IsOnly:               isOnly,
 		DeployCommand:        cmd.Use,
 	}
 
-	return &packageSpec
+	return &packageSpec, nil
 }
 
-func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec core.PackageSpec) *core.PackageSpec {
+func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec core.PackageSpec) (*core.PackageSpec, error) {
 	profile := core.Profile{}
 	profileName, err := cmd.Flags().GetString("profile")
+	if err != nil {
+		return nil, err
+	}
 	util.LogError(err)
 	for _, p := range config.Profiles {
 		if p.Name == profileName {
@@ -68,7 +98,7 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 		packageSpec.EnvironmentVariables = append(envVariables, packageSpec.EnvironmentVariables...)
 	}
 
-	return &packageSpec
+	return &packageSpec, nil
 }
 
 func DeclarePackageCommand() *cobra.Command {

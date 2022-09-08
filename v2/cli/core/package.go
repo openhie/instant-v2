@@ -2,8 +2,14 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"net/http"
 	"os"
+	"path"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -14,6 +20,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
+	"github.com/pkg/errors"
 )
 
 type Package struct {
@@ -45,8 +52,85 @@ type PackageSpec struct {
 	IsDev                bool
 	IsOnly               bool
 	CustomPackagePaths   []string
+	SSHKeyFile           string
+	SSHPasswordFile      string
 	ImageVersion         string
 	TargetLauncher       string
+}
+
+func getCustomPackageName(pathToPackage string) string {
+	return strings.TrimSuffix(path.Base(path.Clean(pathToPackage)), path.Ext(pathToPackage))
+}
+
+func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Context, instantContainerId, privateKeyFile, password string) error {
+	gitRegex := regexp.MustCompile(`\.git`)
+	httpRegex := regexp.MustCompile("http")
+	zipRegex := regexp.MustCompile(`\.zip`)
+	tarRegex := regexp.MustCompile(`\.tar`)
+
+	const CUSTOM_PACKAGE_LOCAL_PATH = "/tmp/custom-package/"
+	customPackageName := getCustomPackageName(pathToPackage)
+	customPackageTmpLocation := fmt.Sprint(CUSTOM_PACKAGE_LOCAL_PATH, customPackageName)
+	os.RemoveAll(customPackageTmpLocation)
+
+	var err error
+	if gitRegex.MatchString(pathToPackage) {
+
+		err = util.CloneRepo(pathToPackage, customPackageTmpLocation, privateKeyFile, password)
+		if err != nil {
+			return err
+		}
+	} else if httpRegex.MatchString(pathToPackage) {
+		resp, err := http.Get(pathToPackage)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			return errors.Wrapf(err, "Error in downloading custom package - HTTP status code: %v", strconv.Itoa(resp.StatusCode))
+		}
+
+		if zipRegex.MatchString(pathToPackage) {
+			tmpZip, err := os.CreateTemp("", "tmp-*.zip")
+			if err != nil {
+				return err
+			}
+
+			io.Copy(tmpZip, resp.Body)
+			err = util.UnzipSource(tmpZip.Name(), customPackageTmpLocation)
+			if err != nil {
+				return err
+			}
+			os.Remove(tmpZip.Name())
+		} else if tarRegex.MatchString(pathToPackage) {
+			tmpTar, err := os.CreateTemp("", "tmp-*.tar")
+			if err != nil {
+				return err
+			}
+
+			io.Copy(tmpTar, resp.Body)
+			err = util.UntarSource(tmpTar.Name(), customPackageTmpLocation)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	customPackageReader, err := util.TarSource(CUSTOM_PACKAGE_LOCAL_PATH)
+	if err != nil {
+		return err
+	}
+	err = cli.CopyToContainer(ctx, instantContainerId, "/instant/", customPackageReader, types.CopyToContainerOptions{
+		AllowOverwriteDirWithFile: true,
+	})
+
+	os.RemoveAll(CUSTOM_PACKAGE_LOCAL_PATH)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func removeStaleInstantContainer(cli *client.Client, ctx context.Context) {
@@ -81,25 +165,34 @@ func removeStaleInstantVolume(cli *client.Client, ctx context.Context) {
 	}
 }
 
-func attachStdoutToInstantOutput(cli *client.Client, ctx context.Context, instantContainerId string) {
+func attachStdoutToInstantOutput(cli *client.Client, ctx context.Context, instantContainerId string) error {
 	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, types.ContainerAttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
-	util.PanicError(err)
+	if err != nil {
+		return err
+	}
 	defer attachResponse.Close()
 	_, err = stdcopy.StdCopy(os.Stdout, os.Stdout, attachResponse.Reader)
-	util.PanicError(err)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func LaunchPackage(packageSpec PackageSpec, config Config) {
+func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	util.PanicError(err)
+	if err != nil {
+		return err
+	}
 
 	removeStaleInstantContainer(cli, ctx)
 	removeStaleInstantVolume(cli, ctx)
 
 	reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
-	util.PanicError(err)
+	if err != nil {
+		return err
+	}
 	defer reader.Close()
 	if os.Getenv("LOG") == "true" {
 		io.Copy(os.Stdout, reader)
@@ -127,13 +220,20 @@ func LaunchPackage(packageSpec PackageSpec, config Config) {
 	}
 
 	instantCommand := []string{packageSpec.DeployCommand, "-t", "swarm"}
+
 	if packageSpec.IsDev {
 		instantCommand = append(instantCommand, "--dev")
 	}
+
 	if packageSpec.IsOnly {
 		instantCommand = append(instantCommand, "--only")
 	}
+
 	instantCommand = append(instantCommand, packageSpec.Packages...)
+
+	for _, customPackage := range packageSpec.CustomPackagePaths {
+		instantCommand = append(instantCommand, getCustomPackageName(customPackage))
+	}
 
 	instantContainer, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:        config.Image,
@@ -146,21 +246,40 @@ func LaunchPackage(packageSpec PackageSpec, config Config) {
 		Binds:       []string{"/var/run/docker.sock:/var/run/docker.sock"},
 		Mounts:      mounts,
 	}, &network.NetworkingConfig{EndpointsConfig: endpointSettings}, nil, "instant-openhie")
-	util.PanicError(err)
+	if err != nil {
+		return err
+	}
+
+	for _, customPackagePath := range packageSpec.CustomPackagePaths {
+		err = mountCustomPackage(customPackagePath, cli, ctx, instantContainer.ID, packageSpec.SSHKeyFile, packageSpec.SSHPasswordFile)
+		if err != nil {
+			return err
+		}
+	}
 
 	err = cli.ContainerStart(ctx, instantContainer.ID, types.ContainerStartOptions{})
-	util.PanicError(err)
+	if err != nil {
+		return err
+	}
 
-	attachStdoutToInstantOutput(cli, ctx, instantContainer.ID)
+	err = attachStdoutToInstantOutput(cli, ctx, instantContainer.ID)
+	if err != nil {
+		return err
+	}
 
 	successC, errC := cli.ContainerWait(ctx, instantContainer.ID, "exited")
 	select {
 	case <-successC:
 		err = cli.ContainerRemove(ctx, instantContainer.ID, types.ContainerRemoveOptions{})
-		util.LogError(err)
+		if err != nil {
+			return err
+		}
 		removeStaleInstantVolume(cli, ctx)
-	case <-errC:
-		util.PanicError(err)
+		return nil
+	case err := <-errC:
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-
 }

@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
+	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -11,19 +12,30 @@ func PackageInitCommand() *cobra.Command {
 		Aliases: []string{"i"},
 		Short:   "Initialize a package with relevant configs, volumes and setup",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := getConfigFromParams(cmd)
-			packageSpec := getPackageSpecFromParams(cmd)
-			packageSpec = loadInProfileParams(cmd, *config, *packageSpec)
+			config, err := getConfigFromParams(cmd)
+			util.PanicError(err)
+			packageSpec, err := getPackageSpecFromParams(cmd)
+			util.PanicError(err)
+			packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
+			util.PanicError(err)
 
-			core.LaunchPackage(*packageSpec, *config)
+			sshKey, err := cmd.Flags().GetString("ssh-key")
+			util.PanicError(err)
+			packageSpec.SSHKeyFile = sshKey
+
+			sshPassword, err := cmd.Flags().GetString("ssh-password")
+			util.PanicError(err)
+			packageSpec.SSHPasswordFile = sshPassword
+
+			err = core.LaunchPackage(*packageSpec, *config)
+			util.PanicError(err)
 		},
 	}
 
+	setPackageActionFlags(cmd)
 	flags := cmd.Flags()
-	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
-	flags.Bool("dev", false, "For development related functionality (Passes `dev` as the second argument to your swarm file)")
-	flags.Bool("only", false, "Ignore package dependencies")
-	flags.String("profile", "", "The profile name to load parameters from (defined in config.yml)")
+	flags.String("ssh-key", "", "The path to the ssh key required for cloning a custom package")
+	flags.String("ssh-password", "", "The password (or path to the file containing the password) required for authenticating the ssh-key when cloning a custom package")
 
 	return cmd
 }

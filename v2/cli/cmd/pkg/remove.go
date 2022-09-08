@@ -2,29 +2,30 @@ package pkg
 
 import (
 	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
+	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
 	"github.com/spf13/cobra"
 )
 
 func PackageRemoveCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "remove",
-		Aliases: []string{"r"},
+		Aliases: []string{"r", "destroy"},
 		Short:   "Remove everything related to a package (volumes, configs, etc)",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := getConfigFromParams(cmd)
-			packageSpec := getPackageSpecFromParams(cmd)
+			config, err := getConfigFromParams(cmd)
+			util.PanicError(err)
+			packageSpec, err := getPackageSpecFromParams(cmd)
+			util.PanicError(err)
 			packageSpec.DeployCommand = "destroy"
-			packageSpec = loadInProfileParams(cmd, *config, *packageSpec)
+			packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
+			util.PanicError(err)
 
-			core.LaunchPackage(*packageSpec, *config)
+			err = core.LaunchPackage(*packageSpec, *config)
+			util.PanicError(err)
 		},
 	}
 
-	flags := cmd.Flags()
-	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
-	flags.Bool("dev", false, "For development related functionality (Passes `dev` as the second argument to your swarm file)")
-	flags.Bool("only", false, "Ignore package dependencies")
-	flags.String("profile", "", "The profile name to load parameters from (defined in config.yml)")
+	setPackageActionFlags(cmd)
 
 	return cmd
 }
