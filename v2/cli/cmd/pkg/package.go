@@ -112,6 +112,7 @@ func DeclarePackageCommand() *cobra.Command {
 		PackageUpCommand(),
 		PackageDownCommand(),
 		PackageRemoveCommand(),
+		PackageGenerateCommand(),
 	)
 
 	return cmd

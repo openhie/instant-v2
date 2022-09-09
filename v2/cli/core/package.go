@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"fmt"
+	"embed"
 	"io"
 	"net/http"
 	"os"
@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -20,8 +21,11 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
+	cp "github.com/otiai10/copy"
 	"github.com/pkg/errors"
 )
+
+var TemplateFs embed.FS
 
 type Package struct {
 	Name string `yaml:"name"`
@@ -70,10 +74,12 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 
 	const CUSTOM_PACKAGE_LOCAL_PATH = "/tmp/custom-package/"
 	customPackageName := getCustomPackageName(pathToPackage)
-	customPackageTmpLocation := fmt.Sprint(CUSTOM_PACKAGE_LOCAL_PATH, customPackageName)
-	os.RemoveAll(customPackageTmpLocation)
+	customPackageTmpLocation := path.Join(CUSTOM_PACKAGE_LOCAL_PATH, customPackageName)
+	err := os.RemoveAll(CUSTOM_PACKAGE_LOCAL_PATH)
+	if err != nil {
+		return err
+	}
 
-	var err error
 	if gitRegex.MatchString(pathToPackage) {
 
 		err = util.CloneRepo(pathToPackage, customPackageTmpLocation, privateKeyFile, password)
@@ -97,23 +103,43 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 				return err
 			}
 
-			io.Copy(tmpZip, resp.Body)
+			_, err = io.Copy(tmpZip, resp.Body)
+			if err != nil {
+				return err
+			}
 			err = util.UnzipSource(tmpZip.Name(), customPackageTmpLocation)
 			if err != nil {
 				return err
 			}
-			os.Remove(tmpZip.Name())
+			err = os.Remove(tmpZip.Name())
+			if err != nil {
+				return err
+			}
 		} else if tarRegex.MatchString(pathToPackage) {
 			tmpTar, err := os.CreateTemp("", "tmp-*.tar")
 			if err != nil {
 				return err
 			}
 
-			io.Copy(tmpTar, resp.Body)
+			_, err = io.Copy(tmpTar, resp.Body)
+			if err != nil {
+				return err
+			}
+
 			err = util.UntarSource(tmpTar.Name(), customPackageTmpLocation)
 			if err != nil {
 				return err
 			}
+
+			err = os.Remove(tmpTar.Name())
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := cp.Copy(pathToPackage, CUSTOM_PACKAGE_LOCAL_PATH)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -121,15 +147,16 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 	if err != nil {
 		return err
 	}
-	err = cli.CopyToContainer(ctx, instantContainerId, "/instant/", customPackageReader, types.CopyToContainerOptions{
-		AllowOverwriteDirWithFile: true,
-	})
-
-	os.RemoveAll(CUSTOM_PACKAGE_LOCAL_PATH)
-
+	err = cli.CopyToContainer(ctx, instantContainerId, "/instant/", customPackageReader, types.CopyToContainerOptions{})
 	if err != nil {
 		return err
 	}
+
+	err = os.RemoveAll(CUSTOM_PACKAGE_LOCAL_PATH)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -282,4 +309,45 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		}
 		return nil
 	}
+}
+
+type GeneratePackageSpec struct {
+	Id             string
+	Name           string
+	Stack          string
+	Description    string
+	Type           string
+	IncludeDevFile bool
+}
+
+func createFileFromTemplate(source, destination string, generatePackageSpec GeneratePackageSpec) error {
+	destination = path.Join(destination, source)
+	templatePath := path.Join("template/package/", source)
+
+	packageTemplate, err := template.New("package").ParseFS(TemplateFs, templatePath)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(destination)
+	if err != nil {
+		return err
+	}
+	err = packageTemplate.ExecuteTemplate(file, source, generatePackageSpec)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GeneratePackage(destination string, generatePackageSpec GeneratePackageSpec) error {
+
+	createFileFromTemplate("swarm.sh", destination, generatePackageSpec)
+	createFileFromTemplate("package-metadata.json", destination, generatePackageSpec)
+	createFileFromTemplate("docker-compose.yml", destination, generatePackageSpec)
+
+	if generatePackageSpec.IncludeDevFile {
+		createFileFromTemplate("docker-compose.dev.yml", destination, generatePackageSpec)
+	}
+
+	return nil
 }
