@@ -79,6 +79,10 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 	if err != nil {
 		return err
 	}
+	err = os.MkdirAll(customPackageTmpLocation, os.ModePerm)
+	if err != nil {
+		return err
+	}
 
 	if gitRegex.MatchString(pathToPackage) {
 
@@ -137,7 +141,7 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 			}
 		}
 	} else {
-		err := cp.Copy(pathToPackage, CUSTOM_PACKAGE_LOCAL_PATH)
+		err := cp.Copy(pathToPackage, customPackageTmpLocation)
 		if err != nil {
 			return err
 		}
