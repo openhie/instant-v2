@@ -10,10 +10,12 @@ import (
 func setPackageActionFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
 	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
-	flags.StringSliceP("custom-path", "c", nil, "Path(s) to custom package(s)")
 	flags.Bool("dev", false, "For development related functionality (Passes `dev` as the second argument to your swarm file)")
 	flags.Bool("only", false, "Ignore package dependencies")
 	flags.String("profile", "", "The profile name to load parameters from (defined in config.yml)")
+	flags.StringSliceP("custom-path", "c", nil, "Path(s) to custom package(s)")
+	flags.String("ssh-key", "", "The path to the ssh key required for cloning a custom package")
+	flags.String("ssh-password", "", "The password (or path to the file containing the password) required for authenticating the ssh-key when cloning a custom package")
 }
 
 func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
@@ -57,6 +59,12 @@ func getPackageSpecFromParams(cmd *cobra.Command) (*core.PackageSpec, error) {
 	envViper := viperUtil.GetEnvironmentVariableViper(envFiles)
 	envVariables := viperUtil.GetEnvVariableString(envViper)
 
+	sshKey, err := cmd.Flags().GetString("ssh-key")
+	util.PanicError(err)
+
+	sshPassword, err := cmd.Flags().GetString("ssh-password")
+	util.PanicError(err)
+
 	packageSpec = core.PackageSpec{
 		Packages:             packageNames,
 		CustomPackagePaths:   customPackages,
@@ -64,6 +72,8 @@ func getPackageSpecFromParams(cmd *cobra.Command) (*core.PackageSpec, error) {
 		IsDev:                isDev,
 		IsOnly:               isOnly,
 		DeployCommand:        cmd.Use,
+		SSHKeyFile:           sshKey,
+		SSHPasswordFile:      sshPassword,
 	}
 
 	return &packageSpec, nil
