@@ -1,4 +1,4 @@
-package main
+package kubernetes
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func debugKubernetes() error {
+func DebugKubernetes() error {
 	fmt.Println("...checking your cluster setup")
 
 	switch runtime.GOOS {

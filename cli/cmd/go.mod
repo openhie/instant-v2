@@ -1,4 +1,4 @@
-module github.com/openhie/package-starter-kit/cli
+module ohie_cli
 
 go 1.16
 

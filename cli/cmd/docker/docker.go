@@ -1,4 +1,4 @@
-package main
+package docker
 
 import (
 	"archive/tar"
@@ -7,7 +7,10 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"ohie_cli/config"
+	"ohie_cli/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,7 +33,7 @@ var (
 	OsOpenFile         = os.OpenFile
 	OsRemove           = os.Remove
 	execCommand        = exec.Command
-	runDeployCommand   = RunDeployCommand
+	RunDeployCommand   = runDeployCommand
 	RunCommand         = runCommand
 	MountCustomPackage = mountCustomPackage
 )
@@ -54,7 +57,7 @@ var logsToSuppress = []string{
 	"Pull complete",
 }
 
-func debugDocker() error {
+func DebugDocker() error {
 	fmt.Printf("...checking your Docker setup")
 
 	cwd, err := os.Getwd()
@@ -108,29 +111,11 @@ func getEnvironmentVariables(inputArr []string, flags []string) (environmentVari
 	return
 }
 
-func sliceContains(slice []string, element string) bool {
-	for _, s := range slice {
-		if s == element {
-			return true
-		}
-	}
-	return false
-}
-
-func sliceContainsSubstr(slice []string, element string) bool {
-	for _, s := range slice {
-		if strings.Contains(element, s) {
-			return true
-		}
-	}
-	return false
-}
-
 func extractCommands(startupCommands []string) CommandsOptions {
 	imageVersion := "latest"
 
-	if strings.Contains(cfg.Image, ":") {
-		imageVersion = strings.Split(cfg.Image, ":")[1]
+	if strings.Contains(config.Cfg.Image, ":") {
+		imageVersion = strings.Split(config.Cfg.Image, ":")[1]
 	}
 
 	commandOptions := CommandsOptions{
@@ -139,7 +124,7 @@ func extractCommands(startupCommands []string) CommandsOptions {
 
 	for _, option := range startupCommands {
 		switch {
-		case sliceContains([]string{"init", "up", "down", "destroy"}, option):
+		case utils.SliceContains([]string{"init", "up", "down", "destroy"}, option):
 			commandOptions.deployCommand = option
 		case strings.HasPrefix(option, "-c=") || strings.HasPrefix(option, "--custom-package="):
 			commandOptions.customPackagePaths = append(commandOptions.customPackagePaths, option)
@@ -165,19 +150,19 @@ func extractCommands(startupCommands []string) CommandsOptions {
 	}
 
 	if commandOptions.targetLauncher == "" {
-		commandOptions.targetLauncher = customOptions.targetLauncher
+		commandOptions.targetLauncher = config.CustomOptions.TargetLauncher
 	}
 
 	return commandOptions
 }
 
-func RunDeployCommand(startupCommands []string) error {
+func runDeployCommand(startupCommands []string) error {
 	fmt.Println("Note: Initial setup takes 1-5 minutes.\nWait for the DONE message.\n--------------------------")
 
 	commandOptions := extractCommands(startupCommands)
 
 	if len(commandOptions.packages) == 0 {
-		for _, p := range cfg.Packages {
+		for _, p := range config.Cfg.Packages {
 			commandOptions.packages = append(commandOptions.packages, p.ID)
 		}
 	}
@@ -191,10 +176,10 @@ func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Target Launcher:", commandOptions.targetLauncher)
 
 	image := ""
-	if strings.Contains(cfg.Image, ":") {
-		image = strings.Split(cfg.Image, ":")[0] + ":" + commandOptions.imageVersion
+	if strings.Contains(config.Cfg.Image, ":") {
+		image = strings.Split(config.Cfg.Image, ":")[0] + ":" + commandOptions.imageVersion
 	} else {
-		image = cfg.Image + ":" + commandOptions.imageVersion
+		image = config.Cfg.Image + ":" + commandOptions.imageVersion
 	}
 
 	fmt.Println("Creating fresh instant container with volumes...")
@@ -207,8 +192,8 @@ func RunDeployCommand(startupCommands []string) error {
 		"--network", "host",
 	}
 
-	if cfg.LogPath != "" {
-		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", cfg.LogPath))
+	if config.Cfg.LogPath != "" {
+		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", config.Cfg.LogPath))
 	}
 
 	commandSlice = append(commandSlice, commandOptions.environmentVariables...)
@@ -278,8 +263,8 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		for stdErrScanner.Scan() {
 			if stdErrScanner.Text() != "" {
 				stderr = stdErrScanner.Text()
-				if sliceContainsSubstr(logsToSuppress, stderr) {
-				} else if sliceContainsSubstr([]string{
+				if utils.SliceContainsSubstr(logsToSuppress, stderr) {
+				} else if utils.SliceContainsSubstr([]string{
 					"Unable to find image",
 					"Pulling from",
 					"Downloaded newer image",
@@ -305,7 +290,7 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 
 	err = cmd.Start()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
+		if suppressErrors != nil && utils.SliceContains(suppressErrors, stderr) {
 		} else {
 			return pathToPackage, errors.Wrap(err, "Error starting Cmd. "+stderr)
 		}
@@ -313,7 +298,7 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 
 	err = cmd.Wait()
 	if err != nil {
-		if suppressErrors != nil && sliceContains(suppressErrors, stderr) {
+		if suppressErrors != nil && utils.SliceContains(suppressErrors, stderr) {
 		} else {
 			return pathToPackage, errors.Wrap(err, "Error waiting for Cmd. "+stderr)
 		}
@@ -499,4 +484,23 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 	pathToPackage = filepath.Join(".", packageName)
 
 	return pathToPackage, nil
+}
+
+// TODO: Check references
+func StopContainer() {
+	commandSlice := []string{"stop", "instant-openhie"}
+	suppressErrors := []string{"Error response from daemon: No such container: instant-openhie"}
+	_, err := RunCommand("docker", suppressErrors, commandSlice...)
+	if err != nil {
+		log.Fatalf("runCommand() failed: %v", err)
+	}
+}
+
+// Gracefully shut down the instant container and then kill the go cli with the panic error or message passed.
+func GracefulPanic(err error, message string) {
+	StopContainer()
+	if message != "" {
+		panic(message)
+	}
+	panic(err)
 }
