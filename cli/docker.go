@@ -33,6 +33,7 @@ var (
 	runDeployCommand   = RunDeployCommand
 	RunCommand         = runCommand
 	MountCustomPackage = mountCustomPackage
+	tempCustomPackagesFolder = filepath.Join(".", "tempCustomPackagesFolder")
 )
 
 type CommandsOptions struct {
@@ -225,9 +226,30 @@ func RunDeployCommand(startupCommands []string) error {
 
 	fmt.Println("Adding 3rd party packages to instant volume:")
 
+	if len(commandOptions.customPackagePaths) > 0 {
+		fmt.Println("Removing outdated temp folder that holds the custom packages")
+		_, err := RunCommand("rm", nil, []string{"-rf", tempCustomPackagesFolder}...)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Creating temp folder that holds the custom packages")
+		_, err = RunCommand("mkdir", nil, tempCustomPackagesFolder)
+		if err != nil {
+			return nil
+		}
+	}
+
 	for _, c := range commandOptions.customPackagePaths {
 		fmt.Print("- " + c)
 		err = MountCustomPackage(c)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(commandOptions.customPackagePaths) > 0 {
+		fmt.Println("Removing temp folder that holds the custom packages")
+		_, err := RunCommand("rm", nil, []string{"-rf", tempCustomPackagesFolder}...)
 		if err != nil {
 			return err
 		}
@@ -323,13 +345,13 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		if len(commandSlice) < 2 {
 			return pathToPackage, errors.New("Not enough arguments for git command")
 		}
-		pathToPackage = commandSlice[1]
+		pathToPackage = commandSlice[3]
 		// Get name of repo
 		urlSplit := strings.Split(pathToPackage, ".")
 		urlPathSplit := strings.Split(urlSplit[len(urlSplit)-2], "/")
 		repoName := urlPathSplit[len(urlPathSplit)-1]
 
-		pathToPackage = filepath.Join(".", repoName)
+		pathToPackage = filepath.Join(tempCustomPackagesFolder, repoName)
 	}
 
 	return pathToPackage, nil
@@ -343,7 +365,7 @@ func mountCustomPackage(pathToPackage string) error {
 
 	var err error
 	if gitRegex.MatchString(pathToPackage) {
-		pathToPackage, err = runCommand("git", nil, []string{"clone", pathToPackage}...)
+		pathToPackage, err = runCommand("git", nil, []string{"-C", tempCustomPackagesFolder, "clone", pathToPackage}...)
 		if err != nil {
 			return err
 		}
@@ -410,7 +432,7 @@ var unzipPackage = func(zipContent io.ReadCloser) (pathToPackage string, err err
 
 	packageName := ""
 	for _, file := range archive.File {
-		filePath := FilepathJoin(".", file.Name)
+		filePath := FilepathJoin(tempCustomPackagesFolder, file.Name)
 
 		if file.FileInfo().IsDir() {
 			if packageName == "" {
@@ -452,7 +474,7 @@ var unzipPackage = func(zipContent io.ReadCloser) (pathToPackage string, err err
 		return "", errors.Wrap(err, "Error in deleting temp.zip file:")
 	}
 
-	return FilepathJoin(".", packageName), nil
+	return FilepathJoin(tempCustomPackagesFolder, packageName), nil
 }
 
 var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err error) {
@@ -477,7 +499,7 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 			return "", errors.Wrap(err, "Error in extracting tar file")
 		}
 
-		filePath := filepath.Join(".", file.Name)
+		filePath := filepath.Join(tempCustomPackagesFolder, file.Name)
 		if file.Typeflag == tar.TypeDir {
 			if packageName == "" {
 				packageName = filePath
@@ -496,7 +518,7 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 			return "", errors.Wrap(err, "Error in extracting tar file")
 		}
 	}
-	pathToPackage = filepath.Join(".", packageName)
+	pathToPackage = filepath.Join(tempCustomPackagesFolder, packageName)
 
 	return pathToPackage, nil
 }
