@@ -22,17 +22,17 @@ import (
 )
 
 var (
-	OsCreate           = os.Create
-	IoCopy             = io.Copy
-	ZipOpenReader      = zip.OpenReader
-	OsMkdirAll         = os.MkdirAll
-	FilepathJoin       = filepath.Join
-	OsOpenFile         = os.OpenFile
-	OsRemove           = os.Remove
-	execCommand        = exec.Command
-	runDeployCommand   = RunDeployCommand
-	RunCommand         = runCommand
-	MountCustomPackage = mountCustomPackage
+	OsCreate                 = os.Create
+	IoCopy                   = io.Copy
+	ZipOpenReader            = zip.OpenReader
+	OsMkdirAll               = os.MkdirAll
+	FilepathJoin             = filepath.Join
+	OsOpenFile               = os.OpenFile
+	OsRemove                 = os.Remove
+	execCommand              = exec.Command
+	runDeployCommand         = RunDeployCommand
+	RunCommand               = runCommand
+	MountCustomPackage       = mountCustomPackage
 	tempCustomPackagesFolder = filepath.Join(".", "tempCustomPackagesFolder")
 )
 
@@ -228,28 +228,26 @@ func RunDeployCommand(startupCommands []string) error {
 
 	if len(commandOptions.customPackagePaths) > 0 {
 		fmt.Println("Removing outdated temp folder that holds the custom packages")
-		_, err := RunCommand("rm", nil, []string{"-rf", tempCustomPackagesFolder}...)
+		err = os.RemoveAll(tempCustomPackagesFolder)
 		if err != nil {
 			return err
 		}
 		fmt.Println("Creating temp folder that holds the custom packages")
-		_, err = RunCommand("mkdir", nil, tempCustomPackagesFolder)
-		if err != nil {
-			return nil
-		}
-	}
-
-	for _, c := range commandOptions.customPackagePaths {
-		fmt.Print("- " + c)
-		err = MountCustomPackage(c)
+		err = os.MkdirAll(tempCustomPackagesFolder, 0777)
 		if err != nil {
 			return err
 		}
-	}
 
-	if len(commandOptions.customPackagePaths) > 0 {
+		for _, c := range commandOptions.customPackagePaths {
+			fmt.Print("- " + c)
+			err = MountCustomPackage(c)
+			if err != nil {
+				return err
+			}
+		}
+
 		fmt.Println("Removing temp folder that holds the custom packages")
-		_, err := RunCommand("rm", nil, []string{"-rf", tempCustomPackagesFolder}...)
+		err = os.RemoveAll(tempCustomPackagesFolder)
 		if err != nil {
 			return err
 		}
