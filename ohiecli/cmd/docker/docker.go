@@ -34,7 +34,7 @@ var (
 	OsOpenFile               = os.OpenFile
 	OsRemove                 = os.Remove
 	execCommand              = exec.Command
-	runDeployCommand         = RunDeployCommand
+	RunDeployCommand         = runDeployCommand
 	RunCommand               = runCommand
 	MountCustomPackage       = mountCustomPackage
 	tempCustomPackagesFolder = filepath.Join(".", "tempCustomPackagesFolder")
@@ -158,7 +158,7 @@ func extractCommands(startupCommands []string) CommandsOptions {
 	return commandOptions
 }
 
-func RunDeployCommand(startupCommands []string) error {
+func runDeployCommand(startupCommands []string) error {
 	fmt.Println("Note: Initial setup takes 1-5 minutes.\nWait for the DONE message.\n--------------------------")
 
 	commandOptions := extractCommands(startupCommands)
