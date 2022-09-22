@@ -16,7 +16,7 @@ jobs:
         go-version: 1.18
 
     - name: Run Go CLI unit tests
-      run: cd ./ohiecli/ && unit_test.sh
+      run: ./ohiecli/unit_test.sh
 
   functional-tests:
     runs-on: ubuntu-latest
