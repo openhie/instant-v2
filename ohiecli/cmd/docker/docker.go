@@ -26,17 +26,18 @@ import (
 )
 
 var (
-	OsCreate           = os.Create
-	IoCopy             = io.Copy
-	ZipOpenReader      = zip.OpenReader
-	OsMkdirAll         = os.MkdirAll
-	FilepathJoin       = filepath.Join
-	OsOpenFile         = os.OpenFile
-	OsRemove           = os.Remove
-	execCommand        = exec.Command
-	RunDeployCommand   = runDeployCommand
-	RunCommand         = runCommand
-	MountCustomPackage = mountCustomPackage
+	OsCreate                 = os.Create
+	IoCopy                   = io.Copy
+	ZipOpenReader            = zip.OpenReader
+	OsMkdirAll               = os.MkdirAll
+	FilepathJoin             = filepath.Join
+	OsOpenFile               = os.OpenFile
+	OsRemove                 = os.Remove
+	execCommand              = exec.Command
+	runDeployCommand         = RunDeployCommand
+	RunCommand               = runCommand
+	MountCustomPackage       = mountCustomPackage
+	tempCustomPackagesFolder = filepath.Join(".", "tempCustomPackagesFolder")
 )
 
 type CommandsOptions struct {
@@ -157,7 +158,7 @@ func extractCommands(startupCommands []string) CommandsOptions {
 	return commandOptions
 }
 
-func runDeployCommand(startupCommands []string) error {
+func RunDeployCommand(startupCommands []string) error {
 	fmt.Println("Note: Initial setup takes 1-5 minutes.\nWait for the DONE message.\n--------------------------")
 
 	commandOptions := extractCommands(startupCommands)
@@ -211,9 +212,28 @@ func runDeployCommand(startupCommands []string) error {
 
 	fmt.Println("Adding 3rd party packages to instant volume:")
 
-	for _, c := range commandOptions.customPackagePaths {
-		fmt.Print("- " + c)
-		err = MountCustomPackage(c)
+	if len(commandOptions.customPackagePaths) > 0 {
+		fmt.Println("Removing outdated temp folder that holds the custom packages")
+		err = os.RemoveAll(tempCustomPackagesFolder)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Creating temp folder that holds the custom packages")
+		err = os.MkdirAll(tempCustomPackagesFolder, 0777)
+		if err != nil {
+			return err
+		}
+
+		for _, c := range commandOptions.customPackagePaths {
+			fmt.Print("- " + c)
+			err = MountCustomPackage(c)
+			if err != nil {
+				return err
+			}
+		}
+
+		fmt.Println("Removing temp folder that holds the custom packages")
+		err = os.RemoveAll(tempCustomPackagesFolder)
 		if err != nil {
 			return err
 		}
@@ -309,13 +329,13 @@ var runCommand = func(commandName string, suppressErrors []string, commandSlice 
 		if len(commandSlice) < 2 {
 			return pathToPackage, errors.New("Not enough arguments for git command")
 		}
-		pathToPackage = commandSlice[1]
+		pathToPackage = commandSlice[3]
 		// Get name of repo
 		urlSplit := strings.Split(pathToPackage, ".")
 		urlPathSplit := strings.Split(urlSplit[len(urlSplit)-2], "/")
 		repoName := urlPathSplit[len(urlPathSplit)-1]
 
-		pathToPackage = filepath.Join(".", repoName)
+		pathToPackage = filepath.Join(tempCustomPackagesFolder, repoName)
 	}
 
 	return pathToPackage, nil
@@ -329,7 +349,7 @@ func mountCustomPackage(pathToPackage string) error {
 
 	var err error
 	if gitRegex.MatchString(pathToPackage) {
-		pathToPackage, err = runCommand("git", nil, []string{"clone", pathToPackage}...)
+		pathToPackage, err = runCommand("git", nil, []string{"-C", tempCustomPackagesFolder, "clone", pathToPackage}...)
 		if err != nil {
 			return err
 		}
@@ -396,7 +416,7 @@ var unzipPackage = func(zipContent io.ReadCloser) (pathToPackage string, err err
 
 	packageName := ""
 	for _, file := range archive.File {
-		filePath := FilepathJoin(".", file.Name)
+		filePath := FilepathJoin(tempCustomPackagesFolder, file.Name)
 
 		if file.FileInfo().IsDir() {
 			if packageName == "" {
@@ -438,7 +458,7 @@ var unzipPackage = func(zipContent io.ReadCloser) (pathToPackage string, err err
 		return "", errors.Wrap(err, "Error in deleting temp.zip file:")
 	}
 
-	return FilepathJoin(".", packageName), nil
+	return FilepathJoin(tempCustomPackagesFolder, packageName), nil
 }
 
 var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err error) {
@@ -463,7 +483,7 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 			return "", errors.Wrap(err, "Error in extracting tar file")
 		}
 
-		filePath := filepath.Join(".", file.Name)
+		filePath := filepath.Join(tempCustomPackagesFolder, file.Name)
 		if file.Typeflag == tar.TypeDir {
 			if packageName == "" {
 				packageName = filePath
@@ -482,7 +502,7 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 			return "", errors.Wrap(err, "Error in extracting tar file")
 		}
 	}
-	pathToPackage = filepath.Join(".", packageName)
+	pathToPackage = filepath.Join(tempCustomPackagesFolder, packageName)
 
 	return pathToPackage, nil
 }

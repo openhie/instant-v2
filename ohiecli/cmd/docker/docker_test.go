@@ -320,8 +320,8 @@ func Test_runCommand(t *testing.T) {
 		{
 			commandName:    "git",
 			suppressErrors: nil,
-			commandSlice:   []string{"clone", "git@github.com:testhie/test.git"},
-			pathToPackage:  "test",
+			commandSlice:   []string{"-C", "tempCustomPackagesFolder", "clone", "git@github.com:testhie/test.git"},
+			pathToPackage:  "tempCustomPackagesFolder/test",
 			errorString:    nil,
 			name:           "runCommand - clone a custom package and return its location",
 			mockExecCommand: func(commandName string, commandSlice ...string) *exec.Cmd {
