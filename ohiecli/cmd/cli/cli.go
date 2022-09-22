@@ -3,11 +3,12 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"ohie_cli/config"
-	"ohie_cli/docker"
-	"ohie_cli/ig"
-	"ohie_cli/utils"
 	"os"
+
+	"ohiecli/config"
+	"ohiecli/docker"
+	"ohiecli/ig"
+	"ohiecli/utils"
 )
 
 func CLI() error {

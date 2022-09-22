@@ -2,17 +2,18 @@ package prompts
 
 import (
 	"fmt"
-	"ohie_cli/config"
-	"ohie_cli/docker"
-	"ohie_cli/ig"
-	"ohie_cli/kubernetes"
-	"ohie_cli/utils"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
+
+	"ohiecli/config"
+	"ohiecli/docker"
+	"ohiecli/ig"
+	"ohiecli/kubernetes"
+	"ohiecli/utils"
 )
 
 func quit() {

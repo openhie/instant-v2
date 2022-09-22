@@ -9,8 +9,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"ohie_cli/config"
-	"ohie_cli/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,6 +20,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+
+	"ohiecli/config"
+	"ohiecli/utils"
 )
 
 var (

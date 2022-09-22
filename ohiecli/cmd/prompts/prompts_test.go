@@ -1,9 +1,10 @@
 package prompts
 
 import (
-	"ohie_cli/config"
-	"ohie_cli/docker"
 	"testing"
+
+	"ohiecli/config"
+	"ohiecli/docker"
 )
 
 func Test_executeCommand(t *testing.T) {

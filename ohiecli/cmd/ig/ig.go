@@ -9,14 +9,15 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
-	"ohie_cli/config"
-	"ohie_cli/docker"
 	"path"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
+
+	"ohiecli/config"
+	"ohiecli/docker"
 )
 
 func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) error {

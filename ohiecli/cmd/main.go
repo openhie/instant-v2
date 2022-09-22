@@ -4,15 +4,16 @@ import (
 	"embed"
 	"io/ioutil"
 	"log"
-	"ohie_cli/cli"
-	"ohie_cli/config"
-	"ohie_cli/docker"
-	"ohie_cli/prompts"
 	"os"
 	"strings"
 
 	"github.com/fatih/color"
 	yaml "gopkg.in/yaml.v3"
+
+	"ohiecli/cli"
+	"ohiecli/config"
+	"ohiecli/docker"
+	"ohiecli/prompts"
 )
 
 //go:embed banner.txt

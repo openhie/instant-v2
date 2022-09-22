@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"ohie_cli/config"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,6 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
+
+	"ohiecli/config"
 )
 
 func Test_getPackagePaths(t *testing.T) {
