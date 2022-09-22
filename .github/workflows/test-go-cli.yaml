@@ -31,6 +31,8 @@ jobs:
 
     - name: Install Godog
       run: cd ./ohiecli/cmd && go get github.com/cucumber/godog/cmd/godog
+      with:
+        use: true
 
     - name: Run Godog tests
       run: cd ./ohiecli/cmd && godog run
