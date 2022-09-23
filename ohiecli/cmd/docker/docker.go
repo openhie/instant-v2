@@ -507,7 +507,6 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 	return pathToPackage, nil
 }
 
-// TODO: Check references
 func StopContainer() {
 	commandSlice := []string{"stop", "instant-openhie"}
 	suppressErrors := []string{"Error response from daemon: No such container: instant-openhie"}
