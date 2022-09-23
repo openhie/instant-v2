@@ -1,4 +1,4 @@
-package main
+package prompts
 
 import (
 	"fmt"
@@ -8,24 +8,30 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
+
+	"ohiecli/config"
+	"ohiecli/docker"
+	"ohiecli/ig"
+	"ohiecli/kubernetes"
+	"ohiecli/utils"
 )
 
 func quit() {
-	stopContainer()
+	docker.StopContainer()
 	os.Exit(0)
 }
 
-func selectSetup() error {
+func SelectSetup() error {
 	items := []string{"Use Docker on your PC", "Help", "Quit"}
 
 	index := 1
-	if !cfg.DisableKubernetes {
+	if !config.Cfg.DisableKubernetes {
 		items = append(items[:index+1], items[index:]...)
 		items[index] = "Use a Kubernetes Cluster"
 		index++
 	}
 
-	if !cfg.DisableIG {
+	if !config.Cfg.DisableIG {
 		items = append(items[:index+1], items[index:]...)
 		items[index] = "Install FHIR package"
 	}
@@ -38,21 +44,21 @@ func selectSetup() error {
 
 	_, result, err := prompt.Run()
 	if err != nil {
-		return errors.Wrap(err, "selectSetup() prompt failed")
+		return errors.Wrap(err, "SelectSetup() prompt failed")
 	}
 
 	fmt.Printf("You chose %q\n========================================\n", result)
 
 	switch result {
 	case "Use Docker on your PC":
-		err = debugDocker()
+		err = docker.DebugDocker()
 		if err != nil {
 			return err
 		}
 		err = selectDefaultOrCustom()
 
 	case "Use a Kubernetes Cluster":
-		err = debugKubernetes()
+		err = kubernetes.DebugKubernetes()
 		if err != nil {
 			return err
 		}
@@ -62,8 +68,8 @@ func selectSetup() error {
 		err = selectUtil()
 
 	case "Help":
-		fmt.Println(getHelpText(true, ""))
-		selectSetup()
+		fmt.Println(utils.GetHelpText(true, ""))
+		SelectSetup()
 
 	case "Quit":
 		quit()
@@ -89,11 +95,11 @@ func selectUtil() error {
 		return err
 	}
 	fmt.Println("FHIR Server target:", fhir_server)
-	err = loadIGpackage(ig_url, fhir_server, params)
+	err = ig.LoadIGpackage(ig_url, fhir_server, params)
 	if err != nil {
 		return err
 	}
-	return selectSetup()
+	return SelectSetup()
 }
 
 func selectDefaultOrCustom() error {
@@ -117,7 +123,7 @@ func selectDefaultOrCustom() error {
 	case "Quit":
 		quit()
 	case "Back":
-		err = selectSetup()
+		err = SelectSetup()
 	}
 
 	return err
@@ -142,9 +148,9 @@ func selectCustomOptions() error {
 		"Back",
 	}
 
-	if !cfg.DisableCustomTargetSelection {
+	if !config.Cfg.DisableCustomTargetSelection {
 		items = append(items[:index+1], items[index:]...)
-		items[index] = "Choose target launcher (default is " + cfg.DefaultTargetLauncher + ")"
+		items[index] = "Choose target launcher (default is " + config.Cfg.DefaultTargetLauncher + ")"
 	}
 
 	prompt := promptui.Select{
@@ -161,7 +167,7 @@ func selectCustomOptions() error {
 	switch result {
 	case "Choose deploy action (default is init)":
 		err = setStartupAction()
-	case "Choose target launcher (default is " + cfg.DefaultTargetLauncher + ")":
+	case "Choose target launcher (default is " + config.Cfg.DefaultTargetLauncher + ")":
 		err = setTargetLauncher()
 	case "Specify deploy packages":
 		err = setStartupPackages()
@@ -189,7 +195,7 @@ func selectCustomOptions() error {
 		resetAll()
 		err = printAll(true)
 	case "Help":
-		fmt.Println(getHelpText(true, "Custom Options"))
+		fmt.Println(utils.GetHelpText(true, "Custom Options"))
 		return selectCustomOptions()
 	case "Quit":
 		quit()
@@ -201,15 +207,15 @@ func selectCustomOptions() error {
 }
 
 func resetAll() {
-	customOptions.startupAction = "init"
-	customOptions.startupPackages = make([]string, 0)
-	customOptions.envVarFileLocation = ""
-	customOptions.envVars = make([]string, 0)
-	customOptions.customPackageFileLocations = make([]string, 0)
-	customOptions.onlyFlag = false
-	customOptions.imageVersion = "latest"
-	customOptions.targetLauncher = cfg.DefaultTargetLauncher
-	customOptions.devMode = false
+	config.CustomOptions.StartupAction = "init"
+	config.CustomOptions.StartupPackages = make([]string, 0)
+	config.CustomOptions.EnvVarFileLocation = ""
+	config.CustomOptions.EnvVars = make([]string, 0)
+	config.CustomOptions.CustomPackageFileLocations = make([]string, 0)
+	config.CustomOptions.OnlyFlag = false
+	config.CustomOptions.ImageVersion = "latest"
+	config.CustomOptions.TargetLauncher = config.Cfg.DefaultTargetLauncher
+	config.CustomOptions.DevMode = false
 	fmt.Println("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\nAll custom options have been reset to default.\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 }
 
@@ -229,10 +235,10 @@ func setStartupAction() error {
 
 	switch result {
 	case "init", "destroy", "up", "down", "test":
-		customOptions.startupAction = result
+		config.CustomOptions.StartupAction = result
 		err = selectCustomOptions()
 	case "Help":
-		fmt.Println(getHelpText(true, "Deploy Commands"))
+		fmt.Println(utils.GetHelpText(true, "Deploy Commands"))
 		return setStartupAction()
 	case "Quit":
 		quit()
@@ -259,7 +265,7 @@ func setTargetLauncher() error {
 
 	switch result {
 	case "docker", "swarm", "kubernetes":
-		customOptions.targetLauncher = result
+		config.CustomOptions.TargetLauncher = result
 		err = selectCustomOptions()
 	case "Quit":
 		quit()
@@ -273,38 +279,38 @@ func setTargetLauncher() error {
 var DeployCommands []string
 
 func executeCommand() error {
-	DeployCommands = []string{customOptions.startupAction}
+	DeployCommands = []string{config.CustomOptions.StartupAction}
 
-	if len(customOptions.startupPackages) == 0 {
+	if len(config.CustomOptions.StartupPackages) == 0 {
 		fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" +
 			"Warning: No package IDs specified, all default packages will be included in your command.\n" +
 			">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
 	}
 
-	DeployCommands = append(DeployCommands, customOptions.startupPackages...)
+	DeployCommands = append(DeployCommands, config.CustomOptions.StartupPackages...)
 
-	if customOptions.envVarFileLocation != "" && len(customOptions.envVarFileLocation) > 0 {
-		DeployCommands = append(DeployCommands, "--env-file="+customOptions.envVarFileLocation)
+	if config.CustomOptions.EnvVarFileLocation != "" && len(config.CustomOptions.EnvVarFileLocation) > 0 {
+		DeployCommands = append(DeployCommands, "--env-file="+config.CustomOptions.EnvVarFileLocation)
 	}
-	if customOptions.envVars != nil && len(customOptions.envVars) > 0 {
-		for _, e := range customOptions.envVars {
+	if config.CustomOptions.EnvVars != nil && len(config.CustomOptions.EnvVars) > 0 {
+		for _, e := range config.CustomOptions.EnvVars {
 			DeployCommands = append(DeployCommands, "-e="+e)
 		}
 	}
-	if customOptions.customPackageFileLocations != nil && len(customOptions.customPackageFileLocations) > 0 {
-		for _, c := range customOptions.customPackageFileLocations {
+	if config.CustomOptions.CustomPackageFileLocations != nil && len(config.CustomOptions.CustomPackageFileLocations) > 0 {
+		for _, c := range config.CustomOptions.CustomPackageFileLocations {
 			DeployCommands = append(DeployCommands, "-c="+c)
 		}
 	}
-	if customOptions.onlyFlag {
+	if config.CustomOptions.OnlyFlag {
 		DeployCommands = append(DeployCommands, "--only")
 	}
-	if customOptions.devMode {
+	if config.CustomOptions.DevMode {
 		DeployCommands = append(DeployCommands, "--dev")
 	}
-	DeployCommands = append(DeployCommands, "--image-version="+customOptions.imageVersion)
-	DeployCommands = append(DeployCommands, "-t="+customOptions.targetLauncher)
-	return runDeployCommand(DeployCommands)
+	DeployCommands = append(DeployCommands, "--image-version="+config.CustomOptions.ImageVersion)
+	DeployCommands = append(DeployCommands, "-t="+config.CustomOptions.TargetLauncher)
+	return docker.RunDeployCommand(DeployCommands)
 }
 
 func printSlice(slice []string) {
@@ -317,36 +323,36 @@ func printSlice(slice []string) {
 func printAll(loopback bool) error {
 	fmt.Println("\nCurrent Custom Options Specified\n---------------------------------")
 	fmt.Println("Target Launcher:")
-	fmt.Printf("-%q\n", customOptions.targetLauncher)
+	fmt.Printf("-%q\n", config.CustomOptions.TargetLauncher)
 	fmt.Println("Startup Action:")
-	fmt.Printf("-%q\n", customOptions.startupAction)
+	fmt.Printf("-%q\n", config.CustomOptions.StartupAction)
 	fmt.Println("Startup Packages:")
-	if customOptions.startupPackages != nil && len(customOptions.startupPackages) > 0 {
-		printSlice(customOptions.startupPackages)
+	if config.CustomOptions.StartupPackages != nil && len(config.CustomOptions.StartupPackages) > 0 {
+		printSlice(config.CustomOptions.StartupPackages)
 	}
 	fmt.Println("Environment Variable File Path:")
-	if customOptions.envVarFileLocation != "" && len(customOptions.envVarFileLocation) > 0 {
-		fmt.Printf("-%q\n", customOptions.envVarFileLocation)
+	if config.CustomOptions.EnvVarFileLocation != "" && len(config.CustomOptions.EnvVarFileLocation) > 0 {
+		fmt.Printf("-%q\n", config.CustomOptions.EnvVarFileLocation)
 	}
 	fmt.Println("Environment Variables:")
-	if customOptions.envVars != nil && len(customOptions.envVars) > 0 {
-		printSlice(customOptions.envVars)
+	if config.CustomOptions.EnvVars != nil && len(config.CustomOptions.EnvVars) > 0 {
+		printSlice(config.CustomOptions.EnvVars)
 	}
-	if customOptions.customPackageFileLocations != nil && len(customOptions.customPackageFileLocations) > 0 {
+	if config.CustomOptions.CustomPackageFileLocations != nil && len(config.CustomOptions.CustomPackageFileLocations) > 0 {
 		fmt.Println("Custom Packages:")
-		printSlice(customOptions.customPackageFileLocations)
+		printSlice(config.CustomOptions.CustomPackageFileLocations)
 	}
 	fmt.Println("Image Version:")
-	fmt.Printf("-%q\n", customOptions.imageVersion)
+	fmt.Printf("-%q\n", config.CustomOptions.ImageVersion)
 
 	fmt.Println("Only Flag Setting:")
-	if customOptions.onlyFlag {
+	if config.CustomOptions.OnlyFlag {
 		fmt.Printf("-%q\n", "On")
 	} else {
 		fmt.Printf("-%q\n", "Off")
 	}
 	fmt.Println("Dev Mode Setting:")
-	if customOptions.devMode {
+	if config.CustomOptions.DevMode {
 		fmt.Printf("-%q\n\n", "On")
 	} else {
 		fmt.Printf("-%q\n\n", "Off")
@@ -361,9 +367,9 @@ func printAll(loopback bool) error {
 }
 
 func setStartupPackages() error {
-	if customOptions.startupPackages != nil && len(customOptions.startupPackages) > 0 {
+	if config.CustomOptions.StartupPackages != nil && len(config.CustomOptions.StartupPackages) > 0 {
 		fmt.Println("\nCurrent Startup Packages Specified:")
-		printSlice(customOptions.startupPackages)
+		printSlice(config.CustomOptions.StartupPackages)
 	}
 	prompt := promptui.Prompt{
 		Label: "Startup Package List(Comma Delimited). e.g. core,cdr",
@@ -376,8 +382,8 @@ func setStartupPackages() error {
 	startupPackages := strings.Split(packageList, ",")
 
 	for _, p := range startupPackages {
-		if !sliceContains(customOptions.startupPackages, p) {
-			customOptions.startupPackages = append(customOptions.startupPackages, p)
+		if !utils.SliceContains(config.CustomOptions.StartupPackages, p) {
+			config.CustomOptions.StartupPackages = append(config.CustomOptions.StartupPackages, p)
 		} else {
 			fmt.Printf(p + " package already exists in the list.\n")
 		}
@@ -387,9 +393,9 @@ func setStartupPackages() error {
 }
 
 func setCustomPackages() error {
-	if customOptions.customPackageFileLocations != nil && len(customOptions.customPackageFileLocations) > 0 {
+	if config.CustomOptions.CustomPackageFileLocations != nil && len(config.CustomOptions.CustomPackageFileLocations) > 0 {
 		fmt.Println("Current Custom Packages Specified:")
-		printSlice(customOptions.customPackageFileLocations)
+		printSlice(config.CustomOptions.CustomPackageFileLocations)
 	}
 	prompt := promptui.Prompt{
 		Label: "Custom Package List(Comma Delimited). e.g. " + filepath.FromSlash("../project/cdr") + "," + filepath.FromSlash("../project/demo"),
@@ -403,16 +409,16 @@ func setCustomPackages() error {
 
 	for _, cp := range newCustomPackages {
 		if strings.HasPrefix(cp, "http") || strings.HasPrefix(cp, "git") {
-			if !sliceContains(customOptions.customPackageFileLocations, cp) {
-				customOptions.customPackageFileLocations = append(customOptions.customPackageFileLocations, cp)
+			if !utils.SliceContains(config.CustomOptions.CustomPackageFileLocations, cp) {
+				config.CustomOptions.CustomPackageFileLocations = append(config.CustomOptions.CustomPackageFileLocations, cp)
 			} else {
 				fmt.Printf(cp + " URL already exists in the list.\n")
 			}
 		} else {
 			exists, fileErr := fileExists(cp)
 			if exists {
-				if !sliceContains(customOptions.customPackageFileLocations, cp) {
-					customOptions.customPackageFileLocations = append(customOptions.customPackageFileLocations, cp)
+				if !utils.SliceContains(config.CustomOptions.CustomPackageFileLocations, cp) {
+					config.CustomOptions.CustomPackageFileLocations = append(config.CustomOptions.CustomPackageFileLocations, cp)
 				} else {
 					fmt.Printf(cp + " path already exists in the list.\n")
 				}
@@ -427,9 +433,9 @@ func setCustomPackages() error {
 }
 
 func setEnvVarFileLocation() error {
-	if customOptions.envVarFileLocation != "" && len(customOptions.envVarFileLocation) > 0 {
+	if config.CustomOptions.EnvVarFileLocation != "" && len(config.CustomOptions.EnvVarFileLocation) > 0 {
 		fmt.Println("Current Environment Variable File Location Specified:")
-		fmt.Printf("-%q\n", customOptions.envVarFileLocation)
+		fmt.Printf("-%q\n", config.CustomOptions.EnvVarFileLocation)
 	}
 	prompt := promptui.Prompt{
 		Label: "Environment Variable file location e.g. " + filepath.FromSlash("../project/prod.env"),
@@ -440,7 +446,7 @@ func setEnvVarFileLocation() error {
 	}
 	exists, fileErr := fileExists(envVarFileLocation)
 	if exists {
-		customOptions.envVarFileLocation = envVarFileLocation
+		config.CustomOptions.EnvVarFileLocation = envVarFileLocation
 	} else {
 		fmt.Printf("\nFile at location %q could not be found due to error: %v\n", envVarFileLocation, fileErr)
 		fmt.Println("\n-----------------\nPlease try again.\n-----------------")
@@ -450,9 +456,9 @@ func setEnvVarFileLocation() error {
 }
 
 func setImageVersion() error {
-	if customOptions.imageVersion != "latest" && len(customOptions.imageVersion) > 0 {
+	if config.CustomOptions.ImageVersion != "latest" && len(config.CustomOptions.ImageVersion) > 0 {
 		fmt.Println("Current Image Version Specified:")
-		fmt.Printf("-%q\n", customOptions.imageVersion)
+		fmt.Printf("-%q\n", config.CustomOptions.ImageVersion)
 	}
 	prompt := promptui.Prompt{
 		Label: "Image Version e.g. 0.0.9",
@@ -463,14 +469,14 @@ func setImageVersion() error {
 		return errors.Wrap(err, "setImageVersion() prompt failed")
 	}
 
-	customOptions.imageVersion = imageVersion
+	config.CustomOptions.ImageVersion = imageVersion
 	return selectCustomOptions()
 }
 
 func setEnvVars() error {
-	if customOptions.envVars != nil && len(customOptions.envVars) > 0 {
+	if config.CustomOptions.EnvVars != nil && len(config.CustomOptions.EnvVars) > 0 {
 		fmt.Println("Current Environment Variables Specified:")
-		printSlice(customOptions.envVars)
+		printSlice(config.CustomOptions.EnvVars)
 	}
 	prompt := promptui.Prompt{
 		Label: "Environment Variable List(Comma Delimited). e.g. NODE_ENV=PROD,DOMAIN_NAME=instant.com",
@@ -483,8 +489,8 @@ func setEnvVars() error {
 	newEnvVars := strings.Split(envVarList, ",")
 
 	for _, env := range newEnvVars {
-		if !sliceContains(customOptions.envVars, env) {
-			customOptions.envVars = append(customOptions.envVars, env)
+		if !utils.SliceContains(config.CustomOptions.EnvVars, env) {
+			config.CustomOptions.EnvVars = append(config.CustomOptions.EnvVars, env)
 		} else {
 			fmt.Printf(env + " environment variable already exists in the list.\n")
 		}
@@ -493,8 +499,8 @@ func setEnvVars() error {
 }
 
 func toggleOnlyFlag() error {
-	customOptions.onlyFlag = !customOptions.onlyFlag
-	if customOptions.onlyFlag {
+	config.CustomOptions.OnlyFlag = !config.CustomOptions.OnlyFlag
+	if config.CustomOptions.OnlyFlag {
 		fmt.Println("Only flag is now on")
 	} else {
 		fmt.Println("Only flag is now off")
@@ -503,8 +509,8 @@ func toggleOnlyFlag() error {
 }
 
 func toggleDevMode() error {
-	customOptions.devMode = !customOptions.devMode
-	if customOptions.devMode {
+	config.CustomOptions.DevMode = !config.CustomOptions.DevMode
+	if config.CustomOptions.DevMode {
 		fmt.Println("Dev mode is now on")
 	} else {
 		fmt.Println("Dev mode is now off")
@@ -546,7 +552,7 @@ func selectDefaultAction() error {
 
 	switch result {
 	case "Help":
-		fmt.Println(getHelpText(true, "Deploy Commands"))
+		fmt.Println(utils.GetHelpText(true, "Deploy Commands"))
 		return selectDefaultAction()
 	case "Back":
 		return selectDefaultOrCustom()
@@ -560,7 +566,7 @@ func selectDefaultAction() error {
 
 func selectDefaultPackage(action string) error {
 	var optionItems []string
-	for _, p := range cfg.Packages {
+	for _, p := range config.Cfg.Packages {
 		optionItems = append(optionItems, p.Name)
 	}
 	optionItems = append(optionItems, "All", "Back", "Quit")
@@ -581,7 +587,7 @@ func selectDefaultPackage(action string) error {
 	switch result {
 	case "All":
 		fmt.Println("...Setting up All Packages")
-		err = RunDeployCommand([]string{action, "-t=" + cfg.DefaultTargetLauncher})
+		err = docker.RunDeployCommand([]string{action, "-t=" + config.Cfg.DefaultTargetLauncher})
 		if err != nil {
 			return err
 		}
@@ -592,7 +598,7 @@ func selectDefaultPackage(action string) error {
 	case "Back":
 		return selectDefaultAction()
 	default:
-		err = RunDeployCommand([]string{cfg.Packages[i].ID, action, "-t=" + cfg.DefaultTargetLauncher})
+		err = docker.RunDeployCommand([]string{config.Cfg.Packages[i].ID, action, "-t=" + config.Cfg.DefaultTargetLauncher})
 		if err != nil {
 			return err
 		}
@@ -618,7 +624,7 @@ func selectPackageCluster() error {
 	switch result {
 	case "Launch Core (Required, Start Here)":
 		fmt.Println("...Setting up Core Package")
-		err = RunDeployCommand([]string{"core", "init", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"core", "init", "-t=k8s"})
 		if err != nil {
 			return err
 		}
@@ -626,7 +632,7 @@ func selectPackageCluster() error {
 
 	case "Launch Facility Registry":
 		fmt.Println("...Setting up Facility Registry Package")
-		err = RunDeployCommand([]string{"facility", "up", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"facility", "up", "-t=k8s"})
 		if err != nil {
 			return err
 		}
@@ -634,7 +640,7 @@ func selectPackageCluster() error {
 
 	case "Launch Workforce":
 		fmt.Println("...Setting up Workforce Package")
-		err = RunDeployCommand([]string{"healthworker", "up", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"healthworker", "up", "-t=k8s"})
 		if err != nil {
 			return err
 		}
@@ -642,7 +648,7 @@ func selectPackageCluster() error {
 
 	case "Stop and Cleanup Core":
 		fmt.Println("Stopping and Cleaning Up Core...")
-		err = RunDeployCommand([]string{"core", "destroy", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"core", "destroy", "-t=k8s"})
 		if err != nil {
 			return err
 		}
@@ -650,7 +656,7 @@ func selectPackageCluster() error {
 
 	case "Stop and Cleanup Facility Registry":
 		fmt.Println("Stopping and Cleaning Up Facility Registry...")
-		err = RunDeployCommand([]string{"facility", "destroy", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"facility", "destroy", "-t=k8s"})
 		if err != nil {
 			return err
 		}
@@ -658,7 +664,7 @@ func selectPackageCluster() error {
 
 	case "Stop and Cleanup Workforce":
 		fmt.Println("Stopping and Cleaning Up Workforce...")
-		err = RunDeployCommand([]string{"healthworker", "destroy", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"healthworker", "destroy", "-t=k8s"})
 		if err != nil {
 			return err
 		}
@@ -666,15 +672,15 @@ func selectPackageCluster() error {
 
 	case "Stop All Services and Cleanup Kubernetes":
 		fmt.Println("Stopping and Cleaning Up Everything...")
-		err = RunDeployCommand([]string{"core", "destroy", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"core", "destroy", "-t=k8s"})
 		if err != nil {
 			return err
 		}
-		err = RunDeployCommand([]string{"facility", "destroy", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"facility", "destroy", "-t=k8s"})
 		if err != nil {
 			return err
 		}
-		err = RunDeployCommand([]string{"healthworker", "destroy", "-t=k8s"})
+		err = docker.RunDeployCommand([]string{"healthworker", "destroy", "-t=k8s"})
 		if err != nil {
 			return err
 		}
@@ -684,13 +690,13 @@ func selectPackageCluster() error {
 		quit()
 
 	case "Back":
-		err = selectSetup()
+		err = SelectSetup()
 	}
 
 	return err
 }
 
-func selectFHIR() (result_url string, params *Params, err error) {
+func selectFHIR() (result_url string, params *config.Params, err error) {
 	prompt := promptui.Select{
 		Label: "Select or enter URL for a FHIR Server",
 		Items: []string{"Docker Default", "Kubernetes Default", "Use Public HAPI Server", "Enter a Server URL", "Quit", "Back"},
@@ -708,21 +714,21 @@ func selectFHIR() (result_url string, params *Params, err error) {
 
 	case "Docker Default":
 		result_url := "http://localhost:8080/fhir"
-		params := &Params{}
+		params := &config.Params{}
 		params.TypeAuth = "Custom"
 		params.Token = "test"
 		return result_url, params, nil
 
 	case "Kubernetes Default":
 		result_url := "http://localhost:8080/fhir"
-		params := &Params{}
+		params := &config.Params{}
 		params.TypeAuth = "Custom"
 		params.Token = "test"
 		return result_url, params, nil
 
 	case "Use Public HAPI Server":
 		result_url := "http://hapi.fhir.org/baseR4"
-		params := &Params{}
+		params := &config.Params{}
 		params.TypeAuth = "None"
 		return result_url, params, nil
 
@@ -740,26 +746,18 @@ func selectFHIR() (result_url string, params *Params, err error) {
 
 	case "Quit":
 		quit()
-		return "", &Params{}, nil
+		return "", &config.Params{}, nil
 
 	case "Back":
-		return "", &Params{}, selectUtil()
+		return "", &config.Params{}, selectUtil()
 
 	}
 	return result_url, params, nil
 
 }
 
-type Params struct {
-	// none, token, basic, custom
-	TypeAuth  string
-	Token     string
-	BasicUser string
-	BasicPass string
-}
-
-func selectParams() (*Params, error) {
-	params := &Params{}
+func selectParams() (*config.Params, error) {
+	params := &config.Params{}
 
 	prompt := promptui.Select{
 		Label: "Choose authentication type",

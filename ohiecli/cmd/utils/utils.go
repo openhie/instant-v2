@@ -1,102 +1,10 @@
-package main
+package utils
 
 import (
-	"embed"
-	"io/ioutil"
-	"log"
-	"os"
 	"strings"
-
-	"github.com/fatih/color"
-	yaml "gopkg.in/yaml.v3"
 )
 
-//go:embed banner.txt
-//go:embed version
-var f embed.FS
-
-var cfg Config
-
-type Package struct {
-	Name string `yaml:"name"`
-	ID   string `yaml:"id"`
-}
-
-type Config struct {
-	Image                        string    `yaml:"image"`
-	DefaultTargetLauncher        string    `yaml:"defaultTargetLauncher"`
-	Packages                     []Package `yaml:"packages"`
-	DisableKubernetes            bool      `yaml:"disableKubernetes"`
-	DisableIG                    bool      `yaml:"disableIG"`
-	DisableCustomTargetSelection bool      `yaml:"disableCustomTargetSelection"`
-	LogPath                      string    `yaml:"logPath"`
-}
-
-type customOption struct {
-	startupAction              string
-	startupPackages            []string
-	envVarFileLocation         string
-	envVars                    []string
-	customPackageFileLocations []string
-	onlyFlag                   bool
-	imageVersion               string
-	targetLauncher             string
-	devMode                    bool
-}
-
-var customOptions = customOption{
-	startupAction:      "init",
-	envVarFileLocation: "",
-	onlyFlag:           false,
-	imageVersion:       "latest",
-	targetLauncher:     "docker",
-	devMode:            false,
-}
-
-func stopContainer() {
-	commandSlice := []string{"stop", "instant-openhie"}
-	suppressErrors := []string{"Error response from daemon: No such container: instant-openhie"}
-	_, err := runCommand("docker", suppressErrors, commandSlice...)
-	if err != nil {
-		log.Fatalf("runCommand() failed: %v", err)
-	}
-}
-
-//Gracefully shut down the instant container and then kill the go cli with the panic error or message passed.
-func gracefulPanic(err error, message string) {
-	stopContainer()
-	if message != "" {
-		panic(message)
-	}
-	panic(err)
-}
-
-func loadConfig() {
-	yamlConfig, loadErr := ioutil.ReadFile("config.yml")
-	if loadErr != nil {
-		log.Fatal(loadErr)
-	}
-
-	err := yaml.Unmarshal(yamlConfig, &cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func showBanner() {
-	// Check for custom banner, otherwise use embedded
-	banner, err := ioutil.ReadFile("banner.txt")
-	if err != nil {
-		banner, err = f.ReadFile("banner.txt")
-		if err != nil {
-			log.Println(err)
-		}
-	}
-
-	color.Green(string(banner))
-}
-
-func getHelpText(interactive bool, options string) string {
+func GetHelpText(interactive bool, options string) string {
 	if interactive {
 		switch options {
 		case "Deploy Commands":
@@ -180,34 +88,20 @@ func getHelpText(interactive bool, options string) string {
 	}
 }
 
-func main() {
-	loadConfig()
-	showBanner()
-
-	//Need to set the default here as we declare the struct before the config is loaded in.
-	customOptions.targetLauncher = cfg.DefaultTargetLauncher
-
-	if strings.Contains(cfg.Image, ":") {
-		customOptions.imageVersion = strings.Split(cfg.Image, ":")[1]
-	}
-
-	version, err := f.ReadFile("version")
-	if err != nil {
-		log.Println(err)
-	}
-
-	color.Cyan("Go Cli Version: " + string(version))
-	color.Blue("Remember to stop applications or they will continue to run and have an adverse impact on performance.")
-
-	if len(os.Args) > 1 {
-		err = CLI()
-		if err != nil {
-			gracefulPanic(err, "")
-		}
-	} else {
-		err = selectSetup()
-		if err != nil {
-			gracefulPanic(err, "")
+func SliceContains(slice []string, element string) bool {
+	for _, s := range slice {
+		if s == element {
+			return true
 		}
 	}
+	return false
+}
+
+func SliceContainsSubstr(slice []string, element string) bool {
+	for _, s := range slice {
+		if strings.Contains(element, s) {
+			return true
+		}
+	}
+	return false
 }

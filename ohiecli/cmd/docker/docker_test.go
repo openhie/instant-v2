@@ -1,4 +1,4 @@
-package main
+package docker
 
 import (
 	"archive/zip"
@@ -13,40 +13,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
+
+	"ohiecli/config"
 )
-
-func Test_sliceContains(t *testing.T) {
-	testCases := []struct {
-		slice   []string
-		element string
-		result  bool
-		name    string
-	}{
-		{
-			name:    "SliceContain test - should return true when slice contains element",
-			slice:   []string{"Optimus Prime", "Iron Hyde"},
-			element: "Optimus Prime",
-			result:  true,
-		},
-		{
-			name:    "SliceContain test - should return false when slice does not contain element",
-			slice:   []string{"Optimus Prime", "Iron Hyde"},
-			element: "Megatron",
-			result:  false,
-		},
-	}
-
-	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
-			ans := sliceContains(tt.slice, tt.element)
-
-			if ans != tt.result {
-				t.Fatal("SliceContains should return " + fmt.Sprintf("%t", tt.result) + " but returned " + fmt.Sprintf("%t", ans))
-			}
-			t.Log(tt.name + " passed!")
-		})
-	}
-}
 
 func Test_getPackagePaths(t *testing.T) {
 	type args struct {
@@ -123,7 +92,7 @@ func Test_getEnvironmentVariables(t *testing.T) {
 }
 
 func Test_extractCommands(t *testing.T) {
-	customOptions.targetLauncher = "docker"
+	config.CustomOptions.TargetLauncher = "docker"
 
 	testCases := []struct {
 		startupCommands []string

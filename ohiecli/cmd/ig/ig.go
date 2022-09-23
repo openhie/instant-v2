@@ -1,4 +1,4 @@
-package main
+package ig
 
 import (
 	"archive/tar"
@@ -15,24 +15,12 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
+
+	"ohiecli/config"
+	"ohiecli/docker"
 )
 
-type indexJSON struct {
-	IndexVersion int32      `json:"index-version"`
-	Files        []filesRep `json:"files"`
-}
-
-type filesRep struct {
-	Filename     string `json:"filename"`
-	ResourceType string `json:"resourceType"`
-	Id           string `json:"id"`
-	Url          string `json:"url"`
-	Version      string `json:"version"`
-	Kind         string `json:"kind"`
-	Type         string `json:"type"`
-}
-
-func loadIGpackage(url_entry string, fhir_server string, params *Params) error {
+func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) error {
 	trimmed := strings.Replace(url_entry, "index.html", "", -1)
 	u, err := url.Parse(trimmed)
 	if err != nil {
@@ -78,7 +66,7 @@ func loadIGpackage(url_entry string, fhir_server string, params *Params) error {
 			var msg indexJSON
 			err := json.Unmarshal(bs, &msg)
 			if err != nil {
-				gracefulPanic(err, "")
+				docker.GracefulPanic(err, "")
 			}
 
 			// Order mostly from: https://github.com/nmdp-bioinformatics/igloader/blob/main/igloader/igloader.py#L33
@@ -151,7 +139,7 @@ func loadIGpackage(url_entry string, fhir_server string, params *Params) error {
 	return nil
 }
 
-func getpushJSON(fhir_server string, ig string, filename string, resourcetype string, bundle bool, id string, params *Params) error {
+func getpushJSON(fhir_server string, ig string, filename string, resourcetype string, bundle bool, id string, params *config.Params) error {
 	trimmed := strings.Replace(ig, "index.html", "", -1)
 	u, err := url.Parse(trimmed)
 	if err != nil {

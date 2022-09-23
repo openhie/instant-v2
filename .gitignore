@@ -1,10 +1,10 @@
 # go-cli
 *-packr.go
 packrd
-cli/bin/go*
-cli/data
-cli/hapi.properties
-cli/pkged.go
+ohiecli/bin/go*
+ohiecli/data
+ohiecli/hapi.properties
+ohiecli/pkged.go
 
 # Logs
 logs
@@ -82,6 +82,6 @@ typings/
 /docs/.cache-loader
 
 # test binaries
-/cli/features/test-platform-linux
-/cli/features/test-platform-macos
-/cli/features/test-platform.exe
+/ohiecli/features/test-platform-linux
+/ohiecli/features/test-platform-macos
+/ohiecli/features/test-platform.exe
