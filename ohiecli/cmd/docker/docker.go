@@ -57,6 +57,7 @@ var logsToSuppress = []string{
 	"Download complete",
 	"Waiting",
 	"Pull complete",
+	"Cloning into '",
 }
 
 func DebugDocker() error {
