@@ -14,7 +14,7 @@ func PackageInitCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			config, err := getConfigFromParams(cmd)
 			util.PanicError(err)
-			packageSpec, err := getPackageSpecFromParams(cmd)
+			packageSpec, err := getPackageSpecFromParams(cmd, config)
 			util.PanicError(err)
 			packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
 			util.PanicError(err)

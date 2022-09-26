@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"log"
+
 	viperUtil "github.com/openhie/package-starter-kit/cli/v2/cli/cmd/util"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/core"
 	"github.com/openhie/package-starter-kit/cli/v2/cli/util"
@@ -16,6 +18,36 @@ func setPackageActionFlags(cmd *cobra.Command) {
 	flags.StringSliceP("custom-path", "c", nil, "Path(s) to custom package(s)")
 	flags.String("ssh-key", "", "The path to the ssh key required for cloning a custom package")
 	flags.String("ssh-password", "", "The password (or path to the file containing the password) required for authenticating the ssh-key when cloning a custom package")
+
+	cmd.RegisterFlagCompletionFunc("name", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		config, err := getConfigFromParams(cmd)
+		if err != nil {
+			log.Print(err)
+		}
+		return config.Packages, cobra.ShellCompDirectiveDefault
+	})
+	cmd.RegisterFlagCompletionFunc("profile", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		config, err := getConfigFromParams(cmd)
+		if err != nil {
+			log.Print(err)
+		}
+		var profileNames []string
+		for _, p := range config.Profiles {
+			profileNames = append(profileNames, p.Name)
+		}
+		return profileNames, cobra.ShellCompDirectiveDefault
+	})
+	cmd.RegisterFlagCompletionFunc("custom-path", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		config, err := getConfigFromParams(cmd)
+		if err != nil {
+			log.Print(err)
+		}
+		var customPackages []string
+		for _, c := range config.CustomPackages {
+			customPackages = append(customPackages, c.Id)
+		}
+		return customPackages, cobra.ShellCompDirectiveDefault
+	})
 }
 
 func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
@@ -32,14 +64,39 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	return &config, nil
 }
 
-func getPackageSpecFromParams(cmd *cobra.Command) (*core.PackageSpec, error) {
+func getCustomPackages(config *core.Config, customPackagePaths []string, sshKey, sshPassword string) []core.CustomPackage {
+	customPackages := make([]core.CustomPackage, len(customPackagePaths))
+
+	for _, customPackagePath := range customPackagePaths {
+		var customPackage core.CustomPackage
+
+		for _, configCustomPackage := range config.CustomPackages {
+			if customPackagePath == configCustomPackage.Id || customPackagePath == configCustomPackage.Path {
+				customPackage = configCustomPackage
+				break
+			}
+		}
+		if customPackage.Id == "" {
+			customPackage = core.CustomPackage{
+				Path:        customPackagePath,
+				SshKey:      sshKey,
+				SshPassword: sshPassword,
+			}
+		}
+
+		customPackages = append(customPackages, customPackage)
+	}
+	return customPackages
+}
+
+func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.PackageSpec, error) {
 	packageSpec := core.PackageSpec{}
 
 	packageNames, err := cmd.Flags().GetStringSlice("name")
 	if err != nil {
 		return nil, err
 	}
-	customPackages, err := cmd.Flags().GetStringSlice("custom-path")
+	customPackagePaths, err := cmd.Flags().GetStringSlice("custom-path")
 	if err != nil {
 		return nil, err
 	}
@@ -65,15 +122,15 @@ func getPackageSpecFromParams(cmd *cobra.Command) (*core.PackageSpec, error) {
 	sshPassword, err := cmd.Flags().GetString("ssh-password")
 	util.PanicError(err)
 
+	customPackages := getCustomPackages(config, customPackagePaths, sshKey, sshPassword)
+
 	packageSpec = core.PackageSpec{
 		Packages:             packageNames,
-		CustomPackagePaths:   customPackages,
+		CustomPackages:       customPackages,
 		EnvironmentVariables: envVariables,
 		IsDev:                isDev,
 		IsOnly:               isOnly,
 		DeployCommand:        cmd.Use,
-		SSHKeyFile:           sshKey,
-		SSHPasswordFile:      sshPassword,
 	}
 
 	return &packageSpec, nil

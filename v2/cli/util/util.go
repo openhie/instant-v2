@@ -271,3 +271,12 @@ func TarSource(path string) (io.Reader, error) {
 	}
 	return bufio.NewReader(&buf), nil
 }
+
+func FirstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}

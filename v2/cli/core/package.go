@@ -27,11 +27,6 @@ import (
 
 var TemplateFs embed.FS
 
-type Package struct {
-	Name string `yaml:"name"`
-	ID   string `yaml:"id"`
-}
-
 type Profile struct {
 	Name     string   `yaml:"name"`
 	EnvFiles []string `yaml:"envFiles"`
@@ -40,13 +35,21 @@ type Profile struct {
 	Packages []string `yaml:"packages"`
 }
 
+type CustomPackage struct {
+	Id          string `yaml:"id"`
+	Path        string `yaml:"path"`
+	SshKey      string `yaml:"sshKey"`
+	SshPassword string `yaml:"sshPassword"`
+}
+
 type Config struct {
-	Image         string    `yaml:"image"`
-	LogPath       string    `yaml:"logPath"`
-	Packages      []Package `yaml:"packages"`
-	Profiles      []Profile `yaml:"profiles"`
-	ProjectName   string    `yaml:"projectName"`
-	PlatformImage string    `yaml:"platformImage"`
+	Image          string          `yaml:"image"`
+	LogPath        string          `yaml:"logPath"`
+	Packages       []string        `yaml:"packages"`
+	CustomPackages []CustomPackage `yaml:"customPackages"`
+	Profiles       []Profile       `yaml:"profiles"`
+	ProjectName    string          `yaml:"projectName"`
+	PlatformImage  string          `yaml:"platformImage"`
 }
 
 type PackageSpec struct {
@@ -55,25 +58,26 @@ type PackageSpec struct {
 	Packages             []string
 	IsDev                bool
 	IsOnly               bool
-	CustomPackagePaths   []string
-	SSHKeyFile           string
-	SSHPasswordFile      string
+	CustomPackages       []CustomPackage
 	ImageVersion         string
 	TargetLauncher       string
 }
 
-func getCustomPackageName(pathToPackage string) string {
-	return strings.TrimSuffix(path.Base(path.Clean(pathToPackage)), path.Ext(pathToPackage))
+func getCustomPackageName(customPackage CustomPackage) string {
+	if customPackage.Id != "" {
+		return customPackage.Id
+	}
+	return strings.TrimSuffix(path.Base(path.Clean(customPackage.Path)), path.Ext(customPackage.Path))
 }
 
-func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Context, instantContainerId, privateKeyFile, password string) error {
+func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx context.Context, instantContainerId string) error {
 	gitRegex := regexp.MustCompile(`\.git`)
 	httpRegex := regexp.MustCompile("http")
 	zipRegex := regexp.MustCompile(`\.zip`)
 	tarRegex := regexp.MustCompile(`\.tar`)
 
 	const CUSTOM_PACKAGE_LOCAL_PATH = "/tmp/custom-package/"
-	customPackageName := getCustomPackageName(pathToPackage)
+	customPackageName := getCustomPackageName(customPackage)
 	customPackageTmpLocation := path.Join(CUSTOM_PACKAGE_LOCAL_PATH, customPackageName)
 	err := os.RemoveAll(CUSTOM_PACKAGE_LOCAL_PATH)
 	if err != nil {
@@ -84,14 +88,14 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 		return err
 	}
 
-	if gitRegex.MatchString(pathToPackage) {
+	if gitRegex.MatchString(customPackage.Path) {
 
-		err = util.CloneRepo(pathToPackage, customPackageTmpLocation, privateKeyFile, password)
+		err = util.CloneRepo(customPackage.Path, customPackageTmpLocation, customPackage.SshKey, customPackage.SshPassword)
 		if err != nil {
 			return err
 		}
-	} else if httpRegex.MatchString(pathToPackage) {
-		resp, err := http.Get(pathToPackage)
+	} else if httpRegex.MatchString(customPackage.Path) {
+		resp, err := http.Get(customPackage.Path)
 		if err != nil {
 			return err
 		}
@@ -101,7 +105,7 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 			return errors.Wrapf(err, "Error in downloading custom package - HTTP status code: %v", strconv.Itoa(resp.StatusCode))
 		}
 
-		if zipRegex.MatchString(pathToPackage) {
+		if zipRegex.MatchString(customPackage.Path) {
 			tmpZip, err := os.CreateTemp("", "tmp-*.zip")
 			if err != nil {
 				return err
@@ -119,7 +123,7 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 			if err != nil {
 				return err
 			}
-		} else if tarRegex.MatchString(pathToPackage) {
+		} else if tarRegex.MatchString(customPackage.Path) {
 			tmpTar, err := os.CreateTemp("", "tmp-*.tar")
 			if err != nil {
 				return err
@@ -141,7 +145,7 @@ func mountCustomPackage(pathToPackage string, cli *client.Client, ctx context.Co
 			}
 		}
 	} else {
-		err := cp.Copy(pathToPackage, customPackageTmpLocation)
+		err := cp.Copy(customPackage.Path, customPackageTmpLocation)
 		if err != nil {
 			return err
 		}
@@ -209,6 +213,26 @@ func attachStdoutToInstantOutput(cli *client.Client, ctx context.Context, instan
 	return nil
 }
 
+func getInstantCommand(packageSpec PackageSpec) []string {
+	instantCommand := []string{packageSpec.DeployCommand, "-t", "swarm"}
+
+	if packageSpec.IsDev {
+		instantCommand = append(instantCommand, "--dev")
+	}
+
+	if packageSpec.IsOnly {
+		instantCommand = append(instantCommand, "--only")
+	}
+
+	instantCommand = append(instantCommand, packageSpec.Packages...)
+
+	for _, customPackage := range packageSpec.CustomPackages {
+		instantCommand = append(instantCommand, getCustomPackageName(customPackage))
+	}
+
+	return instantCommand
+}
+
 func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -225,6 +249,7 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		return err
 	}
 	defer reader.Close()
+
 	if os.Getenv("LOG") == "true" {
 		io.Copy(os.Stdout, reader)
 	}
@@ -250,21 +275,7 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		EndpointID: "host",
 	}
 
-	instantCommand := []string{packageSpec.DeployCommand, "-t", "swarm"}
-
-	if packageSpec.IsDev {
-		instantCommand = append(instantCommand, "--dev")
-	}
-
-	if packageSpec.IsOnly {
-		instantCommand = append(instantCommand, "--only")
-	}
-
-	instantCommand = append(instantCommand, packageSpec.Packages...)
-
-	for _, customPackage := range packageSpec.CustomPackagePaths {
-		instantCommand = append(instantCommand, getCustomPackageName(customPackage))
-	}
+	instantCommand := getInstantCommand(packageSpec)
 
 	instantContainer, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:        config.Image,
@@ -281,8 +292,8 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		return err
 	}
 
-	for _, customPackagePath := range packageSpec.CustomPackagePaths {
-		err = mountCustomPackage(customPackagePath, cli, ctx, instantContainer.ID, packageSpec.SSHKeyFile, packageSpec.SSHPasswordFile)
+	for _, customPackage := range packageSpec.CustomPackages {
+		err = mountCustomPackage(customPackage, cli, ctx, instantContainer.ID)
 		if err != nil {
 			return err
 		}

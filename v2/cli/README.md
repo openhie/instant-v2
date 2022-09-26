@@ -36,3 +36,5 @@ commands:
 - Support for multiple env files
 - Support for predefined profiles to load in when performing a package action
 - Generate a new project prompt
+- Generate a new package prompt
+- Autocomplete/Autosuggestions based off the config file
