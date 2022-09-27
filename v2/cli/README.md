@@ -1,37 +1,26 @@
 # CLI v2
 
-An initialisation of the cli using cobra and viper
+An initialisation of the cli using cobra and viper with the official go sdk
 
-commands:
-- project
-  - ls
-  - -generate, -g \<name>
-  - -init, -i
-  - -up, -u
-  - -down, -d
-  - -remove, -r
-- package
-  - ls
-  - -generate, -g \<name>
-  - -init, -i \<name>
-  - -up, -u \<name>
-  - -down, -d \<name>
-  - -remove, -r \<name>
-- stack
-  - ls
-  - -generate, -g \<name>
-  - -init, -i \<name>
-  - -up, -u \<name>
-  - -down, -d \<name>
-  - -remove, -r \<name>
-- config
-  - ls
-  - -generate, -g \<name>
+## Commands
+For a full breakdown of all functionality:
+
+`cli --help`
 
 ## Build
 `go build .`
 
+## Generate autocomplete/suggestions
+Generate the completion script with:
+
+`cli completion bash|fish|powershell|zsh > /tmp/completion`
+
+Load in the completion script with:
+
+`source /tmp/completion`
+
 ## Additional Features over V1
+- Refactored structure allows for easier contribution and maintainability
 - Auto removes instant container and volume before performing a package action
 - Support for multiple env files
 - Support for predefined profiles to load in when performing a package action
