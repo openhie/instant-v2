@@ -1,7 +1,7 @@
 # Table of contents
 
 * [Overview](README.md)
-  * [package-base](overview/package-base.md)
+* [package-base](package-base.md)
 * [Getting Started](getting-started.md)
 * [Config](config.md)
 * [Banner](banner.md)
