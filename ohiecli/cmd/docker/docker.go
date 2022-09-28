@@ -57,6 +57,9 @@ var logsToSuppress = []string{
 	"Waiting",
 	"Pull complete",
 	"Cloning into '",
+	"Error response from daemon: No such container: instant-openhie",
+	"Error: No such container: instant-openhie",
+	"Error: No such volume: instant",
 }
 
 func DebugDocker() error {
@@ -252,19 +255,19 @@ func runDeployCommand(startupCommands []string) error {
 }
 
 func CleanInstantContainerAndVolume() {
-	_, err := RunCommand("docker", []string{"No such container: instant-openhie"}, []string{"stop", "instant-openhie"}...)
+	fmt.Println("\nCleaning instant container and volume...")
+
+	_, err := RunCommand("docker", []string{"Error response from daemon: No such container: instant-openhie"}, []string{"stop", "instant-openhie"}...)
 	if err != nil {
 		fmt.Println(errors.Wrap(err, "[Error] Failed to stop instant container."))
 	}
 
-	fmt.Println("\n\nRemoving instant container...")
-	_, err = RunCommand("docker", []string{"No such container: instant-openhie"}, []string{"rm", "instant-openhie"}...)
+	_, err = RunCommand("docker", []string{"Error: No such container: instant-openhie"}, []string{"rm", "instant-openhie"}...)
 	if err != nil {
 		fmt.Println(errors.Wrap(err, "[Error] Failed to remove instant container."))
 	}
 
-	fmt.Println("\n\nRemoving instant volume...")
-	_, err = RunCommand("docker", []string{"No such volume: instant"}, []string{"volume", "rm", "instant"}...)
+	_, err = RunCommand("docker", []string{"Error: No such volume: instant"}, []string{"volume", "rm", "instant"}...)
 	if err != nil {
 		fmt.Println(errors.Wrap(err, "[Error] Failed to remove instant volume."))
 	}
@@ -520,7 +523,6 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 
 // Gracefully shut down the instant container and then kill the go cli with the panic error or message passed.
 func GracefulPanic(err error, message string) {
-	CleanInstantContainerAndVolume()
 	if message != "" {
 		panic(message)
 	}
