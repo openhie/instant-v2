@@ -17,7 +17,7 @@ import (
 )
 
 func quit() {
-	docker.StopContainer()
+	docker.CleanInstantContainerAndVolume()
 	os.Exit(0)
 }
 
