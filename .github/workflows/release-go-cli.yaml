@@ -1,4 +1,4 @@
-name: Create and release go binaries for linux, windows and mac
+name: Create and release go-cli binaries for current and latest tags
 
 on:
   release:
@@ -16,13 +16,18 @@ jobs:
       with:
         go-version: 1.18
 
-    - name: Build Releases
+    - name: Build go-cli binary releases
       run:  cd ./ohiecli && ./buildreleases.sh
 
-    - name: Test binaries
-      run: cd ./ohiecli/bin && ./gocli-linux help
+    - name: Create release
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: ./ohiecli/bin/gocli-linux,./ohiecli/bin/gocli-macos,./ohiecli/bin/gocli.exe
+        tag: latest
+        commit: main
 
-    - name: Release
+    - name: Release binaries to referenced tag
       uses: softprops/action-gh-release@v1
       with:
         files: |
