@@ -26,11 +26,11 @@ interface PackagesMap {
   [packageID: string]: PackageInfo
 }
 
-type EnvironmentVars = Array<{
+type EnvironmentVar = {
   'Environment Variable': string
   'Default Value': string
   'Updated Value': string | undefined
-}>
+}
 
 function getInstantOHIEPackages(): PackagesMap {
   const packages: PackagesMap = {}
@@ -139,7 +139,7 @@ const setEnvVars = (packageInfo: PackageInfo) => {
   console.log(
     `------------------------------------------------------------\nConfig Details: ${packageInfo.metadata.name} (${packageInfo.metadata.id})\n------------------------------------------------------------`
   )
-  const envVars = [] as EnvironmentVars
+  const envVars = [] as EnvironmentVar[]
 
   for (let envVar in packageInfo.metadata.environmentVariables) {
     const defaultEnv = packageInfo.metadata.environmentVariables[envVar]
@@ -158,23 +158,6 @@ const setEnvVars = (packageInfo: PackageInfo) => {
     console.table(envVars)
   }
 }
-
-// const setEnvironmentVars = (packageInfo: PackageInfo) => {
-//   // either we put it before running the bash script or we export the env vars in a
-//   let envVarsString = ''
-//   for (let envVar in packageInfo.metadata.environmentVariables) {
-//     const defaultEnv = packageInfo.metadata.environmentVariables[envVar]
-
-//     envVarsString += `${envVar}=`
-//     if (!env[envVar] && defaultEnv) {
-//       process.env[envVar] = defaultEnv
-//       envVarsString += `${defaultEnv}`
-//     } else if (!defaultEnv) {
-//       console.error(`Environment Variable ${envVar} has no default value`)
-//     }
-//   }
-//   return envVarsString
-// }
 
 // Main script execution
 const main = async () => {
