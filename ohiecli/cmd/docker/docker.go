@@ -521,10 +521,3 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 	return pathToPackage, nil
 }
 
-// Gracefully shut down the instant container and then kill the go cli with the panic error or message passed.
-func GracefulPanic(err error, message string) {
-	if message != "" {
-		panic(message)
-	}
-	panic(err)
-}
