@@ -12,7 +12,6 @@ import (
 
 	"ohiecli/cli"
 	"ohiecli/config"
-	"ohiecli/docker"
 	"ohiecli/prompts"
 )
 
@@ -67,12 +66,12 @@ func main() {
 	if len(os.Args) > 1 {
 		err = cli.CLI()
 		if err != nil {
-			docker.GracefulPanic(err, "")
+			panic(err)
 		}
 	} else {
 		err = prompts.SelectSetup()
 		if err != nil {
-			docker.GracefulPanic(err, "")
+			panic(err)
 		}
 	}
 }

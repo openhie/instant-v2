@@ -7,7 +7,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -18,7 +17,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
-	"github.com/pkg/errors"
+	"github.com/luno/jettison/errors"
 	"golang.org/x/net/context"
 
 	"ohiecli/config"
@@ -58,6 +57,9 @@ var logsToSuppress = []string{
 	"Waiting",
 	"Pull complete",
 	"Cloning into '",
+	"Error response from daemon: No such container: instant-openhie",
+	"Error: No such container: instant-openhie",
+	"Error: No such volume: instant",
 }
 
 func DebugDocker() error {
@@ -194,6 +196,7 @@ func runDeployCommand(startupCommands []string) error {
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"--network", "host",
 	}
+	defer CleanInstantContainerAndVolume()
 
 	if config.Cfg.LogPath != "" {
 		commandSlice = append(commandSlice, fmt.Sprintf("--mount=type=bind,src=%s,dst=/tmp/logs", config.Cfg.LogPath))
@@ -209,7 +212,6 @@ func runDeployCommand(startupCommands []string) error {
 	if err != nil {
 		return err
 	}
-	defer removeInstantVolume()
 
 	fmt.Println("Adding 3rd party packages to instant volume:")
 
@@ -252,9 +254,20 @@ func runDeployCommand(startupCommands []string) error {
 	return nil
 }
 
-func removeInstantVolume() {
-	fmt.Println("\n\nRemoving instant volume...")
-	_, err := RunCommand("docker", []string{"Error: No such volume: instant"}, []string{"volume", "rm", "instant"}...)
+func CleanInstantContainerAndVolume() {
+	fmt.Println("\nCleaning instant container and volume...")
+
+	_, err := RunCommand("docker", []string{"Error response from daemon: No such container: instant-openhie"}, []string{"stop", "instant-openhie"}...)
+	if err != nil {
+		fmt.Println(errors.Wrap(err, "[Error] Failed to stop instant container."))
+	}
+
+	_, err = RunCommand("docker", []string{"Error: No such container: instant-openhie"}, []string{"rm", "instant-openhie"}...)
+	if err != nil {
+		fmt.Println(errors.Wrap(err, "[Error] Failed to remove instant container."))
+	}
+
+	_, err = RunCommand("docker", []string{"Error: No such volume: instant"}, []string{"volume", "rm", "instant"}...)
 	if err != nil {
 		fmt.Println(errors.Wrap(err, "[Error] Failed to remove instant volume."))
 	}
@@ -362,7 +375,7 @@ func mountCustomPackage(pathToPackage string) error {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != 200 {
-			return errors.Wrapf(err, "Error in downloading custom package - HTTP status code: %v", strconv.Itoa(resp.StatusCode))
+			return errors.Wrap(err, "Error in downloading custom package - HTTP status code: "+strconv.Itoa(resp.StatusCode))
 		}
 
 		if zipRegex.MatchString(pathToPackage) {
@@ -508,20 +521,3 @@ var untarPackage = func(tarContent io.ReadCloser) (pathToPackage string, err err
 	return pathToPackage, nil
 }
 
-func StopContainer() {
-	commandSlice := []string{"stop", "instant-openhie"}
-	suppressErrors := []string{"Error response from daemon: No such container: instant-openhie"}
-	_, err := RunCommand("docker", suppressErrors, commandSlice...)
-	if err != nil {
-		log.Fatalf("runCommand() failed: %v", err)
-	}
-}
-
-// Gracefully shut down the instant container and then kill the go cli with the panic error or message passed.
-func GracefulPanic(err error, message string) {
-	StopContainer()
-	if message != "" {
-		panic(message)
-	}
-	panic(err)
-}

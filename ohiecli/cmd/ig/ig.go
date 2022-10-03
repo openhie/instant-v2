@@ -17,7 +17,6 @@ import (
 	"github.com/pkg/errors"
 
 	"ohiecli/config"
-	"ohiecli/docker"
 )
 
 func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) error {
@@ -66,7 +65,7 @@ func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) 
 			var msg indexJSON
 			err := json.Unmarshal(bs, &msg)
 			if err != nil {
-				docker.GracefulPanic(err, "")
+				panic(err)
 			}
 
 			// Order mostly from: https://github.com/nmdp-bioinformatics/igloader/blob/main/igloader/igloader.py#L33
