@@ -26,11 +26,17 @@ interface PackagesMap {
   [packageID: string]: PackageInfo
 }
 
+type EnvironmentVar = {
+  'Environment Variable': string
+  'Default Value': string
+  'Updated Value': string | undefined
+}
+
 function getInstantOHIEPackages(): PackagesMap {
   const packages: PackagesMap = {}
   let metaPathRegex = 'package-metadata.json'
   let pathRegex = 'instant.json' //Keeping the instant.json logic to ensure backward compatibility
-  let paths = []
+  let paths = [] as string[]
   let nestingLevel = 0
 
   while (nestingLevel < 5) {
@@ -66,8 +72,8 @@ async function runBashScript(path: string, filename: string, args: string[]) {
   try {
     const promise = exec(cmd)
     if (promise.child) {
-      promise.child.stdout.on('data', (data) => console.log(data))
-      promise.child.stderr.on('data', (data) => console.error(data))
+      promise.child.stdout?.on('data', (data) => console.log(data))
+      promise.child.stderr?.on('data', (data) => console.error(data))
     }
     await promise
   } catch (err) {
@@ -81,8 +87,8 @@ async function runTests(path: string) {
   try {
     const promise = exec(cmd)
     if (promise.child) {
-      promise.child.stdout.on('data', (data) => console.log(data))
-      promise.child.stderr.on('data', (data) => console.error(data))
+      promise.child.stdout?.on('data', (data) => console.log(data))
+      promise.child.stderr?.on('data', (data) => console.error(data))
     }
     await promise
   } catch (err) {
@@ -108,18 +114,18 @@ const orderPackageIds = (allPackages, chosenPackageIds) => {
       throw Error(`Package ${id} does not exist or the metadata is invalid`)
     }
 
-    const orderedIds = []
+    const orderedIds = [] as string[]
     const currentStackClone = currentStack.slice()
 
     allPackages[id].metadata.dependencies.forEach((dependency) => {
-      const ids = resolveDeps(dependency, currentStackClone)
+      const ids: string[] = resolveDeps(dependency, currentStackClone)
       orderedIds.push(...ids)
     })
     orderedIds.push(id)
     return orderedIds
   }
 
-  let orderedPackageIds = []
+  let orderedPackageIds = [] as string[]
   chosenPackageIds.forEach((packageId) => {
     let packageIds = orderedPackageIds.concat(resolveDeps(packageId, []))
     orderedPackageIds = packageIds.filter(
@@ -129,18 +135,25 @@ const orderPackageIds = (allPackages, chosenPackageIds) => {
   return orderedPackageIds
 }
 
-const logPackageDetails = (packageInfo: PackageInfo) => {
+const setEnvVars = (packageInfo: PackageInfo) => {
   console.log(
     `------------------------------------------------------------\nConfig Details: ${packageInfo.metadata.name} (${packageInfo.metadata.id})\n------------------------------------------------------------`
   )
-  const envVars = []
+  const envVars = [] as EnvironmentVar[]
+
   for (let envVar in packageInfo.metadata.environmentVariables) {
+    const defaultEnv = packageInfo.metadata.environmentVariables[envVar]
+    if (env[envVar] === undefined || env[envVar] === null) {
+      process.env[envVar] = defaultEnv
+    }
+
     envVars.push({
       'Environment Variable': envVar,
-      'Default Value': packageInfo.metadata.environmentVariables[envVar],
+      'Default Value': defaultEnv,
       'Updated Value': env[envVar]
     })
   }
+
   if (envVars?.length > 0) {
     console.table(envVars)
   }
@@ -233,7 +246,7 @@ const main = async () => {
     switch (mainOptions.target) {
       case 'docker':
         for (const id of chosenPackageIds) {
-          logPackageDetails(allPackages[id])
+          setEnvVars(allPackages[id])
           await runBashScript(`${allPackages[id].path}docker/`, 'compose.sh', [
             main.command
           ])
@@ -242,7 +255,7 @@ const main = async () => {
       case 'k8s':
       case 'kubernetes':
         for (const id of chosenPackageIds) {
-          logPackageDetails(allPackages[id])
+          setEnvVars(allPackages[id])
           await runBashScript(
             `${allPackages[id].path}kubernetes/main/`,
             'k8s.sh',
@@ -252,7 +265,7 @@ const main = async () => {
         break
       case 'swarm':
         for (const id of chosenPackageIds) {
-          logPackageDetails(allPackages[id])
+          setEnvVars(allPackages[id])
           await runBashScript(`${allPackages[id].path}/`, 'swarm.sh', [
             main.command,
             mainOptions.mode
