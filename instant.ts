@@ -71,9 +71,9 @@ async function runBashScript(path: string, filename: string, args: string[]) {
 
   try {
     const promise = exec(cmd)
-    if (promise.child && promise.child.stdout && promise.child.stderr) {
-      promise.child.stdout.on('data', (data) => console.log(data))
-      promise.child.stderr.on('data', (data) => console.error(data))
+    if (promise.child) {
+      promise.child.stdout?.on('data', (data) => console.log(data))
+      promise.child.stderr?.on('data', (data) => console.error(data))
     }
     await promise
   } catch (err) {
@@ -86,9 +86,9 @@ async function runTests(path: string) {
 
   try {
     const promise = exec(cmd)
-    if (promise.child && promise.child.stdout && promise.child.stderr) {
-      promise.child.stdout.on('data', (data) => console.log(data))
-      promise.child.stderr.on('data', (data) => console.error(data))
+    if (promise.child) {
+      promise.child.stdout?.on('data', (data) => console.log(data))
+      promise.child.stderr?.on('data', (data) => console.error(data))
     }
     await promise
   } catch (err) {
