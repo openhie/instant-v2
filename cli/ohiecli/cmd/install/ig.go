@@ -1,4 +1,4 @@
-package ig
+package install
 
 import (
 	"archive/tar"
@@ -15,12 +15,11 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
-
-	"ohiecli/old/config"
 )
 
-func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) error {
-	trimmed := strings.Replace(url_entry, "index.html", "", -1)
+// TODO: refactor this file
+func loadIGpackage(urlEntry string, fhirServer string, params *params) error {
+	trimmed := strings.Replace(urlEntry, "index.html", "", -1)
 	u, err := url.Parse(trimmed)
 	if err != nil {
 		return errors.Wrap(err, "Invalid url")
@@ -78,7 +77,7 @@ func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) 
 			for _, y := range stuff {
 				for _, x := range msg.Files {
 					if x.ResourceType == y {
-						err = getpushJSON(fhir_server, url_entry, x.Filename, x.ResourceType, false, x.Id, params)
+						err = getpushJSON(fhirServer, urlEntry, x.Filename, x.ResourceType, false, x.Id, params)
 						if err != nil {
 							return err
 						}
@@ -93,7 +92,7 @@ func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) 
 			for _, b := range stuff2 {
 				for _, a := range msg.Files {
 					if a.ResourceType == b {
-						err = getpushJSON(fhir_server, url_entry, a.Filename, a.ResourceType, false, a.Id, params)
+						err = getpushJSON(fhirServer, urlEntry, a.Filename, a.ResourceType, false, a.Id, params)
 						if err != nil {
 							return err
 						}
@@ -104,7 +103,7 @@ func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) 
 			color.Blue("2nd pass: Load resources again (except ig-r4.json or bundles) to address customized dependencies in IGs.")
 			for _, dog := range msg.Files {
 				if dog.ResourceType != "Bundle" && dog.ResourceType != "ImplementationGuide" {
-					err = getpushJSON(fhir_server, url_entry, dog.Filename, dog.ResourceType, false, dog.Id, params)
+					err = getpushJSON(fhirServer, urlEntry, dog.Filename, dog.ResourceType, false, dog.Id, params)
 					if err != nil {
 						return err
 					}
@@ -114,7 +113,7 @@ func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) 
 			color.Blue("3rd pass - Explicit Bundles (not Structure Definitions)")
 			for _, cat := range msg.Files {
 				if cat.ResourceType == "Bundle" && cat.Type == "transaction" {
-					err = getpushJSON(fhir_server, url_entry, cat.Filename, cat.ResourceType, true, cat.Id, params)
+					err = getpushJSON(fhirServer, urlEntry, cat.Filename, cat.ResourceType, true, cat.Id, params)
 					if err != nil {
 						return err
 					}
@@ -124,7 +123,7 @@ func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) 
 			color.Blue("3rd pass - Implementation Guide")
 			for _, mouse := range msg.Files {
 				if mouse.Filename != "ig-r4.json" && mouse.ResourceType == "ImplementationGuide" {
-					err = getpushJSON(fhir_server, url_entry, mouse.Filename, mouse.ResourceType, false, mouse.Id, params)
+					err = getpushJSON(fhirServer, urlEntry, mouse.Filename, mouse.ResourceType, false, mouse.Id, params)
 					if err != nil {
 						return err
 					}
@@ -138,7 +137,7 @@ func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) 
 	return nil
 }
 
-func getpushJSON(fhir_server string, ig string, filename string, resourcetype string, bundle bool, id string, params *config.Params) error {
+func getpushJSON(fhirServer string, ig string, filename string, resourcetype string, bundle bool, id string, params *params) error {
 	trimmed := strings.Replace(ig, "index.html", "", -1)
 	u, err := url.Parse(trimmed)
 	if err != nil {
@@ -153,7 +152,7 @@ func getpushJSON(fhir_server string, ig string, filename string, resourcetype st
 		return err
 	}
 
-	p, err := url.Parse(fhir_server)
+	p, err := url.Parse(fhirServer)
 	if err != nil {
 		return errors.Wrap(err, "invalid url")
 	}

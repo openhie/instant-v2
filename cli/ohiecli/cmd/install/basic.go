@@ -1,8 +1,6 @@
 package install
 
 import (
-	"ohiecli/old/config"
-	"ohiecli/old/ig"
 	"ohiecli/util"
 
 	"github.com/spf13/cobra"
@@ -13,7 +11,7 @@ func InitBasicCommand() *cobra.Command {
 		Use:   "basic",
 		Short: "Install with basic auth",
 		Run: func(cmd *cobra.Command, args []string) {
-			params := config.Params{}
+			params := params{}
 			params.TypeAuth = "Basic"
 
 			basicUser, err := cmd.Flags().GetString("basic-user")
@@ -28,7 +26,7 @@ func InitBasicCommand() *cobra.Command {
 			fhirServer, err := cmd.Flags().GetString("fhir-server")
 			util.LogError(err)
 
-			err = ig.LoadIGpackage(urlEntry, fhirServer, &params)
+			err = loadIGpackage(urlEntry, fhirServer, &params)
 			util.LogError(err)
 		},
 	}

@@ -1,8 +1,6 @@
 package install
 
 import (
-	"ohiecli/old/config"
-	"ohiecli/old/ig"
 	"ohiecli/util"
 
 	"github.com/spf13/cobra"
@@ -13,7 +11,7 @@ func InitNoneCommand() *cobra.Command {
 		Use:   "none",
 		Short: "Install with no auth",
 		Run: func(cmd *cobra.Command, args []string) {
-			params := config.Params{}
+			params := params{}
 			params.TypeAuth = "None"
 
 			urlEntry, err := cmd.Flags().GetString("url-entry")
@@ -21,7 +19,7 @@ func InitNoneCommand() *cobra.Command {
 			fhirServer, err := cmd.Flags().GetString("fhir-server")
 			util.LogError(err)
 
-			err = ig.LoadIGpackage(urlEntry, fhirServer, &params)
+			err = loadIGpackage(urlEntry, fhirServer, &params)
 			util.LogError(err)
 		},
 	}

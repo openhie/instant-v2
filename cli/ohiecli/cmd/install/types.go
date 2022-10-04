@@ -1,4 +1,12 @@
-package ig
+package install
+
+type params struct {
+	// none, token, basic, custom
+	TypeAuth  string
+	Token     string
+	BasicUser string
+	BasicPass string
+}
 
 type indexJSON struct {
 	IndexVersion int32      `json:"index-version"`
