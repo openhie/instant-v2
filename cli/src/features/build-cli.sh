@@ -1,13 +1,13 @@
 #!/bin/bash
 
-cp -r ../../ohiecli ../../cli-tmp
-cp ./features/test-conf/* ../../cli-tmp/cmd
+cp -r ../../cli ../../cli-tmp
+cp ./features/test-conf/* ../../cli-tmp/src
 
-cd ../../cli-tmp/cmd || exit
+cd ../../cli-tmp/src || exit
 
-GOOS=darwin GOARCH=amd64 go build -o ../../ohiecli/cmd/features/test-platform-macos
-GOOS=linux GOARCH=amd64 go build -o ../../ohiecli/cmd/features/test-platform-linux
-GOOS=windows GOARCH=amd64 go build -o ../../ohiecli/cmd/features/test-platform.exe
+GOOS=darwin GOARCH=amd64 go build -o ../../cli/src/features/test-platform-macos
+GOOS=linux GOARCH=amd64 go build -o ../../cli/src/features/test-platform-linux
+GOOS=windows GOARCH=amd64 go build -o ../../cli/src/features/test-platform.exe
 go clean
 
 cd ../.. || exit

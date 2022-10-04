@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"cli/core"
-	"cli/util"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -14,14 +14,24 @@ func PackageInitCommand() *cobra.Command {
 		Short:   "Initialize a package with relevant configs, volumes and setup",
 		Run: func(cmd *cobra.Command, args []string) {
 			config, err := getConfigFromParams(cmd)
-			util.PanicError(err)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			packageSpec, err := getPackageSpecFromParams(cmd, config)
-			util.PanicError(err)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
-			util.PanicError(err)
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			err = core.LaunchPackage(*packageSpec, *config)
-			util.PanicError(err)
+			if err != nil {
+				log.Fatal(err)
+			}
 		},
 	}
 

@@ -54,19 +54,25 @@ func setPackageActionFlags(cmd *cobra.Command) {
 	})
 }
 
+// TODO: This function MUST be unit-tested
 func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	var config core.Config
 	configFile, err := cmd.Flags().GetString("config")
 	if err != nil {
 		return nil, err
 	}
-	configViper := viperUtil.GetConfigViper(configFile)
+
+	configViper, err := viperUtil.GetConfigViper(configFile)
+	if err != nil {
+		return nil, err
+	}
 
 	var decoderOptions viper.DecoderConfigOption = func(dc *mapstructure.DecoderConfig) {
 		dc.DecodeHook = func(k1, k2 reflect.Kind, i interface{}) (interface{}, error) {
 			if k1 == reflect.Map {
 				ip := i.(map[string]interface{})
 
+				// test this logic
 				if _, ok := ip["packages"]; !ok {
 					return ip["id"], nil
 				}
@@ -132,7 +138,11 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 	if err != nil {
 		return nil, err
 	}
-	envViper := viperUtil.GetEnvironmentVariableViper(envFiles)
+
+	envViper, err := viperUtil.GetEnvironmentVariableViper(envFiles)
+	if err != nil {
+		return nil, err
+	}
 	envVariables := viperUtil.GetEnvVariableString(envViper)
 
 	sshKey, err := cmd.Flags().GetString("ssh-key")
@@ -179,7 +189,10 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 		packageSpec.Packages = append(profile.Packages, packageSpec.Packages...)
 	}
 	if len(profile.EnvFiles) > 0 {
-		envViper := viperUtil.GetEnvironmentVariableViper(profile.EnvFiles)
+		envViper, err := viperUtil.GetEnvironmentVariableViper(profile.EnvFiles)
+		if err != nil {
+			return nil, err
+		}
 		envVariables := viperUtil.GetEnvVariableString(envViper)
 		packageSpec.EnvironmentVariables = append(envVariables, packageSpec.EnvironmentVariables...)
 	}

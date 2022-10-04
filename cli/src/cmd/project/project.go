@@ -16,7 +16,11 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	configViper := viperUtil.GetConfigViper(configFile)
+	configViper, err := viperUtil.GetConfigViper(configFile)
+	if err != nil {
+		return nil, err
+	}
+
 	err = configViper.Unmarshal(&config)
 	if err != nil {
 		return nil, err
@@ -41,7 +45,11 @@ func getPackageSpecFromParams(cmd *cobra.Command) (*core.PackageSpec, error) {
 	if err != nil {
 		return nil, err
 	}
-	envViper := viperUtil.GetEnvironmentVariableViper(envFiles)
+
+	envViper, err := viperUtil.GetEnvironmentVariableViper(envFiles)
+	if err != nil {
+		return nil, err
+	}
 	envVariables := viperUtil.GetEnvVariableString(envViper)
 
 	packageSpec = core.PackageSpec{
@@ -78,7 +86,10 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 		packageSpec.Packages = append(profile.Packages, packageSpec.Packages...)
 	}
 	if len(profile.EnvFiles) > 0 {
-		envViper := viperUtil.GetEnvironmentVariableViper(profile.EnvFiles)
+		envViper, err := viperUtil.GetEnvironmentVariableViper(profile.EnvFiles)
+		if err != nil {
+			return nil, err
+		}
 		envVariables := viperUtil.GetEnvVariableString(envViper)
 		packageSpec.EnvironmentVariables = append(envVariables, packageSpec.EnvironmentVariables...)
 	}
@@ -98,7 +109,7 @@ func getProjectAction(cmd *cobra.Command) (string, error) {
 	case cmd.Flag("remove").Changed:
 		action = "destroy"
 	default:
-		return action, errors.New("Invalid action entered")
+		return action, errors.New("invalid action entered")
 	}
 	return action, nil
 }
