@@ -29,6 +29,7 @@ func LogError(err error) {
 	}
 }
 
+// TODO: this should panic
 func PanicError(err error) {
 	if err != nil {
 		fmt.Println(err)

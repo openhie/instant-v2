@@ -2,12 +2,15 @@ package pkg
 
 import (
 	"log"
+	"reflect"
 
 	viperUtil "ohiecli/cmd/util"
 	"ohiecli/core"
 	"ohiecli/util"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func setPackageActionFlags(cmd *cobra.Command) {
@@ -58,7 +61,22 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 		return nil, err
 	}
 	configViper := viperUtil.GetConfigViper(configFile)
-	err = configViper.Unmarshal(&config)
+
+	var decoderOptions viper.DecoderConfigOption = func(dc *mapstructure.DecoderConfig) {
+		dc.DecodeHook = func(k1, k2 reflect.Kind, i interface{}) (interface{}, error) {
+			if k1 == reflect.Map {
+				ip := i.(map[string]interface{})
+
+				if _, ok := ip["packages"]; !ok {
+					return ip["id"], nil
+				}
+			}
+
+			return i, nil
+		}
+	}
+
+	err = configViper.Unmarshal(&config, decoderOptions)
 	if err != nil {
 		return nil, err
 	}
