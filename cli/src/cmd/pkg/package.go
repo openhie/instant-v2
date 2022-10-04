@@ -4,9 +4,9 @@ import (
 	"log"
 	"reflect"
 
-	viperUtil "ohiecli/cmd/util"
-	"ohiecli/core"
-	"ohiecli/util"
+	viperUtil "cli/cmd/util"
+	"cli/core"
+	"cli/util"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"

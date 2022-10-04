@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"cli/util"
+
 	"github.com/iancoleman/strcase"
 	"github.com/manifoldco/promptui"
-	"ohiecli/util"
 )
 
 type GenerateProjectPromptResponse struct {

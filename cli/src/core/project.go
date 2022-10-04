@@ -3,7 +3,7 @@ package core
 import (
 	"io/ioutil"
 
-	"ohiecli/util"
+	"cli/util"
 
 	"gopkg.in/yaml.v2"
 )

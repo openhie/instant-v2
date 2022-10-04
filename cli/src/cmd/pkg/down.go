@@ -1,8 +1,8 @@
 package pkg
 
 import (
-	"ohiecli/core"
-	"ohiecli/util"
+	"cli/core"
+	"cli/util"
 
 	"github.com/spf13/cobra"
 )

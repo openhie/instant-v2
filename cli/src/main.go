@@ -3,8 +3,8 @@ package main
 import (
 	"embed"
 
-	"ohiecli/cmd"
-	"ohiecli/core"
+	"cli/cmd"
+	"cli/core"
 )
 
 //go:embed template/*

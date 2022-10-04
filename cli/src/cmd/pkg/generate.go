@@ -5,10 +5,11 @@ import (
 	"path"
 	"path/filepath"
 
+	"cli/core"
+	prompt "cli/prompt/package"
+	"cli/util"
+
 	"github.com/spf13/cobra"
-	"ohiecli/core"
-	prompt "ohiecli/prompt/package"
-	"ohiecli/util"
 )
 
 func PackageGenerateCommand() *cobra.Command {

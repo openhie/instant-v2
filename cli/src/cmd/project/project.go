@@ -3,9 +3,9 @@ package project
 import (
 	"errors"
 
-	viperUtil "ohiecli/cmd/util"
-	"ohiecli/core"
-	"ohiecli/util"
+	viperUtil "cli/cmd/util"
+	"cli/core"
+	"cli/util"
 
 	"github.com/spf13/cobra"
 )

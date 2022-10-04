@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"ohiecli/cmd/config"
-	"ohiecli/cmd/pkg"
-	"ohiecli/cmd/project"
-	"ohiecli/cmd/stack"
+	"cli/cmd/config"
+	"cli/cmd/pkg"
+	"cli/cmd/project"
+	"cli/cmd/stack"
 
 	"github.com/spf13/cobra"
 )

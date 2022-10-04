@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"ohiecli/cmd/commands"
+	"cli/cmd/commands"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

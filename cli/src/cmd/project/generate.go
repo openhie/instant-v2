@@ -1,8 +1,8 @@
 package project
 
 import (
-	"ohiecli/core"
-	prompt "ohiecli/prompt/project"
+	"cli/core"
+	prompt "cli/prompt/project"
 
 	"github.com/spf13/cobra"
 )
