@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"github.com/luno/jettison/errors"
 	"github.com/manifoldco/promptui"
 )
 
@@ -28,7 +29,7 @@ func GeneratePackagePrompt() (*GeneratePackagePromptResponse, error) {
 	}
 	Id, err := promptId.Run()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	promptName := promptui.Prompt{
@@ -37,7 +38,7 @@ func GeneratePackagePrompt() (*GeneratePackagePromptResponse, error) {
 	}
 	Name, err := promptName.Run()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	promptDescription := promptui.Prompt{
@@ -46,7 +47,7 @@ func GeneratePackagePrompt() (*GeneratePackagePromptResponse, error) {
 	}
 	Description, err := promptDescription.Run()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	promptStack := promptui.Prompt{
@@ -55,7 +56,7 @@ func GeneratePackagePrompt() (*GeneratePackagePromptResponse, error) {
 	}
 	Stack, err := promptStack.Run()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	promptType := promptui.Select{
@@ -64,7 +65,7 @@ func GeneratePackagePrompt() (*GeneratePackagePromptResponse, error) {
 	}
 	index, Type, err := promptType.Run()
 	if err != nil || index == -1 {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	promptDev := promptui.Select{
@@ -73,7 +74,7 @@ func GeneratePackagePrompt() (*GeneratePackagePromptResponse, error) {
 	}
 	index, Dev, err := promptDev.Run()
 	if err != nil || index == -1 {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	var IncludeDevFile bool

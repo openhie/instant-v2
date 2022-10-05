@@ -1,13 +1,14 @@
 package pkg
 
 import (
-	"log"
+	"context"
 	"reflect"
 
 	viperUtil "cli/cmd/util"
 	"cli/core"
-	"cli/util"
 
+	"github.com/luno/jettison/errors"
+	"github.com/luno/jettison/log"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -26,30 +27,35 @@ func setPackageActionFlags(cmd *cobra.Command) {
 	cmd.RegisterFlagCompletionFunc("name", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := getConfigFromParams(cmd)
 		if err != nil {
-			log.Print(err)
+			log.Error(context.Background(), err)
 		}
+
 		return config.Packages, cobra.ShellCompDirectiveDefault
 	})
 	cmd.RegisterFlagCompletionFunc("profile", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := getConfigFromParams(cmd)
 		if err != nil {
-			log.Print(err)
+			log.Error(context.Background(), err)
 		}
+
 		var profileNames []string
 		for _, p := range config.Profiles {
 			profileNames = append(profileNames, p.Name)
 		}
+
 		return profileNames, cobra.ShellCompDirectiveDefault
 	})
 	cmd.RegisterFlagCompletionFunc("custom-path", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := getConfigFromParams(cmd)
 		if err != nil {
-			log.Print(err)
+			log.Error(context.Background(), err)
 		}
+
 		var customPackages []string
 		for _, c := range config.CustomPackages {
 			customPackages = append(customPackages, c.Id)
 		}
+
 		return customPackages, cobra.ShellCompDirectiveDefault
 	})
 }
@@ -59,12 +65,12 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	var config core.Config
 	configFile, err := cmd.Flags().GetString("config")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	configViper, err := viperUtil.GetConfigViper(configFile)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	var decoderOptions viper.DecoderConfigOption = func(dc *mapstructure.DecoderConfig) {
@@ -84,8 +90,9 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 
 	err = configViper.Unmarshal(&config, decoderOptions)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
+
 	return &config, nil
 }
 
@@ -119,24 +126,24 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 
 	packageNames, err := cmd.Flags().GetStringSlice("name")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 	customPackagePaths, err := cmd.Flags().GetStringSlice("custom-path")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 	isDev, err := cmd.Flags().GetBool("dev")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 	isOnly, err := cmd.Flags().GetBool("only")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	envFiles, err := cmd.Flags().GetStringSlice("env-file")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	envViper, err := viperUtil.GetEnvironmentVariableViper(envFiles)
@@ -146,10 +153,14 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 	envVariables := viperUtil.GetEnvVariableString(envViper)
 
 	sshKey, err := cmd.Flags().GetString("ssh-key")
-	util.PanicError(err)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
 
 	sshPassword, err := cmd.Flags().GetString("ssh-password")
-	util.PanicError(err)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
 
 	customPackages := getCustomPackages(config, customPackagePaths, sshKey, sshPassword)
 
@@ -169,9 +180,9 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 	profile := core.Profile{}
 	profileName, err := cmd.Flags().GetString("profile")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
-	util.LogError(err)
+
 	for _, p := range config.Profiles {
 		if p.Name == profileName {
 			profile = p

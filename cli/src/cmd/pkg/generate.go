@@ -1,14 +1,15 @@
 package pkg
 
 import (
+	"context"
 	"os"
 	"path"
 	"path/filepath"
 
 	"cli/core"
 	prompt "cli/prompt/package"
-	"cli/util"
 
+	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 )
 
@@ -18,17 +19,28 @@ func PackageGenerateCommand() *cobra.Command {
 		Aliases: []string{"g"},
 		Short:   "Generate a new package",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
 
 			ex, err := os.Executable()
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
+
 			pwd := filepath.Dir(ex)
 
 			resp, err := prompt.GeneratePackagePrompt()
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
 
 			packagePath := path.Join(pwd, resp.Id)
 			err = os.Mkdir(packagePath, os.ModePerm)
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
 
 			generatePackageSpec := core.GeneratePackageSpec{
 				Id:             resp.Id,
@@ -39,7 +51,10 @@ func PackageGenerateCommand() *cobra.Command {
 				IncludeDevFile: resp.IncludeDevFile,
 			}
 			err = core.GeneratePackage(packagePath, generatePackageSpec)
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
 		},
 	}
 

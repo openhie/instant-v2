@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"os"
+	"context"
 
 	"cli/cmd/commands"
 
+	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,7 +27,8 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		log.Error(context.Background(), err)
+		panic(err)
 	}
 }
 

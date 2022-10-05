@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/luno/jettison/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -24,13 +25,6 @@ func Log(message string) {
 }
 
 func LogError(err error) {
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-// TODO: this should panic
-func PanicError(err error) {
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -52,7 +46,7 @@ func GetFlagOrDefaultString(cmd *cobra.Command, flagName string) string {
 func ReadLines(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 	defer file.Close()
 
@@ -61,13 +55,18 @@ func ReadLines(path string) ([]string, error) {
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
-	return lines, scanner.Err()
+
+	if err = scanner.Err(); err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	return lines, nil
 }
 
 func getPublicKeys(privateKeyFile string, password string) (*ssh.PublicKeys, error) {
 	_, err := os.Stat(privateKeyFile)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	// Try to resolve password if a file path is provided as the password param
@@ -82,7 +81,7 @@ func getPublicKeys(privateKeyFile string, password string) (*ssh.PublicKeys, err
 	// Clone the given repository to the given directory
 	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, password)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	return publicKeys, nil
@@ -99,8 +98,9 @@ func CloneRepo(url, dest, sshKeyPath, sshPassword string) error {
 
 	_, err = git.PlainClone(dest, false, cloneOptions)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
+
 	return nil
 }
 
@@ -108,38 +108,39 @@ func unzipFile(f *zip.File, destination string) error {
 	// Check if file paths are not vulnerable to Zip Slip
 	filePath := filepath.Join(destination, f.Name)
 	if !strings.HasPrefix(filePath, filepath.Clean(destination)+string(os.PathSeparator)) {
-		return fmt.Errorf("invalid file path: %s", filePath)
+		return errors.Wrap(errors.New("invalid file path: "+filePath), "")
 	}
 
 	// Create directory tree
 	if f.FileInfo().IsDir() {
 		if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 		return nil
 	}
 
 	if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	// Create a destination file for unzipped content
 	destinationFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	defer destinationFile.Close()
 
 	// Unzip the content of a file and copy it to the destination file
 	zippedFile, err := f.Open()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	defer zippedFile.Close()
 
 	if _, err := io.Copy(destinationFile, zippedFile); err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
+
 	return nil
 }
 
@@ -147,14 +148,14 @@ func UnzipSource(source, destination string) error {
 	// Open the zip file
 	reader, err := zip.OpenReader(source)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	defer reader.Close()
 
 	// Get the absolute destination path
 	destination, err = filepath.Abs(destination)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	// Iterate over zip files inside the archive and unzip each of them
@@ -171,12 +172,12 @@ func UnzipSource(source, destination string) error {
 func UntarSource(source, destination string) error {
 	file, err := os.Open(source)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	gzr, err := gzip.NewReader(file)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	defer gzr.Close()
 
@@ -186,12 +187,11 @@ func UntarSource(source, destination string) error {
 		header, err := tr.Next()
 
 		switch {
-
 		case err == io.EOF:
 			return nil
 
 		case err != nil:
-			return err
+			return errors.Wrap(err, "")
 
 		case header == nil:
 			continue
@@ -204,18 +204,18 @@ func UntarSource(source, destination string) error {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
 				if err := os.MkdirAll(target, 0755); err != nil {
-					return err
+					return errors.Wrap(err, "")
 				}
 			}
 
 		case tar.TypeReg:
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
 
 			if _, err := io.Copy(f, tr); err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
 
 			f.Close()
@@ -229,22 +229,22 @@ func TarSource(path string) (io.Reader, error) {
 
 	ok := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 
 		header, err := tar.FileInfoHeader(fi, fi.Name())
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 		header.Name = strings.TrimPrefix(strings.Replace(file, path, "", -1), string(filepath.Separator))
 		err = tw.WriteHeader(header)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 
 		f, err := os.Open(file)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 
 		if fi.IsDir() {
@@ -253,23 +253,26 @@ func TarSource(path string) (io.Reader, error) {
 
 		_, err = io.Copy(tw, f)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 
 		err = f.Close()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
+
 		return nil
 	})
 
 	if ok != nil {
 		return nil, ok
 	}
-	ok = tw.Close()
-	if ok != nil {
-		return nil, ok
+
+	err := tw.Close()
+	if err != nil {
+		return nil, errors.Wrap(err, "")
 	}
+
 	return bufio.NewReader(&buf), nil
 }
 

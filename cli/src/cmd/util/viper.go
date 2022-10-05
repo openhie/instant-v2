@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/luno/jettison/errors"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -17,7 +16,10 @@ func GetConfigViper(configFile string) (*viper.Viper, error) {
 		configViper.SetConfigFile(configFile)
 	} else {
 		wd, err := os.Getwd()
-		cobra.CheckErr(err)
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
 		configViper.AddConfigPath(wd)
 		configViper.SetConfigType("yaml")
 		configViper.SetConfigName("config")
@@ -57,7 +59,9 @@ func GetEnvironmentVariableViper(envFiles []string) (*viper.Viper, error) {
 		}
 	} else {
 		wd, err := os.Getwd()
-		cobra.CheckErr(err)
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
 
 		envVarViper.AddConfigPath(wd)
 		envVarViper.SetConfigType("env")
@@ -83,5 +87,6 @@ func GetEnvVariableString(envViper *viper.Viper) []string {
 	for key, element := range allEnvVars {
 		envVariables = append(envVariables, fmt.Sprintf("%v=%v", strings.ToUpper(key), element))
 	}
+	
 	return envVariables
 }

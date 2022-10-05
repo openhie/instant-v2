@@ -2,8 +2,9 @@ package pkg
 
 import (
 	"cli/core"
-	"log"
+	"context"
 
+	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 )
 
@@ -15,22 +16,26 @@ func PackageInitCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			config, err := getConfigFromParams(cmd)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(context.Background(), err)
+				panic(err)
 			}
 
 			packageSpec, err := getPackageSpecFromParams(cmd, config)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(context.Background(), err)
+				panic(err)
 			}
 
 			packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(context.Background(), err)
+				panic(err)
 			}
 
 			err = core.LaunchPackage(*packageSpec, *config)
 			if err != nil {
-				log.Fatal(err)
+				log.Error(context.Background(), err)
+				panic(err)
 			}
 		},
 	}

@@ -22,8 +22,9 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/luno/jettison/errors"
+	"github.com/luno/jettison/log"
 	cp "github.com/otiai10/copy"
-	"github.com/pkg/errors"
 )
 
 var TemplateFs embed.FS
@@ -82,57 +83,60 @@ func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx con
 	customPackageTmpLocation := path.Join(CUSTOM_PACKAGE_LOCAL_PATH, customPackageName)
 	err := os.RemoveAll(CUSTOM_PACKAGE_LOCAL_PATH)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	err = os.MkdirAll(customPackageTmpLocation, os.ModePerm)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	if gitRegex.MatchString(customPackage.Path) {
-
 		err = util.CloneRepo(customPackage.Path, customPackageTmpLocation, customPackage.SshKey, customPackage.SshPassword)
 		if err != nil {
 			return err
 		}
+
 	} else if httpRegex.MatchString(customPackage.Path) {
 		resp, err := http.Get(customPackage.Path)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != 200 {
-			return errors.Wrapf(err, "Error in downloading custom package - HTTP status code: %v", strconv.Itoa(resp.StatusCode))
+			return errors.Wrap(err, "Error in downloading custom package - HTTP status code: "+strconv.Itoa(resp.StatusCode))
 		}
 
 		if zipRegex.MatchString(customPackage.Path) {
 			tmpZip, err := os.CreateTemp("", "tmp-*.zip")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
 
 			_, err = io.Copy(tmpZip, resp.Body)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
+
 			err = util.UnzipSource(tmpZip.Name(), customPackageTmpLocation)
 			if err != nil {
 				return err
 			}
+
 			err = os.Remove(tmpZip.Name())
 			if err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
+
 		} else if tarRegex.MatchString(customPackage.Path) {
 			tmpTar, err := os.CreateTemp("", "tmp-*.tar")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
 
 			_, err = io.Copy(tmpTar, resp.Body)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "")
 			}
 
 			err = util.UntarSource(tmpTar.Name(), customPackageTmpLocation)
@@ -148,7 +152,7 @@ func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx con
 	} else {
 		err := cp.Copy(customPackage.Path, customPackageTmpLocation)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "")
 		}
 	}
 
@@ -158,44 +162,56 @@ func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx con
 	}
 	err = cli.CopyToContainer(ctx, instantContainerId, "/instant/", customPackageReader, types.CopyToContainerOptions{})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	err = os.RemoveAll(CUSTOM_PACKAGE_LOCAL_PATH)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	return nil
 }
 
-func removeStaleInstantContainer(cli *client.Client, ctx context.Context) {
+func RemoveStaleInstantContainer(cli *client.Client, ctx context.Context) {
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
-	util.LogError(err)
+	if err != nil {
+		log.Error(ctx, err)
+	}
 
 	for _, _container := range containers {
 		for _, name := range _container.Names {
 			if name == "/instant-openhie" {
 				if _container.State == "running" {
 					err = cli.ContainerStop(ctx, _container.ID, nil)
-					util.PanicError(err)
+					if err != nil {
+						log.Error(ctx, err)
+					}
 				}
 				err = cli.ContainerRemove(ctx, _container.ID, types.ContainerRemoveOptions{})
-				util.LogError(err)
+				if err != nil {
+					log.Error(ctx, err)
+				}
+
 				break
 			}
 		}
 	}
 }
 
-func removeStaleInstantVolume(cli *client.Client, ctx context.Context) {
+func RemoveStaleInstantVolume(cli *client.Client, ctx context.Context) {
 	volumes, err := cli.VolumeList(ctx, filters.Args{})
-	util.LogError(err)
+	if err != nil {
+		log.Error(ctx, err)
+	}
 
 	for _, volume := range volumes.Volumes {
 		if volume.Name == "instant" {
 			err = cli.VolumeRemove(ctx, volume.Name, false)
-			util.LogError(err)
+			if err != nil {
+				log.Error(ctx, err)
+			}
+
 			break
 		}
 	}
@@ -212,6 +228,7 @@ func attachUntilRemoved(cli *client.Client, ctx context.Context, instantContaine
 	go func() {
 		_, err = stdcopy.StdCopy(os.Stdout, os.Stdout, attachResponse.Reader)
 		if err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+			log.Error(ctx, err)
 			panic(err)
 		}
 	}()
@@ -221,7 +238,7 @@ func attachUntilRemoved(cli *client.Client, ctx context.Context, instantContaine
 	case <-successC:
 		return nil
 	case err := <-errC:
-		return err
+		return errors.Wrap(err, "")
 	}
 }
 
@@ -250,15 +267,15 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	defer cancel()
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
-	removeStaleInstantContainer(cli, ctx)
-	removeStaleInstantVolume(cli, ctx)
+	RemoveStaleInstantContainer(cli, ctx)
+	RemoveStaleInstantVolume(cli, ctx)
 
 	reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	defer reader.Close()
 
@@ -302,7 +319,7 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		AutoRemove:  true,
 	}, &network.NetworkingConfig{EndpointsConfig: endpointSettings}, nil, "instant-openhie")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	for _, customPackage := range packageSpec.CustomPackages {
@@ -312,11 +329,9 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		}
 	}
 
-	defer removeStaleInstantVolume(cli, ctx)
-
 	err = cli.ContainerStart(ctx, instantContainer.ID, types.ContainerStartOptions{})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 
 	err = attachUntilRemoved(cli, ctx, instantContainer.ID)
@@ -342,27 +357,41 @@ func createFileFromTemplate(source, destination string, generatePackageSpec Gene
 
 	packageTemplate, err := template.New("package").ParseFS(TemplateFs, templatePath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	file, err := os.Create(destination)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
 	err = packageTemplate.ExecuteTemplate(file, source, generatePackageSpec)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "")
 	}
+
 	return nil
 }
 
 func GeneratePackage(destination string, generatePackageSpec GeneratePackageSpec) error {
+	err := createFileFromTemplate("swarm.sh", destination, generatePackageSpec)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
 
-	createFileFromTemplate("swarm.sh", destination, generatePackageSpec)
-	createFileFromTemplate("package-metadata.json", destination, generatePackageSpec)
-	createFileFromTemplate("docker-compose.yml", destination, generatePackageSpec)
+	err = createFileFromTemplate("package-metadata.json", destination, generatePackageSpec)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	err = createFileFromTemplate("docker-compose.yml", destination, generatePackageSpec)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
 
 	if generatePackageSpec.IncludeDevFile {
-		createFileFromTemplate("docker-compose.dev.yml", destination, generatePackageSpec)
+		err = createFileFromTemplate("docker-compose.dev.yml", destination, generatePackageSpec)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
 	}
 
 	return nil

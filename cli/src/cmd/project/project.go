@@ -1,12 +1,12 @@
 package project
 
 import (
-	"errors"
-
 	viperUtil "cli/cmd/util"
 	"cli/core"
-	"cli/util"
+	"context"
 
+	"github.com/luno/jettison/errors"
+	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 )
 
@@ -14,8 +14,9 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	var config core.Config
 	configFile, err := cmd.Flags().GetString("config")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
+
 	configViper, err := viperUtil.GetConfigViper(configFile)
 	if err != nil {
 		return nil, err
@@ -23,8 +24,9 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 
 	err = configViper.Unmarshal(&config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
+
 	return &config, nil
 }
 
@@ -33,17 +35,17 @@ func getPackageSpecFromParams(cmd *cobra.Command) (*core.PackageSpec, error) {
 
 	isDev, err := cmd.Flags().GetBool("dev")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	isOnly, err := cmd.Flags().GetBool("only")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	envFiles, err := cmd.Flags().GetStringSlice("env-file")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 
 	envViper, err := viperUtil.GetEnvironmentVariableViper(envFiles)
@@ -66,9 +68,9 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 	profile := core.Profile{}
 	profileName, err := cmd.Flags().GetString("profile")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
-	util.LogError(err)
+
 	for _, p := range config.Profiles {
 		if p.Name == profileName {
 			profile = p
@@ -109,8 +111,9 @@ func getProjectAction(cmd *cobra.Command) (string, error) {
 	case cmd.Flag("remove").Changed:
 		action = "destroy"
 	default:
-		return action, errors.New("invalid action entered")
+		return action, errors.Wrap(errors.New("invalid action entered"), "")
 	}
+
 	return action, nil
 }
 
@@ -120,24 +123,40 @@ func DeclareProjectCommand() *cobra.Command {
 		Short: "Project level commands",
 		Run: func(cmd *cobra.Command, args []string) {
 			if cmd.Flag("init").Changed || cmd.Flag("up").Changed || cmd.Flag("down").Changed || cmd.Flag("remove").Changed {
+				ctx := context.Background()
 
 				packageSpec, err := getPackageSpecFromParams(cmd)
-				util.PanicError(err)
+				if err != nil {
+					log.Error(ctx, err)
+					panic(err)
+				}
 
 				action, err := getProjectAction(cmd)
-				util.PanicError(err)
+				if err != nil {
+					log.Error(ctx, err)
+					panic(err)
+				}
 				packageSpec.DeployCommand = action
 
 				config, err := getConfigFromParams(cmd)
-				util.PanicError(err)
+				if err != nil {
+					log.Error(ctx, err)
+					panic(err)
+				}
 				packageSpec.Packages = config.Packages
 				packageSpec.CustomPackages = config.CustomPackages
 
 				packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
-				util.PanicError(err)
+				if err != nil {
+					log.Error(ctx, err)
+					panic(err)
+				}
 
 				err = core.LaunchPackage(*packageSpec, *config)
-				util.PanicError(err)
+				if err != nil {
+					log.Error(ctx, err)
+					panic(err)
+				}
 			}
 		},
 	}

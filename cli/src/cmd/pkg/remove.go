@@ -2,8 +2,9 @@ package pkg
 
 import (
 	"cli/core"
-	"cli/util"
+	"context"
 
+	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 )
 
@@ -13,16 +14,32 @@ func PackageRemoveCommand() *cobra.Command {
 		Aliases: []string{"r", "destroy"},
 		Short:   "Remove everything related to a package (volumes, configs, etc)",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+
 			config, err := getConfigFromParams(cmd)
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
+
 			packageSpec, err := getPackageSpecFromParams(cmd, config)
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
+
 			packageSpec.DeployCommand = "destroy"
 			packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
 
 			err = core.LaunchPackage(*packageSpec, *config)
-			util.PanicError(err)
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
 		},
 	}
 
