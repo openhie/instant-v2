@@ -201,17 +201,28 @@ func removeStaleInstantVolume(cli *client.Client, ctx context.Context) {
 	}
 }
 
-func attachStdoutToInstantOutput(cli *client.Client, ctx context.Context, instantContainerId string) error {
+// Attaches a container's STDOUT until that container has been removed
+func attachUntilRemoved(cli *client.Client, ctx context.Context, instantContainerId string) error {
 	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, types.ContainerAttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
 	if err != nil {
 		return err
 	}
 	defer attachResponse.Close()
-	_, err = stdcopy.StdCopy(os.Stdout, os.Stdout, attachResponse.Reader)
-	if err != nil {
+
+	go func() {
+		_, err = stdcopy.StdCopy(os.Stdout, os.Stdout, attachResponse.Reader)
+		if err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+			panic(err)
+		}
+	}()
+
+	successC, errC := cli.ContainerWait(ctx, instantContainerId, "removed")
+	select {
+	case <-successC:
+		return nil
+	case err := <-errC:
 		return err
 	}
-	return nil
 }
 
 func getInstantCommand(packageSpec PackageSpec) []string {
@@ -288,6 +299,7 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		NetworkMode: "host",
 		Binds:       []string{"/var/run/docker.sock:/var/run/docker.sock"},
 		Mounts:      mounts,
+		AutoRemove:  true,
 	}, &network.NetworkingConfig{EndpointsConfig: endpointSettings}, nil, "instant-openhie")
 	if err != nil {
 		return err
@@ -300,31 +312,19 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		}
 	}
 
+	defer removeStaleInstantVolume(cli, ctx)
+
 	err = cli.ContainerStart(ctx, instantContainer.ID, types.ContainerStartOptions{})
 	if err != nil {
 		return err
 	}
 
-	err = attachStdoutToInstantOutput(cli, ctx, instantContainer.ID)
+	err = attachUntilRemoved(cli, ctx, instantContainer.ID)
 	if err != nil {
 		return err
 	}
 
-	successC, errC := cli.ContainerWait(ctx, instantContainer.ID, "exited")
-	select {
-	case <-successC:
-		err = cli.ContainerRemove(ctx, instantContainer.ID, types.ContainerRemoveOptions{})
-		if err != nil {
-			return err
-		}
-		removeStaleInstantVolume(cli, ctx)
-		return nil
-	case err := <-errC:
-		if err != nil {
-			return err
-		}
-		return nil
-	}
+	return nil
 }
 
 type GeneratePackageSpec struct {
