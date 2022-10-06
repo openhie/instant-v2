@@ -97,8 +97,7 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 }
 
 func getCustomPackages(config *core.Config, customPackagePaths []string, sshKey, sshPassword string) []core.CustomPackage {
-	customPackages := make([]core.CustomPackage, len(customPackagePaths))
-
+	var customPackages []core.CustomPackage
 	for _, customPackagePath := range customPackagePaths {
 		var customPackage core.CustomPackage
 
