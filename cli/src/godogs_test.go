@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -19,9 +20,18 @@ var (
 	binaryFilePath string
 	logs           string
 	directoryNames []string
+	customPackages = make(map[string]bool)
 )
 
 func theCommandIsRun(command string) error {
+	customPackageNames, ok := hasCustomPackage(command)
+	if ok {
+		for _, customPackageName := range customPackageNames {
+			// TODO: find a way to make the below code OS-agnostic (/tmp is linux specific)
+			go monitorDirFor(filepath.Join("/tmp", "custom-package"), customPackageName)
+		}
+	}
+
 	res, err := runTestCommand(binaryFilePath, strings.Split(command, " ")...)
 	if err == nil {
 		logs = res
@@ -37,15 +47,13 @@ func checkCustomPackages(packages *godog.Table) error {
 	head := packages.Rows[0].Cells
 
 	for i := 1; i < len(packages.Rows); i++ {
-
 		for n, cell := range packages.Rows[i].Cells {
 			switch head[n].Value {
 			case "directory":
 				directoryNames = append(directoryNames, cell.Value)
-			case "location":
-				err := compareLogsAndOutputs(logs, cell.Value)
-				if err != nil {
-					return err
+
+				if customPackages[cell.Value] {
+					return nil
 				}
 			default:
 				return errors.New("Unexpected column name: " + head[n].Value)
@@ -53,7 +61,7 @@ func checkCustomPackages(packages *godog.Table) error {
 		}
 	}
 
-	return nil
+	return errors.New("did not create custom-package")
 }
 
 func compareLogsAndOutputs(inputLogs, expectedOutput string) error {
@@ -69,9 +77,8 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 			s.AfterSuite(cleanUp)
 		},
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
-			if binaryFilePath == "" {
-				binaryFilePath = buildBinary()
-			}
+			binaryFilePath = buildBinary()
+
 			sc.Step(`^check the CLI output is "([^"]*)"$`, checkTheCLIOutputIs)
 			sc.Step(`^the command "([^"]*)" is run$`, theCommandIsRun)
 			sc.Step(`^check that the CLI added custom packages$`, checkCustomPackages)
@@ -129,11 +136,10 @@ func runTestCommand(commandName string, commandSlice ...string) (string, error) 
 	err = cmd.Start()
 	if err != nil {
 		return "", errors.Wrap(err, "Error starting Cmd. "+stderr.String())
-
 	}
 	err = cmd.Wait()
 	if err != nil {
-		return "", errors.Wrap(err, "Error waiting for Cmd. "+stderr.String())
+		return "", errors.New(stderr.String())
 	}
 
 	wg.Wait()
@@ -161,5 +167,48 @@ func cleanUp() {
 	_, errVolume := runTestCommand("docker", "volume", "rm", "instant")
 	if errVolume != nil {
 		fmt.Println("Instant Docker volume not deleted")
+	}
+}
+
+func hasCustomPackage(command string) ([]string, bool) {
+	if strings.Contains(command, "-c=") {
+		split := strings.SplitAfter(command, "-c=")
+
+		var customPackageNames []string
+		for i := 1; i < len(split); i++ {
+			subSplit := strings.Split(split[1], " ")
+			customPackageNames = append(customPackageNames, strings.TrimSuffix(path.Base(path.Clean(subSplit[0])), path.Ext(subSplit[0])))
+		}
+
+		return customPackageNames, true
+	} else if strings.Contains(command, "--custom-path=") {
+		split := strings.SplitAfter(command, "--custom-path=")
+
+		var customPackageNames []string
+		for i := 1; i < len(split); i++ {
+			subSplit := strings.Split(split[1], " ")
+			customPackageNames = append(customPackageNames, strings.TrimSuffix(path.Base(path.Clean(subSplit[0])), path.Ext(subSplit[0])))
+		}
+
+		return customPackageNames, true
+	}
+
+	return nil, false
+}
+
+// This function is can run infinitely, the caller must ensure that the goroutine running
+// this process is terminated
+func monitorDirFor(directory, basename string) {
+	pathName := filepath.Join(directory, basename)
+	for {
+		_, err := os.Stat(pathName)
+		if os.IsNotExist(err) {
+			continue
+		} else if err != nil {
+			os.Exit(1)
+		}
+
+		customPackages[basename] = true
+		break
 	}
 }
