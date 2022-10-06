@@ -90,7 +90,7 @@ func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx con
 		return errors.Wrap(err, "")
 	}
 
-	if gitRegex.MatchString(customPackage.Path) {
+	if gitRegex.MatchString(customPackage.Path) && !httpRegex.MatchString(customPackage.Path) {
 		err = util.CloneRepo(customPackage.Path, customPackageTmpLocation, customPackage.SshKey, customPackage.SshPassword)
 		if err != nil {
 			return err
@@ -256,7 +256,10 @@ func getInstantCommand(packageSpec PackageSpec) []string {
 	instantCommand = append(instantCommand, packageSpec.Packages...)
 
 	for _, customPackage := range packageSpec.CustomPackages {
-		instantCommand = append(instantCommand, getCustomPackageName(customPackage))
+		customPackageName := getCustomPackageName(customPackage)
+		if !util.SliceContains(packageSpec.Packages, customPackageName) {
+			instantCommand = append(instantCommand, customPackageName)
+		}
 	}
 
 	return instantCommand
