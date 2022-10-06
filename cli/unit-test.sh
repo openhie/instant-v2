@@ -1,8 +1,9 @@
 #!/bin/bash
 
-cd src/core || exit 
+FILE_PATH=$(
+  cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+  pwd -P
+)
 
+cd "$FILE_PATH"/src/core || exit
 go test .
-
-cd ../.. || exit
-
