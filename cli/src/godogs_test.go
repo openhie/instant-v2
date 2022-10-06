@@ -72,10 +72,9 @@ func compareLogsAndOutputs(inputLogs, expectedOutput string) error {
 }
 
 func InitializeScenario(sc *godog.ScenarioContext) {
+	defer cleanUp()
+
 	suite := &godog.TestSuite{
-		TestSuiteInitializer: func(s *godog.TestSuiteContext) {
-			s.AfterSuite(cleanUp)
-		},
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			binaryFilePath = buildBinary()
 			copyFiles()
@@ -88,8 +87,9 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 
 	if suite.Run() != 0 {
 		fmt.Println("Tests failed")
-		os.Exit(1)
+		panic("")
 	}
+	cleanUp()
 	os.Exit(0)
 }
 
