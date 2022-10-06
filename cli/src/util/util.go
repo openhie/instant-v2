@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -15,53 +14,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/luno/jettison/errors"
-	"github.com/spf13/cobra"
 )
-
-func Log(message string) {
-	if os.Getenv("LOG") == "true" {
-		fmt.Println(message)
-	}
-}
-
-func LogError(err error) {
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func GetFlagOrDefaultString(cmd *cobra.Command, flagName string) string {
-	var name string
-	if cmd.Flag(flagName).Changed {
-		var err error
-		name, err = cmd.Flags().GetString(flagName)
-		LogError(err)
-	} else {
-		name = cmd.Flag(flagName).DefValue
-	}
-	return name
-
-}
-
-func ReadLines(path string) ([]string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-	defer file.Close()
-
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	if err = scanner.Err(); err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	return lines, nil
-}
 
 func getPublicKeys(privateKeyFile string, password string) (*ssh.PublicKeys, error) {
 	_, err := os.Stat(privateKeyFile)
@@ -274,15 +227,6 @@ func TarSource(path string) (io.Reader, error) {
 	}
 
 	return bufio.NewReader(&buf), nil
-}
-
-func FirstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
 }
 
 func SliceContains[Type comparable](slice []Type, element Type) bool {
