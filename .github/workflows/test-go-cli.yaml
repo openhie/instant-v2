@@ -16,7 +16,7 @@ jobs:
         go-version: 1.18
 
     - name: Run Go CLI unit tests
-      run: ./ohiecli/unit_test.sh
+      run: ./cli/unit-test.sh
 
   functional-tests:
     runs-on: ubuntu-22.04
@@ -30,7 +30,7 @@ jobs:
         go-version: 1.18
 
     - name: Install Godog
-      run: cd ./ohiecli/cmd && go install github.com/cucumber/godog/cmd/godog@v0.12.5 && go mod tidy
+      run: cd ./cli/src && go install github.com/cucumber/godog/cmd/godog@v0.12.5 && go mod tidy
 
     - name: Run Godog tests
-      run: cd ./ohiecli/cmd && godog run
+      run: cd ./cli/src && godog run
