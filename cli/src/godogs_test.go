@@ -78,6 +78,7 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 		},
 		ScenarioInitializer: func(sc *godog.ScenarioContext) {
 			binaryFilePath = buildBinary()
+			copyFiles()
 
 			sc.Step(`^check the CLI output is "([^"]*)"$`, checkTheCLIOutputIs)
 			sc.Step(`^the command "([^"]*)" is run$`, theCommandIsRun)
@@ -107,6 +108,13 @@ func buildBinary() string {
 		return filepath.Join(".", "features", "test-platform-linux")
 	default:
 		panic(errors.New("Operating system not supported"))
+	}
+}
+
+func copyFiles() {
+	_, err := runTestCommand("/bin/sh", filepath.Join(".", "features", "copy-files.sh"))
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -159,14 +167,24 @@ func cleanUp() {
 	deleteContentAtFilePath([]string{".", "features"}, []string{"test-platform.exe", "test-platform-linux", "test-platform-macos"})
 	deleteContentAtFilePath([]string{"."}, directoryNames)
 
-	_, errContainer := runTestCommand("docker", "rm", "instant-openhie")
-	if errContainer == nil {
-		fmt.Println("Deleted Instant OpenHIE container")
+	_, err := runTestCommand("docker", "rm", "instant-openhie")
+	if err == nil {
+		fmt.Println("[ERROR]: ", err)
 	}
 
-	_, errVolume := runTestCommand("docker", "volume", "rm", "instant")
-	if errVolume != nil {
-		fmt.Println("Instant Docker volume not deleted")
+	_, err = runTestCommand("docker", "volume", "rm", "instant")
+	if err != nil && !strings.Contains(err.Error(), "No such volume: instant") {
+		fmt.Println("[ERROR]: ", err)
+	}
+
+	err = os.Remove(".env")
+	if err != nil {
+		fmt.Println("[ERROR]: ", err)
+	}
+
+	err = os.Remove("config.yml")
+	if err != nil {
+		fmt.Println("[ERROR]: ", err)
 	}
 }
 
@@ -196,7 +214,7 @@ func hasCustomPackage(command string) ([]string, bool) {
 	return nil, false
 }
 
-// This function is can run infinitely, the caller must ensure that the goroutine running
+// This function can run infinitely, the caller must ensure that the goroutine running
 // this process is terminated
 func monitorDirFor(directory, basename string) {
 	pathName := filepath.Join(directory, basename)
