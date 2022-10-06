@@ -34,7 +34,7 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
-            "args": ["package", "init", "-n=dashboard-visualiser-jsreport", "--dev", "--env-file=.env.local", "--config=config.yml"]
+            "args": ["package", "init", "-n=dashboard-visualiser-jsreport", "--dev", "-e=features/test-conf/.env.test", "--config=features/test-conf/config.yml"]
         },
     ]
 }
