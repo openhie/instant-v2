@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -282,8 +283,10 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	}
 	defer reader.Close()
 
-	if os.Getenv("LOG") == "true" {
-		io.Copy(os.Stdout, reader)
+	// This io.Copy helps to wait for the image to finish downloading
+	_, err = io.Copy(ioutil.Discard, reader)
+	if err != nil {
+		return errors.Wrap(err, "")
 	}
 
 	mounts := []mount.Mount{
