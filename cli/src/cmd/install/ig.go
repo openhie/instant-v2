@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:cli/src/cmd/install/ig.go
 package install
+========
+package ig
+>>>>>>>> main:ohiecli/cmd/ig/ig.go
 
 import (
 	"archive/tar"
@@ -15,11 +19,18 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
+
+	"ohiecli/config"
 )
 
+<<<<<<<< HEAD:cli/src/cmd/install/ig.go
 // TODO: refactor this file
 func loadIGpackage(urlEntry string, fhirServer string, params *params) error {
 	trimmed := strings.Replace(urlEntry, "index.html", "", -1)
+========
+func LoadIGpackage(url_entry string, fhir_server string, params *config.Params) error {
+	trimmed := strings.Replace(url_entry, "index.html", "", -1)
+>>>>>>>> main:ohiecli/cmd/ig/ig.go
 	u, err := url.Parse(trimmed)
 	if err != nil {
 		return errors.Wrap(err, "Invalid url")
@@ -137,7 +148,11 @@ func loadIGpackage(urlEntry string, fhirServer string, params *params) error {
 	return nil
 }
 
+<<<<<<<< HEAD:cli/src/cmd/install/ig.go
 func getpushJSON(fhirServer string, ig string, filename string, resourcetype string, bundle bool, id string, params *params) error {
+========
+func getpushJSON(fhir_server string, ig string, filename string, resourcetype string, bundle bool, id string, params *config.Params) error {
+>>>>>>>> main:ohiecli/cmd/ig/ig.go
 	trimmed := strings.Replace(ig, "index.html", "", -1)
 	u, err := url.Parse(trimmed)
 	if err != nil {

@@ -5,9 +5,7 @@ go 1.18
 require (
 	github.com/cucumber/godog v0.12.5
 	github.com/docker/docker v20.10.18+incompatible
-	github.com/fatih/color v1.13.0
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/go-resty/resty/v2 v2.6.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/luno/jettison v0.0.0-20220927134759-09187a35ec8c
 	github.com/manifoldco/promptui v0.9.0
@@ -46,8 +44,6 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
