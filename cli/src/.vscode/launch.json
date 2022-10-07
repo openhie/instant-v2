@@ -34,7 +34,15 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
-            "args": ["package", "init", "-n=dashboard-visualiser-jsreport", "--dev", "-e=features/test-conf/.env.test", "--config=features/test-conf/config.yml"]
+            "args": ["package", "init", "-n=dashboard-visualiser-jsreport", "-n=disi-on-platform", "-c=git@github.com:jembi/disi-on-platform.git", "--dev", "-e=features/test-conf/.env.test", "--config=features/test-conf/config.yml"]
+        },
+        {
+            "name": "Init profile-2",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "args": ["package", "init", "--profile=profile-2", "-e=features/test-conf/.env.test", "--config=features/test-conf/config.yml"]
         },
     ]
 }

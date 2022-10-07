@@ -78,8 +78,9 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 			if k1 == reflect.Map {
 				ip := i.(map[string]interface{})
 
-				// test this logic
-				if _, ok := ip["packages"]; !ok {
+				// TODO: implement better logic for this
+				_, sshKeyExists := ip["sshkey"]
+				if _, ok := ip["packages"]; !ok && !sshKeyExists {
 					return ip["id"], nil
 				}
 			}
