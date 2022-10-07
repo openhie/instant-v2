@@ -239,6 +239,9 @@ func attachUntilRemoved(cli *client.Client, ctx context.Context, instantContaine
 	case <-successC:
 		return nil
 	case err := <-errC:
+		if strings.Contains(err.Error(), "No such container") {
+			return nil
+		}
 		return errors.Wrap(err, "")
 	}
 }
