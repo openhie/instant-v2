@@ -219,7 +219,7 @@ func RemoveStaleInstantVolume(cli *client.Client, ctx context.Context) {
 }
 
 // Attaches a container's STDOUT until that container has been removed
-func attachUntilRemoved(cli *client.Client, ctx context.Context, instantContainerId string) error {
+func attachUntilRemoved(cli client.ContainerAPIClient, ctx context.Context, instantContainerId string) error {
 	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, types.ContainerAttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
 	if err != nil {
 		return err
