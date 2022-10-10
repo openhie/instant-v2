@@ -153,34 +153,34 @@ func TestGetCustomPackageName(t *testing.T) {
 }
 
 func Test_attachUntilRemoved(t *testing.T) {
-	mockCopy := new(MockApiClient)
+	mockApiClient := new(MockApiClient)
 
 	// Case: receive error from cli.Container attach
-	mockCopy.On("ContainerAttach").Return("test error").Once()
-	err := attachUntilRemoved(mockCopy, context.Background(), "")
+	mockApiClient.On("ContainerAttach").Return("test error").Once()
+	err := attachUntilRemoved(mockApiClient, context.Background(), "")
 	jtest.Require(t, errors.New("test error"), err)
 
 	// Case: receive success message to successChannel
-	mockCopy.On("ContainerAttach").Return(nil)
+	mockApiClient.On("ContainerAttach").Return(nil)
 
-	mockCopy.On("ContainerWait").Return(_container.ContainerWaitOKBody{
+	mockApiClient.On("ContainerWait").Return(_container.ContainerWaitOKBody{
 		StatusCode: 0,
 		Error:      nil,
 	}, nil).Once()
 
-	err = attachUntilRemoved(mockCopy, context.Background(), "")
+	err = attachUntilRemoved(mockApiClient, context.Background(), "")
 	jtest.RequireNil(t, err)
 
 	// Case: receive expected "No such container" message
-	mockCopy.On("ContainerWait").Return(nil, "No such container").Once()
+	mockApiClient.On("ContainerWait").Return(nil, "No such container").Once()
 
-	err = attachUntilRemoved(mockCopy, context.Background(), "")
+	err = attachUntilRemoved(mockApiClient, context.Background(), "")
 	jtest.RequireNil(t, err)
 
 	// Case: receive error to errorChannel
-	mockCopy.On("ContainerWait").Return(nil, "test error").Once()
+	mockApiClient.On("ContainerWait").Return(nil, "test error").Once()
 
-	err = attachUntilRemoved(mockCopy, context.Background(), "")
+	err = attachUntilRemoved(mockApiClient, context.Background(), "")
 	jtest.Require(t, errors.New("test error"), err)
 }
 
@@ -233,4 +233,23 @@ func (mock *MockApiClient) ContainerWait(ctx context.Context, container string, 
 	}
 
 	return newChan, errChan
+}
+
+func Test_getCustomPackageName(t *testing.T) {
+	type cases struct {
+		customPackage CustomPackage
+		expectName    string
+	}
+
+	testCases := []cases{
+		{CustomPackage{Path: "https://github.com/jembi/instant-openhie-template-package.git"}, "instant-openhie-template-package"},
+		{CustomPackage{Path: "https://github.com/jembi/instant-openhie-template-package.tar"}, "instant-openhie-template-package"},
+		{CustomPackage{Path: "https://github.com/jembi/instant-openhie-template-package.zip"}, "instant-openhie-template-package"},
+		{CustomPackage{Id: "template", Path: "https://github.com/jembi/instant-openhie-template-package.git"}, "template"},
+	}
+
+	for _, tc := range testCases {
+		got := getCustomPackageName(tc.customPackage)
+		assert.Equal(t, tc.expectName, got)
+	}
 }

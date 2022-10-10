@@ -73,7 +73,8 @@ func getCustomPackageName(customPackage CustomPackage) string {
 	return strings.TrimSuffix(path.Base(path.Clean(customPackage.Path)), path.Ext(customPackage.Path))
 }
 
-func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx context.Context, instantContainerId string) error {
+// TODO: see how I can refactor this function
+func mountCustomPackage(ctx context.Context, cli *client.Client, customPackage CustomPackage, instantContainerId string) error {
 	gitRegex := regexp.MustCompile(`\.git`)
 	httpRegex := regexp.MustCompile("http")
 	zipRegex := regexp.MustCompile(`\.zip`)
@@ -332,7 +333,7 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	}
 
 	for _, customPackage := range packageSpec.CustomPackages {
-		err = mountCustomPackage(customPackage, cli, ctx, instantContainer.ID)
+		err = mountCustomPackage(ctx, cli, customPackage, instantContainer.ID)
 		if err != nil {
 			return err
 		}
@@ -368,10 +369,12 @@ func createFileFromTemplate(source, destination string, generatePackageSpec Gene
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
+
 	file, err := os.Create(destination)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
+
 	err = packageTemplate.ExecuteTemplate(file, source, generatePackageSpec)
 	if err != nil {
 		return errors.Wrap(err, "")
