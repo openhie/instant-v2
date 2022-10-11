@@ -5,7 +5,6 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
-	"compress/gzip"
 	"io"
 	"os"
 	"path/filepath"
@@ -128,13 +127,10 @@ func UntarSource(source, destination string) error {
 		return errors.Wrap(err, "")
 	}
 
-	gzr, err := gzip.NewReader(file)
+	tr := tar.NewReader(file)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
 
 	for {
 		header, err := tr.Next()
@@ -150,19 +146,23 @@ func UntarSource(source, destination string) error {
 			continue
 		}
 
-		target := filepath.Join(destination, header.Name)
-
 		switch header.Typeflag {
-
 		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
+			err := os.MkdirAll(destination, 0755)
+			if err != nil {
+				return errors.Wrap(err, "")
+			}
+
+		case tar.TypeReg:
+			dir, _ := filepath.Split(destination)
+			if dir != "" {
+				err := os.MkdirAll(dir, 0755)
+				if err != nil {
 					return errors.Wrap(err, "")
 				}
 			}
 
-		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			f, err := os.OpenFile(destination, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return errors.Wrap(err, "")
 			}
