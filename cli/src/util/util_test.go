@@ -3,6 +3,7 @@ package util
 import (
 	"archive/tar"
 	"archive/zip"
+	"bufio"
 	"io/fs"
 	"os"
 	"testing"
@@ -179,6 +180,70 @@ func createTestTarFile(t *testing.T, tarFileName string, contentFile *os.File) *
 	jtest.RequireNil(t, err)
 
 	return tarFile
+}
+
+func Test_tarSource(t *testing.T) {
+	type testArgs struct {
+		source          string
+		contentFileName string
+	}
+
+	testCases := []testArgs{
+		// untar file into current directory
+		{
+			source:          "test_tar.tar",
+			contentFileName: "test.txt",
+		},
+		// return error from not specifying source file
+		{},
+	}
+
+	for _, tc := range testCases {
+		defer os.Remove(tc.contentFileName)
+		defer os.Remove(tc.source)
+		defer os.Remove("untarred")
+
+		if tc.contentFileName != "" {
+			testFile := createTestFile(t, tc.contentFileName)
+			defer testFile.Close()
+
+			_, err := testFile.Write([]byte("test data"))
+			jtest.RequireNil(t, err)
+		}
+
+		re, err := TarSource(tc.contentFileName)
+		if err != nil {
+			expectedErr := fs.PathError{
+				Op:  "lstat",
+				Err: unix.ENOENT,
+			}
+
+			if !assert.Equal(t, errors.New(expectedErr.Error()).Error(), err.Error()) {
+				t.FailNow()
+			}
+		} else {
+			tarFile, err := os.OpenFile(tc.source, os.O_CREATE|os.O_RDWR, 0777)
+			jtest.RequireNil(t, err)
+			defer tarFile.Close()
+
+			_, err = tarFile.ReadFrom(re)
+			jtest.RequireNil(t, err)
+
+			untarFile := createTestFile(t, "untarred")
+			err = UntarSource(tc.source, "untarred")
+			jtest.RequireNil(t, err)
+
+			scanner := bufio.NewScanner(untarFile)
+			scanner.Scan()
+			if scanner.Text() != "test data" {
+				t.FailNow()
+			}
+		}
+
+		os.Remove(tc.contentFileName)
+		os.Remove("untarred")
+		os.Remove(tc.source)
+	}
 }
 
 func createTestFile(t *testing.T, fileName string) *os.File {
