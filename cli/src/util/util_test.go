@@ -15,32 +15,31 @@ import (
 
 func TestUnzipSource(t *testing.T) {
 	type testArgs struct {
-		source      string
-		destination string
-		contentFile string
+		source          string
+		destination     string
+		contentFileName string
 	}
 
 	testCases := []testArgs{
 		// unzip file into current directory
 		{
-			source:      "test_zip.zip",
-			destination: "test.txt",
-			contentFile: "test.txt",
+			source:          "test_zip.zip",
+			destination:     "test.txt",
+			contentFileName: "test.txt",
 		},
 		// return error from not specifying source file
 		{},
 		// unzip file into nested directory,
 		{
-			source:      "test_zip.zip",
-			destination: "./testDir/test.txt",
-			contentFile: "test.txt",
+			source:          "test_zip.zip",
+			destination:     "./testDir/test.txt",
+			contentFileName: "test.txt",
 		},
 	}
 	for _, tc := range testCases {
 		var zipFile *os.File
 		if tc.source != "" {
-			zipFile = createTestZipFile(tc.source, tc.contentFile)
-
+			zipFile = createTestZipFile(t, tc.source, tc.contentFileName)
 		}
 		defer os.RemoveAll(tc.source)
 		defer os.RemoveAll(tc.destination)
@@ -67,11 +66,8 @@ func TestUnzipSource(t *testing.T) {
 	os.RemoveAll("testDir")
 }
 
-func createTestZipFile(zipFileName, contentFileName string) *os.File {
-	zipFile, err := os.Create(zipFileName)
-	if err != nil {
-		panic(err)
-	}
+func createTestZipFile(t *testing.T, zipFileName string, contentFileName string) *os.File {
+	zipFile := createTestFile(t, zipFileName)
 	defer zipFile.Close()
 
 	zipWriter := zip.NewWriter(zipFile)
@@ -97,52 +93,59 @@ func createTestZipFile(zipFileName, contentFileName string) *os.File {
 
 func Test_untarSource(t *testing.T) {
 	type testArgs struct {
-		source      string
-		destination string
-		contentFile string
+		source          string
+		destination     string
+		contentFileName string
 	}
 
 	testCases := []testArgs{
 		// untar file into current directory
 		{
-			source:      "test_tar.tar",
-			destination: "test.txt",
-			contentFile: "test.txt",
+			source:          "test_tar.tar",
+			destination:     "test.txt",
+			contentFileName: "test.txt",
 		},
 		// return error from not specifying source file
 		{},
+		// return error from not specifying destination file
+		{
+			source:          "test_tar.tar",
+			contentFileName: "test.txt",
+		},
 		// untar file into nested directory,
 		{
-			source:      "test_tar.tar",
-			destination: "./testDir/test.txt",
-			contentFile: "test.txt",
+			source:          "test_tar.tar",
+			destination:     "./testDir/test.txt",
+			contentFileName: "test.txt",
 		},
 	}
 
 	for _, tc := range testCases {
-		var tarFile *os.File
-		if tc.source != "" {
-			tarFile = createTestTarFile(t, tc.source, tc.contentFile)
-
-		}
 		// Ensure removal on panic
 		defer os.RemoveAll(tc.source)
 		defer os.RemoveAll(tc.destination)
 
+		var contentFile, tarFile *os.File
+		if tc.source != "" {
+			contentFile = createTestFile(t, tc.contentFileName)
+			tarFile = createTestTarFile(t, tc.source, contentFile)
+		}
+
 		err := UntarSource(tc.source, tc.destination)
 		if err != nil {
 			expectedErr := fs.PathError{
-				Op:   "open",
-				Path: tc.source,
-				Err:  unix.ENOENT,
+				Op:  "open",
+				Err: unix.ENOENT,
 			}
 
-			assert.Equal(t, errors.New(expectedErr.Error()).Error(), err.Error())
+			if !assert.Equal(t, errors.New(expectedErr.Error()).Error(), err.Error()) {
+				t.FailNow()
+			}
 		} else {
 			_, err = os.Stat(tc.destination)
 			jtest.RequireNil(t, err)
 		}
-
+		contentFile.Close()
 		tarFile.Close()
 
 		// Ensure removal per test case
@@ -153,9 +156,8 @@ func Test_untarSource(t *testing.T) {
 	os.RemoveAll("testDir")
 }
 
-func createTestTarFile(t *testing.T, tarFileName, contentFileName string) *os.File {
-	tarFile, err := os.OpenFile(tarFileName, os.O_CREATE|os.O_RDWR, 0777)
-	jtest.RequireNil(t, err)
+func createTestTarFile(t *testing.T, tarFileName string, contentFile *os.File) *os.File {
+	tarFile := createTestFile(t, tarFileName)
 	defer tarFile.Close()
 
 	tarWriter := tar.NewWriter(tarFile)
@@ -163,11 +165,11 @@ func createTestTarFile(t *testing.T, tarFileName, contentFileName string) *os.Fi
 
 	fileData := []byte("test data")
 	header := &tar.Header{
-		Name: contentFileName,
+		Name: contentFile.Name(),
 		Size: int64(len(fileData)),
 		Mode: 0777,
 	}
-	err = tarWriter.WriteHeader(header)
+	err := tarWriter.WriteHeader(header)
 	jtest.RequireNil(t, err)
 
 	_, err = tarWriter.Write(fileData)
@@ -177,4 +179,11 @@ func createTestTarFile(t *testing.T, tarFileName, contentFileName string) *os.Fi
 	jtest.RequireNil(t, err)
 
 	return tarFile
+}
+
+func createTestFile(t *testing.T, fileName string) *os.File {
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0777)
+	jtest.RequireNil(t, err)
+
+	return file
 }
