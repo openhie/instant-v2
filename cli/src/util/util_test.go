@@ -255,3 +255,55 @@ func createTestFile(t *testing.T, fileName string) *os.File {
 
 	return file
 }
+
+func Test_SliceContains(t *testing.T) {
+	type testCase struct {
+		slice      interface{}
+		typeOf     string
+		matchValue interface{}
+		wantMatch  bool
+	}
+
+	testCases := []testCase{
+		{
+			slice:      []string{"one", "two", "three"},
+			typeOf:     "string",
+			matchValue: "two",
+			wantMatch:  true,
+		},
+		{
+			slice:      []string{"one", "two", "three"},
+			typeOf:     "string",
+			matchValue: "four",
+			wantMatch:  false,
+		},
+		{
+			slice:      []int{1, 2, 3},
+			typeOf:     "int",
+			matchValue: 2,
+			wantMatch:  true,
+		},
+		{
+			slice:      []int{1, 2, 3},
+			typeOf:     "int",
+			matchValue: 4,
+			wantMatch:  false,
+		},
+	}
+
+	for _, tc := range testCases {
+		switch tc.typeOf {
+		case "string":
+			if SliceContains(tc.slice.([]string), tc.matchValue.(string)) != tc.wantMatch {
+				t.FailNow()
+			}
+
+		case "int":
+			if SliceContains(tc.slice.([]int), tc.matchValue.(int)) != tc.wantMatch {
+				t.FailNow()
+			}
+
+		}
+
+	}
+}
