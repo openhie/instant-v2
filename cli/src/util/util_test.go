@@ -44,6 +44,7 @@ func TestUnzipSource(t *testing.T) {
 		}
 		defer os.RemoveAll(tc.source)
 		defer os.RemoveAll(tc.destination)
+		defer os.RemoveAll("testDir")
 
 		err := UnzipSource(tc.source, tc.destination)
 		if err != nil {
@@ -53,7 +54,9 @@ func TestUnzipSource(t *testing.T) {
 				Err:  unix.ENOENT,
 			}
 
-			assert.Equal(t, errors.New(expectedErr.Error()).Error(), err.Error())
+			if !assert.Equal(t, errors.New(expectedErr.Error()).Error(), err.Error()) {
+				t.FailNow()
+			}
 		} else {
 			_, err = os.Stat(tc.destination)
 			jtest.RequireNil(t, err)
