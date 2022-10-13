@@ -95,6 +95,18 @@ func Test_loadInProfileParams(t *testing.T) {
 			t.FailNow()
 		}
 	}
+
+	// case: load in environment variables from more than one env file
+	cmd, config := setupLoadInProfileParams(t, wd+"/../../features/unit-test-configs/config-case-2.yml")
+
+	cmd.Flags().String("profile", "non-only", "")
+
+	packageSpec, err := loadInProfileParams(cmd, *config, core.PackageSpec{})
+	jtest.RequireNil(t, err)
+
+	if !assert.Equal(t, packageSpec.EnvironmentVariables, []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"}) {
+		t.FailNow()
+	}
 }
 
 func setupLoadInProfileParams(t *testing.T, configFilePath string) (*cobra.Command, *core.Config) {

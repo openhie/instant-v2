@@ -29,4 +29,5 @@ profiles:
       - id: dashboard-visualiser-jsreport
         name: Dashboard Visualiser - JS Report
     envFiles:
-      - ../test-conf/.env.test
+      - ../../features/test-conf/.env.one
+      - ../../features/test-conf/.env.two
