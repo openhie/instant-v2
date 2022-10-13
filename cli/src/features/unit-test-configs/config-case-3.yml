@@ -1,0 +1,15 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - id: client
+    name: OpenCR Client Registry
+
+profiles:
+  - name: bad-env-file-path
+    packages:
+      - id: client
+        name: OpenCR Client Registry
+    envFiles:
+      - ./features/test-conf/.env.tests

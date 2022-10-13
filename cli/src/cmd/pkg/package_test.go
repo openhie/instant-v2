@@ -75,6 +75,13 @@ func Test_loadInProfileParams(t *testing.T) {
 			configFilePath:      wd + "/../../features/unit-test-configs/config-case-2.yml",
 			expectedErrorString: ErrConflictingOnlyFlag.Error(),
 		},
+		// case: return error from non-existant env file directory
+		{
+			profileName:         "bad-env-file-path",
+			boolFlagName:        "",
+			configFilePath:      wd + "/../../features/unit-test-configs/config-case-3.yml",
+			expectedErrorString: "stat ./features/test-conf/.env.tests: no such file or directory",
+		},
 	}
 
 	for _, tc := range testCases {
