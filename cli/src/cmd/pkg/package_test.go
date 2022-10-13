@@ -8,10 +8,11 @@ import (
 	"cli/core"
 
 	"github.com/luno/jettison/jtest"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_getConfigFromParams(t *testing.T) {
+func Test_unmarshalConfig(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
@@ -24,7 +25,35 @@ func Test_getConfigFromParams(t *testing.T) {
 	if !assert.Equal(t, configCaseOne, *config) {
 		t.FailNow()
 	}
+}
 
+func Test_loadInProfileParams(t *testing.T) {
+	wd, err := os.Getwd()
+	jtest.RequireNil(t, err)
+
+	// case: return error from conflicting command-line --dev flag and dev: false config.yml profile flag
+	cmd, config := setupLoadInProfileParams(t, wd+"/../../features/unit-test-configs/config-case-2.yml")
+
+	cmd.Flags().Bool("dev", false, "")
+	err = cmd.Flags().Set("dev", "true")
+	jtest.RequireNil(t, err)
+
+	cmd.Flags().String("profile", "non-dev", "")
+
+	_, err = loadInProfileParams(cmd, *config, core.PackageSpec{})
+	if !assert.Equal(t, ErrConflictingDevFlag.Error(), err.Error()) {
+		t.FailNow()
+	}
+}
+
+func setupLoadInProfileParams(t *testing.T, configFilePath string) (*cobra.Command, *core.Config) {
+	configViper, err := viperUtil.GetConfigViper(configFilePath)
+	jtest.RequireNil(t, err)
+
+	config, err := unmarshalConfig(core.Config{}, configViper)
+	jtest.RequireNil(t, err)
+
+	return &cobra.Command{}, config
 }
 
 var configCaseOne = core.Config{

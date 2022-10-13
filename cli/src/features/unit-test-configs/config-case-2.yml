@@ -1,0 +1,26 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - id: client
+    name: OpenCR Client Registry
+  - id: dashboard-visualiser-jsreport
+    name: Dashboard Visualiser - JS Report
+
+customPackages:
+  - id: disi-on-platform
+    path: "git@github.com:jembi/disi-on-platform.git"
+    sshKey: ./id_rsa
+    sshPassword: ./id_rsa_password.txt
+
+profiles:
+  - name: non-dev
+    packages:
+      - id: dashboard-visualiser-jsreport
+        name: Dashboard Visualiser - JS Report
+      - id: disi-on-platform
+        name: Disi On Platform
+    envFiles:
+      - ./features/test-conf/.env.tests
+    dev: false

@@ -81,6 +81,7 @@ func GetEnvironmentVariableViper(envFiles []string) (*viper.Viper, error) {
 	return envVarViper, nil
 }
 
+// TODO: Unit-test this
 func GetEnvVariableString(envViper *viper.Viper) []string {
 	var envVariables []string
 	allEnvVars := envViper.AllSettings()
