@@ -22,5 +22,5 @@ profiles:
       - id: disi-on-platform
         name: Disi On Platform
     envFiles:
-      - ./features/test-conf/.env.tests
+      - ../test-conf/.env.test
     dev: true

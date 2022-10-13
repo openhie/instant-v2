@@ -22,5 +22,11 @@ profiles:
       - id: disi-on-platform
         name: Disi On Platform
     envFiles:
-      - ./features/test-conf/.env.tests
-    dev: false
+      - ../test-conf/.env.test
+
+  - name: non-only
+    packages:
+      - id: dashboard-visualiser-jsreport
+        name: Dashboard Visualiser - JS Report
+    envFiles:
+      - ../test-conf/.env.test
