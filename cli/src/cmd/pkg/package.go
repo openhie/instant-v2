@@ -14,6 +14,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	ErrConflictingDevFlag  error = errors.New("conflicting command-line and profile flag: --dev")
+	ErrConflictingOnlyFlag error = errors.New("conflicting command-line and profile flag: --only")
+)
+
 func setPackageActionFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
 	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
@@ -185,6 +190,7 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 	return &packageSpec, nil
 }
 
+// TODO: This can be turned into a method for type *core.PackageSpec
 func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec core.PackageSpec) (*core.PackageSpec, error) {
 	profile := core.Profile{}
 	profileName, err := cmd.Flags().GetString("profile")
@@ -201,10 +207,30 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 
 	if !cmd.Flags().Changed("dev") && profile.Dev {
 		packageSpec.IsDev = profile.Dev
+	} else if cmd.Flags().Changed("dev") {
+		val, err := cmd.Flags().GetBool("dev")
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		if val != profile.Dev {
+			return nil, errors.Wrap(ErrConflictingDevFlag, "")
+		}
 	}
+
 	if !cmd.Flags().Changed("only") && profile.Only {
 		packageSpec.IsOnly = profile.Only
+	} else if cmd.Flags().Changed("only") {
+		val, err := cmd.Flags().GetBool("only")
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		if val != profile.Only {
+			return nil, errors.Wrap(ErrConflictingOnlyFlag, "")
+		}
 	}
+
 	if len(profile.Packages) > 0 {
 		packageSpec.Packages = append(profile.Packages, packageSpec.Packages...)
 	}
