@@ -70,9 +70,18 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 
 	configViper, err := viperUtil.GetConfigViper(configFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, err
 	}
 
+	populatedConfig, err := unmarshalConfig(config, configViper)
+	if err != nil {
+		return nil, err
+	}
+
+	return populatedConfig, nil
+}
+
+func unmarshalConfig(config core.Config, configViper *viper.Viper) (*core.Config, error) {
 	var decoderOptions viper.DecoderConfigOption = func(dc *mapstructure.DecoderConfig) {
 		dc.DecodeHook = func(k1, k2 reflect.Kind, i interface{}) (interface{}, error) {
 			if k1 == reflect.Map {
@@ -89,7 +98,7 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 		}
 	}
 
-	err = configViper.Unmarshal(&config, decoderOptions)
+	err := configViper.Unmarshal(&config, decoderOptions)
 	if err != nil {
 		return nil, errors.Wrap(err, "")
 	}
