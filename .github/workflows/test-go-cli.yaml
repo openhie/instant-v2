@@ -29,6 +29,9 @@ jobs:
       with:
         go-version: 1.18
 
+    - name: Set /tmp/logs
+      run: mkdir -p /tmp/logs
+
     - name: Install Godog
       run: cd ./cli/src && go install github.com/cucumber/godog/cmd/godog@v0.12.5 && go mod tidy
 
