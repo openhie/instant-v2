@@ -34,6 +34,12 @@ func PackageUpCommand() *cobra.Command {
 				panic(err)
 			}
 
+			err = validate(cmd, config)
+			if err != nil {
+				log.Error(context.Background(), err)
+				panic(err)
+			}
+
 			err = core.LaunchPackage(*packageSpec, *config)
 			if err != nil {
 				log.Error(ctx, err)
