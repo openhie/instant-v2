@@ -48,10 +48,13 @@ func theCommandIsRunWithProfile(command string, packages *godog.Table) error {
 	}
 
 	res, err := runTestCommand(binaryFilePath, strings.Split(command, " ")...)
-	if err == nil {
-		logs = res
+
+	if err != nil {
+		return err
 	}
-	return err
+	logs = res
+
+	return nil
 }
 
 func checkTheCLIOutputIs(expectedOutput string) error {
