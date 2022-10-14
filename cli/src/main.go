@@ -22,6 +22,7 @@ func main() {
 	cmd.Execute()
 }
 
+// TODO: should the cli panic if launching a package not contained in the config.yml?
 func handleExit() {
 	ctx := context.Background()
 

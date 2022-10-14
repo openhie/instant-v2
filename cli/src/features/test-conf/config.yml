@@ -5,6 +5,7 @@ logPath: /tmp/logs
 packages:
   - core
   - client
+  - dashboard-visualiser-jsreport
 
 customPackages:
   - id: disi-on-platform
