@@ -1,25 +1,58 @@
 ---
 image: 'jembi/go-cli-test-image'
-defaultTargetLauncher: docker
-disableKubernetes: false
-disableIG: false
-disableCustomTargetSelection: false
+logPath: /tmp/logs
+
 packages:
-  - id: core
-    name: Core package
-  - id: client
-    name: OpenCR Client Registry
-  - id: elastic-analytics
-    name: Data Analytics package using the elastic stack
-  - id: elastic-pipeline
-    name: Data pipeline package using the elastic stack
-  - id: emr
-    name: Electronic Medical Record Package
-  - id: facility
-    name: Facility Registry
-  - id: hmis
-    name: health-management-information-system
-  - id: healthworker
-    name: healthworker
-  - id: mcsd
-    name: mCSD use case package
+  - core
+  - client
+
+customPackages:
+  - id: disi-on-platform
+    path: "git@github.com:jembi/disi-on-platform.git"
+    sshKey: ./id_rsa
+    sshPassword: ./id_rsa_password.txt
+  - id: cares-on-platform
+    path: ./features/cares-on-platform
+    sshKey: ./id_rsa
+    sshPassword: ./id_rsa_password.txt
+
+profiles:
+  - name: dev
+    packages:
+      - core
+      - client
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: true
+
+  - name: custom-package
+    packages:
+      - disi-on-platform
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: false
+
+  - name: mixed-package
+    packages:
+      - core
+      - client
+      - disi-on-platform
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: false
+
+  - name: local-custom-package
+    packages:
+      - cares-on-platform
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: true
+    
+  - name: mixed-custom-package
+    packages:
+      - core
+      - disi-on-platform
+      - cares-on-platform
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: true
