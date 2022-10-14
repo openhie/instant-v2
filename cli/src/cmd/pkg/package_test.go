@@ -13,9 +13,10 @@ import (
 )
 
 var configCaseOne = core.Config{
-	Image:    "jembi/go-cli-test-image",
-	LogPath:  "/tmp/logs",
-	Packages: []string{"client", "dashboard-visualiser-jsreport"},
+	Image:         "jembi/go-cli-test-image",
+	LogPath:       "/tmp/logs",
+	PlatformImage: "jembi/platform:latest",
+	Packages:      []string{"client", "dashboard-visualiser-jsreport"},
 	CustomPackages: []core.CustomPackage{
 		{
 			Id:          "disi-on-platform",
@@ -44,18 +45,7 @@ func Test_unmarshalConfig(t *testing.T) {
 	config, err := unmarshalConfig(core.Config{}, configViper)
 	jtest.RequireNil(t, err)
 
-	if !assert.Equal(t, configCaseOne, *config) {
-		t.FailNow()
-	}
-
-	configViper, err = viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-5.yml")
-	jtest.RequireNil(t, err)
-
-	_, err = unmarshalConfig(core.Config{}, configViper)
-
-	if assert.Equal(t, nil, err) {
-		t.FailNow()
-	}
+	assert.Equal(t, configCaseOne, *config)
 }
 
 func Test_loadInProfileParams(t *testing.T) {

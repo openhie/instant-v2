@@ -10,3 +10,6 @@ go test .
 
 cd "$FILE_PATH"/src/util || exit
 go test .
+
+cd "$FILE_PATH"/src/cmd/pkg || exit
+go test .

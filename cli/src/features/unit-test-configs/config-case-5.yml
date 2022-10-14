@@ -20,6 +20,3 @@ profiles:
     envFiles:
       - ../test-conf/.env.test
     dev: true
-
-# if profile has package not mentioned in customPackage or packages, throw error
-# if specifying custom package for cloning, throw error if no ssh key is specified

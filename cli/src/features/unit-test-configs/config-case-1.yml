@@ -1,6 +1,7 @@
 ---
 image: 'jembi/go-cli-test-image'
 logPath: /tmp/logs
+platformImage: jembi/platform:latest
 
 packages:
   - id: client
