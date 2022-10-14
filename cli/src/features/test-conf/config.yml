@@ -10,12 +10,8 @@ packages:
 customPackages:
   - id: disi-on-platform
     path: "git@github.com:jembi/disi-on-platform.git"
-    sshKey: ./id_rsa
-    sshPassword: ./id_rsa_password.txt
   - id: custom-local-package
     path: ./features/custom-local-package
-    sshKey: ./id_rsa
-    sshPassword: ./id_rsa_password.txt
 
 profiles:
   - name: test-dev
