@@ -1,0 +1,25 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - id: client
+    name: OpenCR Client Registry
+
+customPackages:
+  - id: custom-package-1
+    path: "path-to-1"
+    sshKey: id_rsa
+    sshPassword: id_rsa_password.txt
+
+profiles:
+  - name: dev
+    packages:
+      - id: cares-on-platform
+        name: Disi On Platform
+    envFiles:
+      - ../test-conf/.env.test
+    dev: true
+
+# if profile has package not mentioned in customPackage or packages, throw error
+# if specifying custom package for cloning, throw error if no ssh key is specified
