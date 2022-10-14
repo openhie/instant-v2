@@ -47,6 +47,15 @@ func Test_unmarshalConfig(t *testing.T) {
 	if !assert.Equal(t, configCaseOne, *config) {
 		t.FailNow()
 	}
+
+	configViper, err = viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-5.yml")
+	jtest.RequireNil(t, err)
+
+	_, err = unmarshalConfig(core.Config{}, configViper)
+
+	if assert.Equal(t, nil, err) {
+		t.FailNow()
+	}
 }
 
 func Test_loadInProfileParams(t *testing.T) {
@@ -104,9 +113,7 @@ func Test_loadInProfileParams(t *testing.T) {
 	packageSpec, err := loadInProfileParams(cmd, *config, core.PackageSpec{})
 	jtest.RequireNil(t, err)
 
-	if !assert.Equal(t, packageSpec.EnvironmentVariables, []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"}) {
-		t.FailNow()
-	}
+	assert.Equal(t, packageSpec.EnvironmentVariables, []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"})
 }
 
 func setupLoadInProfileParams(t *testing.T, configFilePath string) (*cobra.Command, *core.Config) {

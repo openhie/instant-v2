@@ -65,7 +65,6 @@ func setPackageActionFlags(cmd *cobra.Command) {
 	})
 }
 
-// TODO: This function MUST be unit-tested
 func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	var config core.Config
 	configFile, err := cmd.Flags().GetString("config")
