@@ -48,7 +48,6 @@ func theCommandIsRunWithProfile(command string, packages *godog.Table) error {
 	}
 
 	res, err := runTestCommand(binaryFilePath, strings.Split(command, " ")...)
-
 	if err != nil {
 		return err
 	}
