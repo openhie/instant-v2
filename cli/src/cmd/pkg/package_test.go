@@ -131,3 +131,37 @@ func setupBoolFlags(t *testing.T, cmd *cobra.Command, boolFlagName string) {
 	err := cmd.Flags().Set(boolFlagName, "true")
 	jtest.RequireNil(t, err)
 }
+
+var (
+	sshKey                 = "id_rsa"
+	sshPassword            = "id_rsa_password.txt"
+	expectedCustomPackages = []core.CustomPackage{
+		{
+			Id:          "custom-package-1",
+			Path:        "path-to-1",
+			SshKey:      sshKey,
+			SshPassword: sshPassword,
+		},
+		{
+			Id:          "custom-package-2",
+			Path:        "path-to-2",
+			SshKey:      sshKey,
+			SshPassword: sshPassword,
+		},
+	}
+)
+
+func Test_getCustomPackages(t *testing.T) {
+	wd, err := os.Getwd()
+	jtest.RequireNil(t, err)
+
+	configViper, err := viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-4.yml")
+	jtest.RequireNil(t, err)
+
+	config, err := unmarshalConfig(core.Config{}, configViper)
+	jtest.RequireNil(t, err)
+
+	gotCustomPackages := getCustomPackages(config, []string{"path-to-1", "path-to-2"}, sshKey, sshPassword)
+
+	assert.Equal(t, expectedCustomPackages, gotCustomPackages)
+}
