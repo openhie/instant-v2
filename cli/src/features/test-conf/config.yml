@@ -3,42 +3,53 @@ image: 'jembi/go-cli-test-image'
 logPath: /tmp/logs
 
 packages:
-  - id: core
-    name: Core package
-  - id: client
-    name: OpenCR Client Registry
-  - id: dashboard-visualiser-jsreport
-    name: Dashboard Visualiser - JS Report
+  - core
+  - client
+  - dashboard-visualiser-jsreport
 
 customPackages:
   - id: disi-on-platform
     path: "git@github.com:jembi/disi-on-platform.git"
-    sshKey: ./id_rsa
-    sshPassword: ./id_rsa_password.txt
+  - id: custom-local-package
+    path: ./features/custom-local-package
 
 profiles:
-  - name: dev
+  - name: test-dev
     packages:
-      - id: core
-        name: Core package
-      - id: client
-        name: OpenCR Client Registry
-
+      - core
+      - client
     envFiles:
       - ./features/test-conf/.env.test
     dev: true
 
-  - name: profile-2
+  - name: test-custom-package
     packages:
-      - id: core
-        name: Core package
-      - id: disi-on-platform
-        name: Disi On Platform
-    customPackages:
-      - id: disi-on-platform
-        path: "git@github.com:jembi/disi-on-platform.git"
-        sshKey: ./id_rsa
-        sshPassword: ./id_rsa_password.txt
+      - disi-on-platform
     envFiles:
       - ./features/test-conf/.env.test
     dev: false
+
+  - name: test-mixed-package
+    packages:
+      - core
+      - client
+      - disi-on-platform
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: false
+
+  - name: test-local-custom-package
+    packages:
+      - custom-local-package
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: true
+    
+  - name: test-mixed-custom-package
+    packages:
+      - core
+      - disi-on-platform
+      - custom-local-package
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: true

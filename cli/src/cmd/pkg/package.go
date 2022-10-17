@@ -1,17 +1,13 @@
 package pkg
 
 import (
-	"context"
-	"reflect"
-
 	viperUtil "cli/cmd/util"
 	"cli/core"
+	"context"
 
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func setPackageActionFlags(cmd *cobra.Command) {
@@ -60,7 +56,6 @@ func setPackageActionFlags(cmd *cobra.Command) {
 	})
 }
 
-// TODO: This function MUST be unit-tested
 func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	var config core.Config
 	configFile, err := cmd.Flags().GetString("config")
@@ -73,23 +68,7 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 		return nil, errors.Wrap(err, "")
 	}
 
-	var decoderOptions viper.DecoderConfigOption = func(dc *mapstructure.DecoderConfig) {
-		dc.DecodeHook = func(k1, k2 reflect.Kind, i interface{}) (interface{}, error) {
-			if k1 == reflect.Map {
-				ip := i.(map[string]interface{})
-
-				// TODO: implement better logic for this
-				_, sshKeyExists := ip["sshkey"]
-				if _, ok := ip["packages"]; !ok && !sshKeyExists {
-					return ip["id"], nil
-				}
-			}
-
-			return i, nil
-		}
-	}
-
-	err = configViper.Unmarshal(&config, decoderOptions)
+	err = configViper.Unmarshal(&config)
 	if err != nil {
 		return nil, errors.Wrap(err, "")
 	}
