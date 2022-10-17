@@ -81,13 +81,12 @@ func GetEnvironmentVariableViper(envFiles []string) (*viper.Viper, error) {
 	return envVarViper, nil
 }
 
-// TODO: Unit-test this
 func GetEnvVariableString(envViper *viper.Viper) []string {
 	var envVariables []string
 	allEnvVars := envViper.AllSettings()
 	for key, element := range allEnvVars {
 		envVariables = append(envVariables, fmt.Sprintf("%v=%v", strings.ToUpper(key), element))
 	}
-	
+
 	return envVariables
 }
