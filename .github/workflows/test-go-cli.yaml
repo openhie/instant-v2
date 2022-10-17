@@ -24,6 +24,11 @@ jobs:
     - name: Checkout Working Branch 
       uses: actions/checkout@v2
 
+    - name: setup ssh-agent
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
