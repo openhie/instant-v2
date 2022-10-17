@@ -1,0 +1,9 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - core
+  - client
+  - dashboard-visualiser-jsreport
+  

@@ -39,6 +39,14 @@ func PackageDownCommand() *cobra.Command {
 				log.Error(context.Background(), err)
 				panic(err)
 			}
+			
+			for _, pack := range packageSpec.Packages {
+				for _, customPack := range config.CustomPackages {
+					if pack == customPack.Id {
+						packageSpec.CustomPackages = append(packageSpec.CustomPackages, customPack)
+					}
+				}
+			}
 
 			err = core.LaunchPackage(*packageSpec, *config)
 			if err != nil {

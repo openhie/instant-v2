@@ -39,6 +39,23 @@ func theCommandIsRun(command string) error {
 	return err
 }
 
+func theCommandIsRunWithProfile(command string, packages *godog.Table) error {
+	if len(packages.Rows) > 0 {
+		for i := 1; i < len(packages.Rows); i++ {
+			// TODO: find a way to make the below code OS-agnostic (/tmp is linux specific)
+			go monitorDirFor(filepath.Join("/tmp", "custom-package"), packages.Rows[i].Cells[0].Value)
+		}
+	}
+
+	res, err := runTestCommand(binaryFilePath, strings.Split(command, " ")...)
+	if err != nil {
+		return err
+	}
+	logs = res
+
+	return nil
+}
+
 func checkTheCLIOutputIs(expectedOutput string) error {
 	return compareLogsAndOutputs(logs, expectedOutput)
 }
@@ -61,7 +78,17 @@ func checkCustomPackages(packages *godog.Table) error {
 		}
 	}
 
-	return errors.New("did not create custom-package")
+	var v string
+
+	for i := 1; i < len(packages.Rows); i++ {
+		for _, cell := range packages.Rows[i].Cells {
+			if !customPackages[cell.Value] {
+				v += cell.Value + "\n"
+			}
+		}
+	}
+
+	return errors.New("did not create custom packages:\n" + v)
 }
 
 func compareLogsAndOutputs(inputLogs, expectedOutput string) error {
@@ -81,6 +108,7 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 
 			sc.Step(`^check the CLI output is "([^"]*)"$`, checkTheCLIOutputIs)
 			sc.Step(`^the command "([^"]*)" is run$`, theCommandIsRun)
+			sc.Step(`^the command "([^"]*)" is run with profile$`, theCommandIsRunWithProfile)
 			sc.Step(`^check that the CLI added custom packages$`, checkCustomPackages)
 		},
 	}
@@ -165,7 +193,6 @@ func deleteContentAtFilePath(filePath []string, content []string) {
 
 func cleanUp() {
 	deleteContentAtFilePath([]string{".", "features"}, []string{"test-platform.exe", "test-platform-linux", "test-platform-macos"})
-	deleteContentAtFilePath([]string{"."}, directoryNames)
 
 	_, err := runTestCommand("docker", "rm", "instant-openhie")
 	if err == nil {

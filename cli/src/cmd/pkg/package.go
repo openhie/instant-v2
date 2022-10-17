@@ -1,10 +1,9 @@
 package pkg
 
 import (
-	"context"
-
 	viperUtil "cli/cmd/util"
 	"cli/core"
+	"context"
 
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"

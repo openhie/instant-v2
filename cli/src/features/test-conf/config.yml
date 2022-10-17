@@ -8,26 +8,48 @@ packages:
   - dashboard-visualiser-jsreport
 
 customPackages:
-  - id: disi-on-platform
-    path: "git@github.com:jembi/disi-on-platform.git"
+  - id: custom-package-test
+    path: "git@github.com:jembi/custom-package-test.git"
+  - id: custom-local-package
+    path: ./features/custom-local-package
 
 profiles:
-  - name: dev
+  - name: test-dev
     packages:
       - core
       - client
-
     envFiles:
       - ./features/test-conf/.env.test
     dev: true
 
-  - name: profile-2
+  - name: test-custom-package
     packages:
-      - core
-      - disi-on-platform
-    customPackages:
-      - id: disi-on-platform
-        path: "git@github.com:jembi/disi-on-platform.git"
+      - custom-package-test
     envFiles:
       - ./features/test-conf/.env.test
     dev: false
+
+  - name: test-mixed-package
+    packages:
+      - core
+      - client
+      - custom-package-test
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: false
+
+  - name: test-local-custom-package
+    packages:
+      - custom-local-package
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: true
+    
+  - name: test-mixed-custom-package
+    packages:
+      - core
+      - custom-package-test
+      - custom-local-package
+    envFiles:
+      - ./features/test-conf/.env.test
+    dev: true
