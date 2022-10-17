@@ -11,44 +11,15 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/luno/jettison/errors"
 )
 
-func getPublicKeys(privateKeyFile string, password string) (*ssh.PublicKeys, error) {
-	_, err := os.Stat(privateKeyFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	// Try to resolve password if a file path is provided as the password param
-	file, err := os.Stat(password)
-	if err == nil && !file.IsDir() {
-		dat, err := os.ReadFile(password)
-		if dat != nil && err == nil {
-			password = string(dat)
-		}
-	}
-
-	// Clone the given repository to the given directory
-	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, password)
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	return publicKeys, nil
-}
-
-func CloneRepo(url, dest, sshKeyPath, sshPassword string) error {
+func CloneRepo(url, dest string) error {
 	cloneOptions := &git.CloneOptions{
 		URL: url,
 	}
-	publicKeys, err := getPublicKeys(sshKeyPath, sshPassword)
-	if err == nil {
-		cloneOptions.Auth = publicKeys
-	}
 
-	_, err = git.PlainClone(dest, false, cloneOptions)
+	_, err := git.PlainClone(dest, false, cloneOptions)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}

@@ -19,10 +19,8 @@ var configCaseOne = core.Config{
 	Packages:      []string{"client", "dashboard-visualiser-jsreport"},
 	CustomPackages: []core.CustomPackage{
 		{
-			Id:          "disi-on-platform",
-			Path:        "git@github.com:jembi/disi-on-platform.git",
-			SshKey:      "./id_rsa",
-			SshPassword: "./id_rsa_password.txt",
+			Id:   "disi-on-platform",
+			Path: "git@github.com:jembi/disi-on-platform.git",
 		},
 	},
 	Profiles: []core.Profile{
@@ -123,20 +121,14 @@ func setupBoolFlags(t *testing.T, cmd *cobra.Command, boolFlagName string) {
 }
 
 var (
-	sshKey                 = "id_rsa"
-	sshPassword            = "id_rsa_password.txt"
 	expectedCustomPackages = []core.CustomPackage{
 		{
-			Id:          "custom-package-1",
-			Path:        "path-to-1",
-			SshKey:      sshKey,
-			SshPassword: sshPassword,
+			Id:   "custom-package-1",
+			Path: "path-to-1",
 		},
 		{
-			Id:          "custom-package-2",
-			Path:        "path-to-2",
-			SshKey:      sshKey,
-			SshPassword: sshPassword,
+			Id:   "custom-package-2",
+			Path: "path-to-2",
 		},
 	}
 )
@@ -151,7 +143,7 @@ func Test_getCustomPackages(t *testing.T) {
 	config, err := unmarshalConfig(core.Config{}, configViper)
 	jtest.RequireNil(t, err)
 
-	gotCustomPackages := getCustomPackages(config, []string{"path-to-1", "path-to-2"}, sshKey, sshPassword)
+	gotCustomPackages := getCustomPackages(config, []string{"path-to-1", "path-to-2"})
 
 	assert.Equal(t, expectedCustomPackages, gotCustomPackages)
 }

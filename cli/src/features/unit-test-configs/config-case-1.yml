@@ -4,24 +4,18 @@ logPath: /tmp/logs
 platformImage: jembi/platform:latest
 
 packages:
-  - id: client
-    name: OpenCR Client Registry
-  - id: dashboard-visualiser-jsreport
-    name: Dashboard Visualiser - JS Report
+  - client
+  - dashboard-visualiser-jsreport
 
 customPackages:
   - id: disi-on-platform
     path: "git@github.com:jembi/disi-on-platform.git"
-    sshKey: ./id_rsa
-    sshPassword: ./id_rsa_password.txt
 
 profiles:
   - name: dev
     packages:
-      - id: dashboard-visualiser-jsreport
-        name: Dashboard Visualiser - JS Report
-      - id: disi-on-platform
-        name: Disi On Platform
+      - dashboard-visualiser-jsreport
+      - disi-on-platform
     envFiles:
       - ../test-conf/.env.test
     dev: true

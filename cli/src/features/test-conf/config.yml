@@ -3,26 +3,19 @@ image: 'jembi/go-cli-test-image'
 logPath: /tmp/logs
 
 packages:
-  - id: core
-    name: Core package
-  - id: client
-    name: OpenCR Client Registry
-  - id: dashboard-visualiser-jsreport
-    name: Dashboard Visualiser - JS Report
+  - core
+  - client
+  - dashboard-visualiser-jsreport
 
 customPackages:
   - id: disi-on-platform
     path: "git@github.com:jembi/disi-on-platform.git"
-    sshKey: ./id_rsa
-    sshPassword: ./id_rsa_password.txt
 
 profiles:
   - name: dev
     packages:
-      - id: core
-        name: Core package
-      - id: client
-        name: OpenCR Client Registry
+      - core
+      - client
 
     envFiles:
       - ./features/test-conf/.env.test
@@ -30,15 +23,11 @@ profiles:
 
   - name: profile-2
     packages:
-      - id: core
-        name: Core package
-      - id: disi-on-platform
-        name: Disi On Platform
+      - core
+      - disi-on-platform
     customPackages:
       - id: disi-on-platform
         path: "git@github.com:jembi/disi-on-platform.git"
-        sshKey: ./id_rsa
-        sshPassword: ./id_rsa_password.txt
     envFiles:
       - ./features/test-conf/.env.test
     dev: false

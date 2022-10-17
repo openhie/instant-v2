@@ -3,20 +3,16 @@ image: 'jembi/go-cli-test-image'
 logPath: /tmp/logs
 
 packages:
-  - id: client
-    name: OpenCR Client Registry
+  - client
 
 customPackages:
   - id: custom-package-1
     path: "path-to-1"
-    sshKey: id_rsa
-    sshPassword: id_rsa_password.txt
 
 profiles:
   - name: dev
     packages:
-      - id: cares-on-platform
-        name: Disi On Platform
+      - cares-on-platform
     envFiles:
       - ../test-conf/.env.test
     dev: true

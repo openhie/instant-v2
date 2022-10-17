@@ -39,10 +39,8 @@ type Profile struct {
 }
 
 type CustomPackage struct {
-	Id          string `yaml:"id"`
-	Path        string `yaml:"path"`
-	SshKey      string `yaml:"sshKey"`
-	SshPassword string `yaml:"sshPassword"`
+	Id   string `yaml:"id"`
+	Path string `yaml:"path"`
 }
 
 type Config struct {
@@ -93,7 +91,7 @@ func mountCustomPackage(ctx context.Context, cli *client.Client, customPackage C
 	}
 
 	if gitRegex.MatchString(customPackage.Path) && !httpRegex.MatchString(customPackage.Path) {
-		err = util.CloneRepo(customPackage.Path, customPackageTmpLocation, customPackage.SshKey, customPackage.SshPassword)
+		err = util.CloneRepo(customPackage.Path, customPackageTmpLocation)
 		if err != nil {
 			return err
 		}

@@ -2,14 +2,12 @@ package pkg
 
 import (
 	"context"
-	"reflect"
 
 	viperUtil "cli/cmd/util"
 	"cli/core"
 
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,8 +24,6 @@ func setPackageActionFlags(cmd *cobra.Command) {
 	flags.Bool("only", false, "Ignore package dependencies")
 	flags.String("profile", "", "The profile name to load parameters from (defined in config.yml)")
 	flags.StringSliceP("custom-path", "c", nil, "Path(s) to custom package(s)")
-	flags.String("ssh-key", "", "The path to the ssh key required for cloning a custom package")
-	flags.String("ssh-password", "", "The password (or path to the file containing the password) required for authenticating the ssh-key when cloning a custom package")
 
 	cmd.RegisterFlagCompletionFunc("name", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := getConfigFromParams(cmd)
@@ -86,23 +82,7 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 }
 
 func unmarshalConfig(config core.Config, configViper *viper.Viper) (*core.Config, error) {
-	var decoderOptions viper.DecoderConfigOption = func(dc *mapstructure.DecoderConfig) {
-		dc.DecodeHook = func(k1, k2 reflect.Kind, i interface{}) (interface{}, error) {
-			if k1 == reflect.Map {
-				ip := i.(map[string]interface{})
-
-				// TODO: implement better logic for this
-				_, sshKeyExists := ip["sshkey"]
-				if _, ok := ip["packages"]; !ok && !sshKeyExists {
-					return ip["id"], nil
-				}
-			}
-
-			return i, nil
-		}
-	}
-
-	err := configViper.Unmarshal(&config, decoderOptions)
+	err := configViper.Unmarshal(&config)
 	if err != nil {
 		return nil, errors.Wrap(err, "")
 	}
@@ -110,7 +90,7 @@ func unmarshalConfig(config core.Config, configViper *viper.Viper) (*core.Config
 	return &config, nil
 }
 
-func getCustomPackages(config *core.Config, customPackagePaths []string, sshKey, sshPassword string) []core.CustomPackage {
+func getCustomPackages(config *core.Config, customPackagePaths []string) []core.CustomPackage {
 	var customPackages []core.CustomPackage
 	for _, customPackagePath := range customPackagePaths {
 		var customPackage core.CustomPackage
@@ -123,9 +103,7 @@ func getCustomPackages(config *core.Config, customPackagePaths []string, sshKey,
 		}
 		if customPackage.Id == "" {
 			customPackage = core.CustomPackage{
-				Path:        customPackagePath,
-				SshKey:      sshKey,
-				SshPassword: sshPassword,
+				Path: customPackagePath,
 			}
 		}
 
@@ -165,17 +143,7 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 	}
 	envVariables := viperUtil.GetEnvVariableString(envViper)
 
-	sshKey, err := cmd.Flags().GetString("ssh-key")
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	sshPassword, err := cmd.Flags().GetString("ssh-password")
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	customPackages := getCustomPackages(config, customPackagePaths, sshKey, sshPassword)
+	customPackages := getCustomPackages(config, customPackagePaths)
 
 	packageSpec = core.PackageSpec{
 		Packages:             packageNames,
