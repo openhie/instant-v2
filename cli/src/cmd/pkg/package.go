@@ -4,6 +4,7 @@ import (
 	viperUtil "cli/cmd/util"
 	"cli/core"
 	"context"
+	"strings"
 
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
@@ -12,8 +13,9 @@ import (
 )
 
 var (
-	ErrConflictingDevFlag  error = errors.New("conflicting command-line and profile flag: --dev")
-	ErrConflictingOnlyFlag error = errors.New("conflicting command-line and profile flag: --only")
+	ErrConflictingDevFlag      = errors.New("conflicting command-line and profile flag: --dev")
+	ErrConflictingOnlyFlag     = errors.New("conflicting command-line and profile flag: --only")
+	ErrInvalidConfigFileSyntax = errors.New("invalid config file syntax, refer to https://github.com/openhie/package-starter-kit/blob/main/README.md, for information on valid config file syntax")
 )
 
 func setPackageActionFlags(cmd *cobra.Command) {
@@ -82,8 +84,10 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 
 func unmarshalConfig(config core.Config, configViper *viper.Viper) (*core.Config, error) {
 	err := configViper.Unmarshal(&config)
-	if err != nil {
-		return nil, errors.Wrap(err, "")
+	if err != nil && strings.Contains(err.Error(), "expected type") {
+		return nil, errors.Wrap(ErrInvalidConfigFileSyntax, "")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "")	
 	}
 
 	return &config, nil

@@ -39,6 +39,7 @@ func Test_unmarshalConfig(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
+	// case: match configCaseOne
 	configViper, err := viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-1.yml")
 	jtest.RequireNil(t, err)
 
@@ -46,6 +47,13 @@ func Test_unmarshalConfig(t *testing.T) {
 	jtest.RequireNil(t, err)
 
 	assert.Equal(t, configCaseOne, *config)
+
+	// case: return invalid config file syntax error
+	configViper, err = viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-6.yml")
+	jtest.RequireNil(t, err)
+
+	_, err = unmarshalConfig(core.Config{}, configViper)
+	assert.Equal(t, ErrInvalidConfigFileSyntax.Error(), err.Error())
 }
 
 func Test_loadInProfileParams(t *testing.T) {
