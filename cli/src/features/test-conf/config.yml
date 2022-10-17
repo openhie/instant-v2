@@ -8,8 +8,8 @@ packages:
   - dashboard-visualiser-jsreport
 
 customPackages:
-  - id: disi-on-platform
-    path: "git@github.com:jembi/disi-on-platform.git"
+  - id: custom-package-test
+    path: "git@github.com:jembi/custom-package-test.git"
   - id: custom-local-package
     path: ./features/custom-local-package
 
@@ -24,7 +24,7 @@ profiles:
 
   - name: test-custom-package
     packages:
-      - disi-on-platform
+      - custom-package-test
     envFiles:
       - ./features/test-conf/.env.test
     dev: false
@@ -33,7 +33,7 @@ profiles:
     packages:
       - core
       - client
-      - disi-on-platform
+      - custom-package-test
     envFiles:
       - ./features/test-conf/.env.test
     dev: false
@@ -48,7 +48,7 @@ profiles:
   - name: test-mixed-custom-package
     packages:
       - core
-      - disi-on-platform
+      - custom-package-test
       - custom-local-package
     envFiles:
       - ./features/test-conf/.env.test
