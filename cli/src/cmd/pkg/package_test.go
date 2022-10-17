@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"os"
+	"sort"
+	"strings"
 	"testing"
 
 	viperUtil "cli/cmd/util"
@@ -75,7 +77,6 @@ func Test_loadInProfileParams(t *testing.T) {
 		// case: return error from non-existant env file directory
 		{
 			profileName:         "bad-env-file-path",
-			boolFlagName:        "",
 			configFilePath:      wd + "/../../features/unit-test-configs/config-case-3.yml",
 			expectedErrorString: "stat ./features/test-conf/.env.tests: no such file or directory",
 		},
@@ -84,8 +85,11 @@ func Test_loadInProfileParams(t *testing.T) {
 	for _, tc := range testCases {
 		cmd, config := setupLoadInProfileParams(t, tc.configFilePath)
 
-		setupBoolFlags(t, cmd, tc.boolFlagName)
-		cmd.Flags().String("profile", tc.profileName, "")
+		setPackageActionFlags(cmd)
+		if tc.boolFlagName != "" {
+			setupBoolFlags(t, cmd, tc.boolFlagName)
+		}
+		cmd.Flags().Set("profile", tc.profileName)
 
 		_, err = loadInProfileParams(cmd, *config, core.PackageSpec{})
 		if !assert.Equal(t, tc.expectedErrorString, err.Error()) {
@@ -95,11 +99,15 @@ func Test_loadInProfileParams(t *testing.T) {
 
 	// case: load in environment variables from more than one env file
 	cmd, config := setupLoadInProfileParams(t, wd+"/../../features/unit-test-configs/config-case-2.yml")
-
-	cmd.Flags().String("profile", "non-only", "")
+	setPackageActionFlags(cmd)
+	cmd.Flags().Set("profile", "non-only")
 
 	packageSpec, err := loadInProfileParams(cmd, *config, core.PackageSpec{})
 	jtest.RequireNil(t, err)
+
+	sort.Slice(packageSpec.EnvironmentVariables, func(i, j int) bool {
+		return strings.Contains(packageSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
+	})
 
 	assert.Equal(t, packageSpec.EnvironmentVariables, []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"})
 }
@@ -115,7 +123,6 @@ func setupLoadInProfileParams(t *testing.T, configFilePath string) (*cobra.Comma
 }
 
 func setupBoolFlags(t *testing.T, cmd *cobra.Command, boolFlagName string) {
-	cmd.Flags().Bool(boolFlagName, false, "")
 	err := cmd.Flags().Set(boolFlagName, "true")
 	jtest.RequireNil(t, err)
 }
@@ -146,4 +153,74 @@ func Test_getCustomPackages(t *testing.T) {
 	gotCustomPackages := getCustomPackages(config, []string{"path-to-1", "path-to-2"})
 
 	assert.Equal(t, expectedCustomPackages, gotCustomPackages)
+}
+
+var packageSpec = &core.PackageSpec{
+	Packages: []string{"pack-1", "pack-2"},
+	CustomPackages: []core.CustomPackage{
+		{
+			Id:   "disi-on-platform",
+			Path: "git@github.com:jembi/disi-on-platform.git",
+		},
+	},
+	EnvironmentVariables: []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"},
+	IsDev:                true,
+	IsOnly:               true,
+}
+
+func Test_getPackageSpecFromParams(t *testing.T) {
+	wd, err := os.Getwd()
+	jtest.RequireNil(t, err)
+
+	type cases struct {
+		configFilePath string
+		hookFunc       func(cmd *cobra.Command)
+	}
+
+	testCases := []cases{
+		// case: match packageSpec
+		{
+			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
+			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().Set("name", "pack-1")
+				cmd.Flags().Set("name", "pack-2")
+
+				cmd.Flags().Set("env-file", wd+"/../../features/test-conf/.env.one")
+				cmd.Flags().Set("env-file", wd+"/../../features/test-conf/.env.two")
+
+				cmd.Flags().Set("custom-path", "disi-on-platform")
+
+				cmd.Flags().Set("dev", "true")
+				cmd.Flags().Set("only", "true")
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		cmd, config := loadCmdAndConfig(t, tc.configFilePath, tc.hookFunc)
+
+		pSpec, err := getPackageSpecFromParams(cmd, config)
+		jtest.RequireNil(t, err)
+
+		if !assert.Equal(t, packageSpec, pSpec) {
+			t.FailNow()
+		}
+	}
+}
+
+func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *cobra.Command)) (*cobra.Command, *core.Config) {
+	configViper, err := viperUtil.GetConfigViper(configFilePath)
+	jtest.RequireNil(t, err)
+
+	config, err := unmarshalConfig(core.Config{}, configViper)
+	jtest.RequireNil(t, err)
+
+	cmd := &cobra.Command{}
+	setPackageActionFlags(cmd)
+
+	cmd.Flags().StringSlice("env-file", []string{".env"}, "")
+
+	hookFunc(cmd)
+
+	return cmd, config
 }

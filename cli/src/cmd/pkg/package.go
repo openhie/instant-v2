@@ -157,7 +157,6 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 	return &packageSpec, nil
 }
 
-// TODO: This can be turned into a method for type *core.PackageSpec
 func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec core.PackageSpec) (*core.PackageSpec, error) {
 	profile := core.Profile{}
 	profileName, err := cmd.Flags().GetString("profile")
