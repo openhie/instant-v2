@@ -18,7 +18,7 @@ var (
 
 func validate(cmd *cobra.Command, config *core.Config) error {
 	customPackagePaths, err := cmd.Flags().GetStringSlice("custom-path")
-	if err != nil && !strings.Contains(err.Error(), "flag accessed but not defined") {
+	if err != nil {
 		return errors.Wrap(err, "")
 	}
 
@@ -29,7 +29,7 @@ func validate(cmd *cobra.Command, config *core.Config) error {
 	}
 
 	profile, err := cmd.Flags().GetString("profile")
-	if err != nil && !strings.Contains(err.Error(), "flag accessed but not defined") {
+	if err != nil {
 		return errors.Wrap(err, "")
 	} else {
 		err = validateProfile(cmd, config, profile)

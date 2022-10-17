@@ -80,6 +80,16 @@ func Test_loadInProfileParams(t *testing.T) {
 			configFilePath:      wd + "/../../features/unit-test-configs/config-case-3.yml",
 			expectedErrorString: "stat ./features/test-conf/.env.tests: no such file or directory",
 		},
+		// case: no profile specified, dev flag specified, return nil error
+		{
+			boolFlagName:   "dev",
+			configFilePath: wd + "/../../features/test-conf/config.yml",
+		},
+		// case: no profile specified, only flag specified, return nil error
+		{
+			boolFlagName:   "only",
+			configFilePath: wd + "/../../features/test-conf/config.yml",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -89,10 +99,15 @@ func Test_loadInProfileParams(t *testing.T) {
 		if tc.boolFlagName != "" {
 			setupBoolFlags(t, cmd, tc.boolFlagName)
 		}
-		cmd.Flags().Set("profile", tc.profileName)
+
+		if tc.profileName != "" {
+			cmd.Flags().Set("profile", tc.profileName)
+		}
 
 		_, err = loadInProfileParams(cmd, *config, core.PackageSpec{})
-		if !assert.Equal(t, tc.expectedErrorString, err.Error()) {
+		if err != nil && !assert.Equal(t, tc.expectedErrorString, err.Error()) {
+			t.FailNow()
+		} else if tc.expectedErrorString == "" && err != nil {
 			t.FailNow()
 		}
 	}
@@ -201,6 +216,10 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 
 		pSpec, err := getPackageSpecFromParams(cmd, config)
 		jtest.RequireNil(t, err)
+
+		sort.Slice(pSpec.EnvironmentVariables, func(i, j int) bool {
+			return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
+		})
 
 		if !assert.Equal(t, packageSpec, pSpec) {
 			t.FailNow()

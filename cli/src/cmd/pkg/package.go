@@ -172,7 +172,7 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 
 	if !cmd.Flags().Changed("dev") && profile.Dev {
 		packageSpec.IsDev = profile.Dev
-	} else if cmd.Flags().Changed("dev") {
+	} else if cmd.Flags().Changed("dev") && profileName != "" {
 		val, err := cmd.Flags().GetBool("dev")
 		if err != nil {
 			return nil, errors.Wrap(err, "")
@@ -185,7 +185,7 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 
 	if !cmd.Flags().Changed("only") && profile.Only {
 		packageSpec.IsOnly = profile.Only
-	} else if cmd.Flags().Changed("only") {
+	} else if cmd.Flags().Changed("only") && profileName != "" {
 		val, err := cmd.Flags().GetBool("only")
 		if err != nil {
 			return nil, errors.Wrap(err, "")
