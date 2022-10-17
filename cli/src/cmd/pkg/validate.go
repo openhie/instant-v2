@@ -28,11 +28,11 @@ func validate(cmd *cobra.Command, config *core.Config) error {
 		return errors.Wrap(ErrNoPackages, "")
 	}
 
-	profiles, err := cmd.Flags().GetStringSlice("profile")
+	profile, err := cmd.Flags().GetString("profile")
 	if err != nil && !strings.Contains(err.Error(), "flag accessed but not defined") {
 		return errors.Wrap(err, "")
 	} else {
-		err = validateProfile(cmd, config, profiles)
+		err = validateProfile(cmd, config, profile)
 		if err != nil {
 			return err
 		}
@@ -41,14 +41,12 @@ func validate(cmd *cobra.Command, config *core.Config) error {
 	return nil
 }
 
-func validateProfile(cmd *cobra.Command, config *core.Config, profiles []string) error {
+func validateProfile(cmd *cobra.Command, config *core.Config, profile string) error {
 	profilePackagesMap := make(map[string]bool)
-	for _, profile := range profiles {
-		for _, pack := range config.Profiles {
-			if pack.Name == profile {
-				for _, p := range pack.Packages {
-					profilePackagesMap[p] = true
-				}
+	for _, pack := range config.Profiles {
+		if pack.Name == profile {
+			for _, p := range pack.Packages {
+				profilePackagesMap[p] = true
 			}
 		}
 	}
@@ -67,7 +65,7 @@ func validateProfile(cmd *cobra.Command, config *core.Config, profiles []string)
 	}
 
 	customPackages, err := cmd.Flags().GetStringSlice("custom-path")
-	if err != nil && !strings.Contains(err.Error(), "flag accessed but not defined") {
+	if err != nil {
 		return errors.Wrap(err, "")
 	}
 
