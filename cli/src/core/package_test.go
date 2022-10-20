@@ -253,3 +253,42 @@ func Test_getCustomPackageName(t *testing.T) {
 		assert.Equal(t, tc.expectName, got)
 	}
 }
+
+func Test_hasImage(t *testing.T) {
+	type cases struct {
+		imageName string
+
+		images    []types.ImageSummary
+		wantMatch bool
+	}
+
+	testCases := []cases{
+		// case: no match
+		{
+			imageName: "matchImage",
+			images: []types.ImageSummary{
+				{
+					RepoTags: []string{"no-match-1", "no-match-2"},
+				},
+			},
+			wantMatch: false,
+		},
+		// case: match
+		{
+			imageName: "matchImage",
+			images: []types.ImageSummary{
+				{
+					RepoTags: []string{"no-match-1", "no-match-2", "matchImage"},
+				},
+			},
+			wantMatch: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		if !assert.Equal(t, tc.wantMatch, hasImage(tc.imageName, tc.images)) {
+			t.FailNow()
+		}
+	}
+
+}

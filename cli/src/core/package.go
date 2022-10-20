@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -279,6 +280,25 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	RemoveStaleInstantContainer(cli, ctx)
 	RemoveStaleInstantVolume(cli, ctx)
 
+	images, err := cli.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	if !hasImage(config.Image, images) {
+		reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+		defer reader.Close()
+
+		// This io.Copy helps to wait for the image to finish downloading
+		_, err = io.Copy(ioutil.Discard, reader)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+	}
+
 	mounts := []mount.Mount{
 		{
 			Type:   mount.TypeVolume,
@@ -359,6 +379,16 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	}
 
 	return nil
+}
+
+func hasImage(imageName string, images []types.ImageSummary) bool {
+	for _, image := range images {
+		if util.SliceContains(image.RepoTags, imageName) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type GeneratePackageSpec struct {

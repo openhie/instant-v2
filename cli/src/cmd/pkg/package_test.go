@@ -251,3 +251,38 @@ func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *co
 
 	return cmd, config
 }
+
+func Test_appendTag(t *testing.T) {
+	type cases struct {
+		config        *core.Config
+		wantImageName string
+	}
+
+	testCases := []cases{
+		{
+			config: &core.Config{
+				Image: "docker/image",
+			},
+			wantImageName: "docker/image:latest",
+		},
+		{
+			config: &core.Config{
+				Image: "docker/image:latest",
+			},
+			wantImageName: "docker/image:latest",
+		},
+		{
+			config: &core.Config{
+				Image: "docker/image:1.0.0",
+			},
+			wantImageName: "docker/image:1.0.0",
+		},
+	}
+
+	for _, tc := range testCases {
+		appendTag(tc.config)
+		if !assert.Equal(t, tc.wantImageName, tc.config.Image) {
+			t.FailNow()
+		}
+	}
+}
