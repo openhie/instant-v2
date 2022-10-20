@@ -79,7 +79,17 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 		return nil, err
 	}
 
+	appendTag(populatedConfig)
+
 	return populatedConfig, nil
+}
+
+func appendTag(config *core.Config) {
+	splitStrings := strings.Split(config.Image, ":")
+
+	if len(splitStrings) == 1 {
+		config.Image += ":latest"
+	}
 }
 
 func unmarshalConfig(config core.Config, configViper *viper.Viper) (*core.Config, error) {
@@ -87,7 +97,7 @@ func unmarshalConfig(config core.Config, configViper *viper.Viper) (*core.Config
 	if err != nil && strings.Contains(err.Error(), "expected type") {
 		return nil, errors.Wrap(ErrInvalidConfigFileSyntax, "")
 	} else if err != nil {
-		return nil, errors.Wrap(err, "")	
+		return nil, errors.Wrap(err, "")
 	}
 
 	return &config, nil
