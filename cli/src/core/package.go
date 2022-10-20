@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -321,6 +322,29 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 		err = mountCustomPackage(ctx, cli, customPackage, instantContainer.ID)
 		if err != nil {
 			return err
+		}
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	dockerCredsPath := filepath.Join(homeDir, ".docker")
+	_, err = os.Stat(dockerCredsPath)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Wrap(err, "")
+	} else if !os.IsNotExist(err) {
+		credsFileReader, err := util.TarSource(dockerCredsPath)
+		if err != nil {
+			return err
+		}
+
+		err = cli.CopyToContainer(ctx, instantContainer.ID, "/root/.docker/", credsFileReader, types.CopyToContainerOptions{
+			AllowOverwriteDirWithFile: true,
+		})
+		if err != nil {
+			return errors.Wrap(err, "")
 		}
 	}
 
