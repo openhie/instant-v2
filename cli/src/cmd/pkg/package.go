@@ -184,6 +184,7 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 		}
 	}
 
+	// TODO: don't panic on flag conflicts, the command line should override the profiles
 	if !cmd.Flags().Changed("dev") && profile.Dev {
 		packageSpec.IsDev = profile.Dev
 	} else if cmd.Flags().Changed("dev") && profileName != "" {

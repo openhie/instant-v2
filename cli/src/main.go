@@ -15,6 +15,7 @@ import (
 //go:embed template/*
 var templateFs embed.FS
 
+// TODO: starting using context correctly
 func main() {
 	defer handleExit()
 
