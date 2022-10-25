@@ -7,14 +7,12 @@ import (
 
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var configFile string
-var configViper viper.Viper
-
-var envFiles []string
-var envVarViper viper.Viper
+var (
+	configFile string
+	envFiles   []string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -33,6 +31,7 @@ func Execute() {
 }
 
 func init() {
+	// TODO: read the docs for cobra.OnInitialize() and decide if it's needed
 	cobra.OnInitialize()
 
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
