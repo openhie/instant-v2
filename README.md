@@ -108,3 +108,29 @@ To include the provided schemas in your project, add the following to your `.vsc
     "https://raw.githubusercontent.com/openhie/package-starter-kit/main/schema/config.schema.json": "config.yml"
 },
 ```
+
+Alternately, adhere the below example config.yml file showcases the available fields:
+
+```yml
+image: jembi/platform
+logPath: /tmp/logs
+
+packages:
+  - analytics-datastore-elastic-search
+  - dashboard-visualiser-kibana
+  - data-mapper-logstash
+
+customPackages:
+  - id: disi-on-platform
+    path: "git@github.com:jembi/disi-on-platform.git"
+
+profiles:
+  - name: dev
+    packages:
+      - analytics-datastore-elastic-search
+      - dashboard-visualiser-kibana
+    envFiles:
+      - .env.dev
+    dev: true
+    only: true
+```

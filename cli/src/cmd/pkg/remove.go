@@ -35,6 +35,12 @@ func PackageRemoveCommand() *cobra.Command {
 				panic(err)
 			}
 
+			err = validate(cmd, config)
+			if err != nil {
+				log.Error(context.Background(), err)
+				panic(err)
+			}
+			
 			for _, pack := range packageSpec.Packages {
 				for _, customPack := range config.CustomPackages {
 					if pack == customPack.Id {

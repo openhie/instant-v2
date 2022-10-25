@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -38,10 +39,8 @@ type Profile struct {
 }
 
 type CustomPackage struct {
-	Id          string `yaml:"id"`
-	Path        string `yaml:"path"`
-	SshKey      string `yaml:"sshKey"`
-	SshPassword string `yaml:"sshPassword"`
+	Id   string `yaml:"id"`
+	Path string `yaml:"path"`
 }
 
 type Config struct {
@@ -72,7 +71,8 @@ func getCustomPackageName(customPackage CustomPackage) string {
 	return strings.TrimSuffix(path.Base(path.Clean(customPackage.Path)), path.Ext(customPackage.Path))
 }
 
-func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx context.Context, instantContainerId string) error {
+// TODO: see how I can refactor this function
+func mountCustomPackage(ctx context.Context, cli *client.Client, customPackage CustomPackage, instantContainerId string) error {
 	gitRegex := regexp.MustCompile(`\.git`)
 	httpRegex := regexp.MustCompile("http")
 	zipRegex := regexp.MustCompile(`\.zip`)
@@ -91,7 +91,7 @@ func mountCustomPackage(customPackage CustomPackage, cli *client.Client, ctx con
 	}
 
 	if gitRegex.MatchString(customPackage.Path) && !httpRegex.MatchString(customPackage.Path) {
-		err = util.CloneRepo(customPackage.Path, customPackageTmpLocation, customPackage.SshKey, customPackage.SshPassword)
+		err = util.CloneRepo(customPackage.Path, customPackageTmpLocation)
 		if err != nil {
 			return err
 		}
@@ -218,7 +218,7 @@ func RemoveStaleInstantVolume(cli *client.Client, ctx context.Context) {
 }
 
 // Attaches a container's STDOUT until that container has been removed
-func attachUntilRemoved(cli *client.Client, ctx context.Context, instantContainerId string) error {
+func attachUntilRemoved(cli client.ContainerAPIClient, ctx context.Context, instantContainerId string) error {
 	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, types.ContainerAttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
 	if err != nil {
 		return err
@@ -279,6 +279,25 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	RemoveStaleInstantContainer(cli, ctx)
 	RemoveStaleInstantVolume(cli, ctx)
 
+	images, err := cli.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	if !hasImage(config.Image, images) {
+		reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+		defer reader.Close()
+
+		// This io.Copy helps to wait for the image to finish downloading
+		_, err = io.Copy(ioutil.Discard, reader)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+	}
+
 	mounts := []mount.Mount{
 		{
 			Type:   mount.TypeVolume,
@@ -319,7 +338,7 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	}
 
 	for _, customPackage := range packageSpec.CustomPackages {
-		err = mountCustomPackage(customPackage, cli, ctx, instantContainer.ID)
+		err = mountCustomPackage(ctx, cli, customPackage, instantContainer.ID)
 		if err != nil {
 			return err
 		}
@@ -336,6 +355,16 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	}
 
 	return nil
+}
+
+func hasImage(imageName string, images []types.ImageSummary) bool {
+	for _, image := range images {
+		if util.SliceContains(image.RepoTags, imageName) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type GeneratePackageSpec struct {
@@ -355,10 +384,12 @@ func createFileFromTemplate(source, destination string, generatePackageSpec Gene
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
+
 	file, err := os.Create(destination)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
+
 	err = packageTemplate.ExecuteTemplate(file, source, generatePackageSpec)
 	if err != nil {
 		return errors.Wrap(err, "")

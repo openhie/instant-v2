@@ -1,0 +1,6 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - id: client

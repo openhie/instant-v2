@@ -87,6 +87,6 @@ func GetEnvVariableString(envViper *viper.Viper) []string {
 	for key, element := range allEnvVars {
 		envVariables = append(envVariables, fmt.Sprintf("%v=%v", strings.ToUpper(key), element))
 	}
-	
+
 	return envVariables
 }

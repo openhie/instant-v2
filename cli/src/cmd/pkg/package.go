@@ -4,10 +4,18 @@ import (
 	viperUtil "cli/cmd/util"
 	"cli/core"
 	"context"
+	"strings"
 
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var (
+	ErrConflictingDevFlag      = errors.New("conflicting command-line and profile flag: --dev")
+	ErrConflictingOnlyFlag     = errors.New("conflicting command-line and profile flag: --only")
+	ErrInvalidConfigFileSyntax = errors.New("invalid config file syntax, refer to https://github.com/openhie/package-starter-kit/blob/main/README.md, for information on valid config file syntax")
 )
 
 func setPackageActionFlags(cmd *cobra.Command) {
@@ -17,8 +25,6 @@ func setPackageActionFlags(cmd *cobra.Command) {
 	flags.Bool("only", false, "Ignore package dependencies")
 	flags.String("profile", "", "The profile name to load parameters from (defined in config.yml)")
 	flags.StringSliceP("custom-path", "c", nil, "Path(s) to custom package(s)")
-	flags.String("ssh-key", "", "The path to the ssh key required for cloning a custom package")
-	flags.String("ssh-password", "", "The password (or path to the file containing the password) required for authenticating the ssh-key when cloning a custom package")
 
 	cmd.RegisterFlagCompletionFunc("name", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		config, err := getConfigFromParams(cmd)
@@ -65,18 +71,39 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 
 	configViper, err := viperUtil.GetConfigViper(configFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, err
 	}
 
-	err = configViper.Unmarshal(&config)
+	populatedConfig, err := unmarshalConfig(config, configViper)
 	if err != nil {
+		return nil, err
+	}
+
+	appendTag(populatedConfig)
+
+	return populatedConfig, nil
+}
+
+func appendTag(config *core.Config) {
+	splitStrings := strings.Split(config.Image, ":")
+
+	if len(splitStrings) == 1 {
+		config.Image += ":latest"
+	}
+}
+
+func unmarshalConfig(config core.Config, configViper *viper.Viper) (*core.Config, error) {
+	err := configViper.Unmarshal(&config)
+	if err != nil && strings.Contains(err.Error(), "expected type") {
+		return nil, errors.Wrap(ErrInvalidConfigFileSyntax, "")
+	} else if err != nil {
 		return nil, errors.Wrap(err, "")
 	}
 
 	return &config, nil
 }
 
-func getCustomPackages(config *core.Config, customPackagePaths []string, sshKey, sshPassword string) []core.CustomPackage {
+func getCustomPackages(config *core.Config, customPackagePaths []string) []core.CustomPackage {
 	var customPackages []core.CustomPackage
 	for _, customPackagePath := range customPackagePaths {
 		var customPackage core.CustomPackage
@@ -89,9 +116,7 @@ func getCustomPackages(config *core.Config, customPackagePaths []string, sshKey,
 		}
 		if customPackage.Id == "" {
 			customPackage = core.CustomPackage{
-				Path:        customPackagePath,
-				SshKey:      sshKey,
-				SshPassword: sshPassword,
+				Path: customPackagePath,
 			}
 		}
 
@@ -131,17 +156,7 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 	}
 	envVariables := viperUtil.GetEnvVariableString(envViper)
 
-	sshKey, err := cmd.Flags().GetString("ssh-key")
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	sshPassword, err := cmd.Flags().GetString("ssh-password")
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	customPackages := getCustomPackages(config, customPackagePaths, sshKey, sshPassword)
+	customPackages := getCustomPackages(config, customPackagePaths)
 
 	packageSpec = core.PackageSpec{
 		Packages:             packageNames,
@@ -171,10 +186,30 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 
 	if !cmd.Flags().Changed("dev") && profile.Dev {
 		packageSpec.IsDev = profile.Dev
+	} else if cmd.Flags().Changed("dev") && profileName != "" {
+		val, err := cmd.Flags().GetBool("dev")
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		if val != profile.Dev {
+			return nil, errors.Wrap(ErrConflictingDevFlag, "")
+		}
 	}
+
 	if !cmd.Flags().Changed("only") && profile.Only {
 		packageSpec.IsOnly = profile.Only
+	} else if cmd.Flags().Changed("only") && profileName != "" {
+		val, err := cmd.Flags().GetBool("only")
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		if val != profile.Only {
+			return nil, errors.Wrap(ErrConflictingOnlyFlag, "")
+		}
 	}
+
 	if len(profile.Packages) > 0 {
 		packageSpec.Packages = append(profile.Packages, packageSpec.Packages...)
 	}

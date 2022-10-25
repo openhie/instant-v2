@@ -1,0 +1,13 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - client
+
+profiles:
+  - name: bad-env-file-path
+    packages:
+      - client
+    envFiles:
+      - ./features/test-conf/.env.tests

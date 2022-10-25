@@ -5,51 +5,21 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
-	"compress/gzip"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/luno/jettison/errors"
 )
 
-func getPublicKeys(privateKeyFile string, password string) (*ssh.PublicKeys, error) {
-	_, err := os.Stat(privateKeyFile)
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	// Try to resolve password if a file path is provided as the password param
-	file, err := os.Stat(password)
-	if err == nil && !file.IsDir() {
-		dat, err := os.ReadFile(password)
-		if dat != nil && err == nil {
-			password = string(dat)
-		}
-	}
-
-	// Clone the given repository to the given directory
-	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, password)
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	return publicKeys, nil
-}
-
-func CloneRepo(url, dest, sshKeyPath, sshPassword string) error {
+func CloneRepo(url, dest string) error {
 	cloneOptions := &git.CloneOptions{
 		URL: url,
 	}
-	publicKeys, err := getPublicKeys(sshKeyPath, sshPassword)
-	if err == nil {
-		cloneOptions.Auth = publicKeys
-	}
 
-	_, err = git.PlainClone(dest, false, cloneOptions)
+	_, err := git.PlainClone(dest, false, cloneOptions)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
@@ -128,13 +98,10 @@ func UntarSource(source, destination string) error {
 		return errors.Wrap(err, "")
 	}
 
-	gzr, err := gzip.NewReader(file)
+	tr := tar.NewReader(file)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
 
 	for {
 		header, err := tr.Next()
@@ -150,19 +117,23 @@ func UntarSource(source, destination string) error {
 			continue
 		}
 
-		target := filepath.Join(destination, header.Name)
-
 		switch header.Typeflag {
-
 		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
+			err := os.MkdirAll(destination, 0755)
+			if err != nil {
+				return errors.Wrap(err, "")
+			}
+
+		case tar.TypeReg:
+			dir, _ := filepath.Split(destination)
+			if dir != "" {
+				err := os.MkdirAll(dir, 0755)
+				if err != nil {
 					return errors.Wrap(err, "")
 				}
 			}
 
-		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			f, err := os.OpenFile(destination, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return errors.Wrap(err, "")
 			}
