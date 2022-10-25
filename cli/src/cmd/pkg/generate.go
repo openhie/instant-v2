@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TODO(MarkL): Write tests for this once this functionality is introduced
 func PackageGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "generate",
