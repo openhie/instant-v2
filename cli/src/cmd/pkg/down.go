@@ -15,37 +15,11 @@ func PackageDownCommand() *cobra.Command {
 		Short:   "Bring a package down without removing volumes or configs",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-
-			config, err := getConfigFromParams(cmd)
-			if err != nil {
-				log.Error(ctx, err)
-				panic(err)
-			}
-
-			packageSpec, err := getPackageSpecFromParams(cmd, config)
-			if err != nil {
-				log.Error(ctx, err)
-				panic(err)
-			}
-
-			packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
-			if err != nil {
-				log.Error(ctx, err)
-				panic(err)
-			}
-
-			err = validate(cmd, config)
-			if err != nil {
-				log.Error(context.Background(), err)
-				panic(err)
-			}
 			
-			for _, pack := range packageSpec.Packages {
-				for _, customPack := range config.CustomPackages {
-					if pack == customPack.Id {
-						packageSpec.CustomPackages = append(packageSpec.CustomPackages, customPack)
-					}
-				}
+			packageSpec, config, err := packageActionHook(cmd, []string{})
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
 			}
 
 			err = core.LaunchPackage(*packageSpec, *config)
