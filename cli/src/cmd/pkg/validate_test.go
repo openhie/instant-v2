@@ -64,6 +64,12 @@ func Test_validate(t *testing.T) {
 		{
 			hookFunc: func(cmd *cobra.Command, config *core.Config) {},
 		},
+		// case: command-line package specified that isn't in config-file, should return nil
+		{
+			hookFunc: func(cmd *cobra.Command, config *core.Config) {
+				cmd.Flags().Set("name", "asdfasdfasdf")
+			},
+		},
 	}
 
 	for _, tc := range testCases {
