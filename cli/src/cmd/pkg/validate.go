@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	ErrNoConfigImage            = errors.New("config file missing field 'image'")
-	ErrNoPackages               = errors.New("no packages or custom packages specified")
-	ErrUndefinedProfilePackages = errors.New("packages in profile not in any of packages, custom-packages, or command-line custom-packages")
+	ErrNoConfigImage               = errors.New("config file missing field 'image'")
+	ErrNoPackages                  = errors.New("no packages or custom packages specified")
+	ErrUndefinedProfilePackages    = errors.New("packages in profile not in any of packages, custom-packages, or command-line custom-packages")
+	ErrUndefinedCommandLinePackage = errors.New("no such command-line package")
 )
 
 func validate(cmd *cobra.Command, config *core.Config) error {
@@ -38,7 +39,7 @@ func validate(cmd *cobra.Command, config *core.Config) error {
 		}
 	}
 
-	return nil
+	return validateName(cmd, config)
 }
 
 func validateProfile(cmd *cobra.Command, config *core.Config, profile string) error {
@@ -78,6 +79,35 @@ func validateProfile(cmd *cobra.Command, config *core.Config, profile string) er
 
 	if len(profilePackagesMap) > 0 {
 		return errors.Wrap(ErrUndefinedProfilePackages, "")
+	}
+
+	return nil
+}
+
+func validateName(cmd *cobra.Command, config *core.Config) error {
+	packages, err := cmd.Flags().GetStringSlice("name")
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	for _, pack := range packages {
+		for _, configPack := range config.Packages {
+			if pack != configPack {
+				continue
+			}
+
+			return nil
+		}
+
+		for _, customPack := range config.CustomPackages {
+			if pack != customPack.Id {
+				continue
+			}
+
+			return nil
+		}
+
+		return errors.Wrap(ErrUndefinedCommandLinePackage, pack)
 	}
 
 	return nil
