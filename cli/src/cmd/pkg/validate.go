@@ -14,7 +14,7 @@ var (
 	ErrNoConfigImage               = errors.New("config file missing field 'image'")
 	ErrNoPackages                  = errors.New("no packages or custom packages specified")
 	ErrUndefinedProfilePackages    = errors.New("packages in profile not in any of packages, custom-packages, or command-line custom-packages")
-	ErrUndefinedCommandLinePackage = errors.New("no such command-line package")
+	ErrUndefinedCommandLinePackage = errors.New("no such package found in config file")
 )
 
 func validate(cmd *cobra.Command, config *core.Config) error {
