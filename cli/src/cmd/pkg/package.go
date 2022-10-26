@@ -241,3 +241,35 @@ func DeclarePackageCommand() *cobra.Command {
 
 	return cmd
 }
+
+func packageActionHook(cmd *cobra.Command, args []string) (*core.PackageSpec, *core.Config, error) {
+	config, err := getConfigFromParams(cmd)
+	if err != nil {
+	return nil, nil, err
+	}
+
+	packageSpec, err := getPackageSpecFromParams(cmd, config)
+	if err != nil {
+	return nil, nil, err
+	}
+
+	packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
+	if err != nil {
+	return nil, nil, err
+	}
+
+	err = validate(cmd, config)
+	if err != nil {
+	return nil, nil, err
+	}
+	
+	for _, pack := range packageSpec.Packages {
+		for _, customPack := range config.CustomPackages {
+			if pack == customPack.Id {
+				packageSpec.CustomPackages = append(packageSpec.CustomPackages, customPack)
+			}
+		}
+	}
+
+	return packageSpec, config, nil
+}
