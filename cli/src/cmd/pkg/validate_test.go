@@ -60,6 +60,17 @@ func Test_validate(t *testing.T) {
 				cmd.Flags().Set("custom-path", "git@github.com:jembi/cares-on-platform.git")
 			},
 		},
+		// case: package specified in command-line that does not exist in config file, expect error
+		{
+			expectedErrorString: "core: no such command-line package",
+			hookFunc: func(cmd *cobra.Command, config *core.Config) {
+				cmd.Flags().Set("name", "core")
+			},
+		},
+		// case: no packages specified in command-line, with valid config file, should return nil
+		{
+			hookFunc: func(cmd *cobra.Command, config *core.Config) {},
+		},
 	}
 
 	for _, tc := range testCases {
