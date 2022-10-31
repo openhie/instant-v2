@@ -13,8 +13,6 @@ import (
 )
 
 var (
-	ErrConflictingDevFlag      = errors.New("conflicting command-line and profile flag: --dev")
-	ErrConflictingOnlyFlag     = errors.New("conflicting command-line and profile flag: --only")
 	ErrInvalidConfigFileSyntax = errors.New("invalid config file syntax, refer to https://github.com/openhie/package-starter-kit/blob/main/README.md, for information on valid config file syntax")
 )
 
@@ -186,28 +184,10 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 
 	if !cmd.Flags().Changed("dev") && profile.Dev {
 		packageSpec.IsDev = profile.Dev
-	} else if cmd.Flags().Changed("dev") && profileName != "" {
-		val, err := cmd.Flags().GetBool("dev")
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-
-		if val != profile.Dev {
-			return nil, errors.Wrap(ErrConflictingDevFlag, "")
-		}
 	}
 
 	if !cmd.Flags().Changed("only") && profile.Only {
 		packageSpec.IsOnly = profile.Only
-	} else if cmd.Flags().Changed("only") && profileName != "" {
-		val, err := cmd.Flags().GetBool("only")
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-
-		if val != profile.Only {
-			return nil, errors.Wrap(ErrConflictingOnlyFlag, "")
-		}
 	}
 
 	if len(profile.Packages) > 0 {

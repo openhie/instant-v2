@@ -53,3 +53,15 @@ profiles:
     envFiles:
       - ./features/test-conf/.env.test
     dev: true
+
+  - name: test-conflicting-dev-flag
+    packages:
+      - core
+    dev: false
+    only: true
+
+  - name: test-conflicting-only-flag
+    packages:
+      - core
+    dev: true
+    only: false

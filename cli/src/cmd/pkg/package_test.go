@@ -68,20 +68,6 @@ func Test_loadInProfileParams(t *testing.T) {
 	}
 
 	testCases := []cases{
-		// case: return error from conflicting command-line --dev flag and 'dev: false' config.yml profile flag
-		{
-			profileName:         "non-dev",
-			boolFlagName:        "dev",
-			configFilePath:      wd + "/../../features/unit-test-configs/config-case-2.yml",
-			expectedErrorString: ErrConflictingDevFlag.Error(),
-		},
-		// case: return error from conflicting command-line --only flag and 'only: false' config.yml profile flag
-		{
-			profileName:         "non-only",
-			boolFlagName:        "only",
-			configFilePath:      wd + "/../../features/unit-test-configs/config-case-2.yml",
-			expectedErrorString: ErrConflictingOnlyFlag.Error(),
-		},
 		// case: return error from non-existant env file directory
 		{
 			profileName:         "bad-env-file-path",

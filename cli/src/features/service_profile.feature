@@ -51,3 +51,11 @@ Feature: Test Deploy Profiles
       | custom-local-package |
       | custom-package-test  |
     Then check the CLI output is "init -t swarm --dev core custom-package-test custom-local-package"
+
+  Scenario: Initialise profile with overwriting --dev command-line flag
+    When the command "package init --profile=test-conflicting-dev-flag --dev" is run
+    Then check the CLI output is "init -t swarm --dev --only core"
+
+  Scenario: Initialise profile with overwriting --only command-line flag
+    When the command "package init --profile=test-conflicting-only-flag --only" is run
+    Then check the CLI output is "init -t swarm --dev --only core"
