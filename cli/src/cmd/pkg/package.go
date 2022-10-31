@@ -3,9 +3,14 @@ package pkg
 import (
 	viperUtil "cli/cmd/util"
 	"cli/core"
+	"cli/util"
 	"context"
+	"io"
+	"io/ioutil"
 	"strings"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
@@ -222,27 +227,27 @@ func DeclarePackageCommand() *cobra.Command {
 	return cmd
 }
 
-func packageActionHook(cmd *cobra.Command, args []string) (*core.PackageSpec, *core.Config, error) {
+func parseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config, error) {
 	config, err := getConfigFromParams(cmd)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
 
 	packageSpec, err := getPackageSpecFromParams(cmd, config)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
 
 	packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
 
 	err = validate(cmd, config)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
-	
+
 	for _, pack := range packageSpec.Packages {
 		for _, customPack := range config.CustomPackages {
 			if pack == customPack.Id {
@@ -251,5 +256,53 @@ func packageActionHook(cmd *cobra.Command, args []string) (*core.PackageSpec, *c
 		}
 	}
 
+	err = prepareEnvironment(*config)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return packageSpec, config, nil
+}
+
+func prepareEnvironment(config core.Config) error {
+	ctx := context.Background()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	core.RemoveStaleInstantContainer(cli, ctx)
+	core.RemoveStaleInstantVolume(cli, ctx)
+
+	images, err := cli.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	if !hasImage(config.Image, images) {
+		reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+		defer reader.Close()
+
+		// This io.Copy helps to wait for the image to finish downloading
+		_, err = io.Copy(ioutil.Discard, reader)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+	}
+
+	return nil
+}
+
+func hasImage(imageName string, images []types.ImageSummary) bool {
+	for _, image := range images {
+		if util.SliceContains(image.RepoTags, imageName) {
+			return true
+		}
+	}
+
+	return false
 }

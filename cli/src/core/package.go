@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -70,7 +69,6 @@ func getCustomPackageName(customPackage CustomPackage) string {
 	return strings.TrimSuffix(path.Base(path.Clean(customPackage.Path)), path.Ext(customPackage.Path))
 }
 
-// TODO: see how I can refactor this function
 func mountCustomPackage(ctx context.Context, cli *client.Client, customPackage CustomPackage, instantContainerId string) error {
 	gitRegex := regexp.MustCompile(`\.git`)
 	httpRegex := regexp.MustCompile("http")
@@ -267,34 +265,12 @@ func getInstantCommand(packageSpec PackageSpec) []string {
 	return instantCommand
 }
 
-func LaunchPackage(packageSpec PackageSpec, config Config) error {
+func LaunchDeploymentContainer(packageSpec PackageSpec, config Config) error {
 	ctx := context.Background()
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return errors.Wrap(err, "")
-	}
-
-	RemoveStaleInstantContainer(cli, ctx)
-	RemoveStaleInstantVolume(cli, ctx)
-
-	images, err := cli.ImageList(ctx, types.ImageListOptions{})
-	if err != nil {
-		return errors.Wrap(err, "")
-	}
-
-	if !hasImage(config.Image, images) {
-		reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-		defer reader.Close()
-
-		// This io.Copy helps to wait for the image to finish downloading
-		_, err = io.Copy(ioutil.Discard, reader)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
 	}
 
 	mounts := []mount.Mount{
@@ -354,16 +330,6 @@ func LaunchPackage(packageSpec PackageSpec, config Config) error {
 	}
 
 	return nil
-}
-
-func hasImage(imageName string, images []types.ImageSummary) bool {
-	for _, image := range images {
-		if util.SliceContains(image.RepoTags, imageName) {
-			return true
-		}
-	}
-
-	return false
 }
 
 type GeneratePackageSpec struct {

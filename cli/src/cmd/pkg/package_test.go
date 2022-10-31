@@ -9,6 +9,7 @@ import (
 	viperUtil "cli/cmd/util"
 	"cli/core"
 
+	"github.com/docker/docker/api/types"
 	"github.com/luno/jettison/jtest"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -268,6 +269,44 @@ func Test_appendTag(t *testing.T) {
 	for _, tc := range testCases {
 		appendTag(tc.config)
 		if !assert.Equal(t, tc.wantImageName, tc.config.Image) {
+			t.FailNow()
+		}
+	}
+}
+
+func Test_hasImage(t *testing.T) {
+	type cases struct {
+		imageName string
+
+		images    []types.ImageSummary
+		wantMatch bool
+	}
+
+	testCases := []cases{
+		// case: no match
+		{
+			imageName: "matchImage",
+			images: []types.ImageSummary{
+				{
+					RepoTags: []string{"no-match-1", "no-match-2"},
+				},
+			},
+			wantMatch: false,
+		},
+		// case: match
+		{
+			imageName: "matchImage",
+			images: []types.ImageSummary{
+				{
+					RepoTags: []string{"no-match-1", "no-match-2", "matchImage"},
+				},
+			},
+			wantMatch: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		if !assert.Equal(t, tc.wantMatch, hasImage(tc.imageName, tc.images)) {
 			t.FailNow()
 		}
 	}
