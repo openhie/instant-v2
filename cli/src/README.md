@@ -2,6 +2,10 @@
 
 An initialisation of the cli using cobra and viper with the official go sdk
 
+## Prerequisites
+
+- Minimum Go version of 1.18
+
 ## Commands
 For a full breakdown of all functionality:
 

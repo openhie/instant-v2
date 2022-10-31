@@ -15,15 +15,15 @@ func PackageRemoveCommand() *cobra.Command {
 		Short:   "Remove everything related to a package (volumes, configs, etc)",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			
-			packageSpec, config, err := packageActionHook(cmd, []string{})
+
+			packageSpec, config, err := parseAndPrepareLaunch(cmd)
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)
 			}
 			packageSpec.DeployCommand = "destroy"
 
-			err = core.LaunchPackage(*packageSpec, *config)
+			err = core.LaunchDeploymentContainer(*packageSpec, *config)
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)

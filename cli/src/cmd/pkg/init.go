@@ -16,13 +16,13 @@ func PackageInitCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 
-			packageSpec, config, err := packageActionHook(cmd, []string{})
+			packageSpec, config, err := parseAndPrepareLaunch(cmd)
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)
 			}
 
-			err = core.LaunchPackage(*packageSpec, *config)
+			err = core.LaunchDeploymentContainer(*packageSpec, *config)
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)

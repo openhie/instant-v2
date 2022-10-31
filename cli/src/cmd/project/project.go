@@ -152,7 +152,7 @@ func DeclareProjectCommand() *cobra.Command {
 					panic(err)
 				}
 
-				err = core.LaunchPackage(*packageSpec, *config)
+				err = core.LaunchDeploymentContainer(*packageSpec, *config)
 				if err != nil {
 					log.Error(ctx, err)
 					panic(err)

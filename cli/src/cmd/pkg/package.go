@@ -3,9 +3,14 @@ package pkg
 import (
 	viperUtil "cli/cmd/util"
 	"cli/core"
+	"cli/util"
 	"context"
+	"io"
+	"io/ioutil"
 	"strings"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
@@ -13,8 +18,6 @@ import (
 )
 
 var (
-	ErrConflictingDevFlag      = errors.New("conflicting command-line and profile flag: --dev")
-	ErrConflictingOnlyFlag     = errors.New("conflicting command-line and profile flag: --only")
 	ErrInvalidConfigFileSyntax = errors.New("invalid config file syntax, refer to https://github.com/openhie/package-starter-kit/blob/main/README.md, for information on valid config file syntax")
 )
 
@@ -187,28 +190,10 @@ func loadInProfileParams(cmd *cobra.Command, config core.Config, packageSpec cor
 	// TODO: don't panic on flag conflicts, the command line should override the profiles
 	if !cmd.Flags().Changed("dev") && profile.Dev {
 		packageSpec.IsDev = profile.Dev
-	} else if cmd.Flags().Changed("dev") && profileName != "" {
-		val, err := cmd.Flags().GetBool("dev")
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-
-		if val != profile.Dev {
-			return nil, errors.Wrap(ErrConflictingDevFlag, "")
-		}
 	}
 
 	if !cmd.Flags().Changed("only") && profile.Only {
 		packageSpec.IsOnly = profile.Only
-	} else if cmd.Flags().Changed("only") && profileName != "" {
-		val, err := cmd.Flags().GetBool("only")
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-
-		if val != profile.Only {
-			return nil, errors.Wrap(ErrConflictingOnlyFlag, "")
-		}
 	}
 
 	if len(profile.Packages) > 0 {
@@ -243,27 +228,27 @@ func DeclarePackageCommand() *cobra.Command {
 	return cmd
 }
 
-func packageActionHook(cmd *cobra.Command, args []string) (*core.PackageSpec, *core.Config, error) {
+func parseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config, error) {
 	config, err := getConfigFromParams(cmd)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
 
 	packageSpec, err := getPackageSpecFromParams(cmd, config)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
 
 	packageSpec, err = loadInProfileParams(cmd, *config, *packageSpec)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
 
 	err = validate(cmd, config)
 	if err != nil {
-	return nil, nil, err
+		return nil, nil, err
 	}
-	
+
 	for _, pack := range packageSpec.Packages {
 		for _, customPack := range config.CustomPackages {
 			if pack == customPack.Id {
@@ -272,5 +257,53 @@ func packageActionHook(cmd *cobra.Command, args []string) (*core.PackageSpec, *c
 		}
 	}
 
+	err = prepareEnvironment(*config)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return packageSpec, config, nil
+}
+
+func prepareEnvironment(config core.Config) error {
+	ctx := context.Background()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	core.RemoveStaleInstantContainer(cli, ctx)
+	core.RemoveStaleInstantVolume(cli, ctx)
+
+	images, err := cli.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	if !hasImage(config.Image, images) {
+		reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+		defer reader.Close()
+
+		// This io.Copy helps to wait for the image to finish downloading
+		_, err = io.Copy(ioutil.Discard, reader)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+	}
+
+	return nil
+}
+
+func hasImage(imageName string, images []types.ImageSummary) bool {
+	for _, image := range images {
+		if util.SliceContains(image.RepoTags, imageName) {
+			return true
+		}
+	}
+
+	return false
 }
