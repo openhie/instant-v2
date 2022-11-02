@@ -3,6 +3,10 @@ Feature: Test Deploy Commands
     When the command "package init -n=core" is run
     Then check the CLI output is "init -t swarm core"
 
+  Scenario: Initialise All (Instant Expects Empty String)
+    When the command "package init" is run
+    Then check the CLI output is "init -t swarm"
+
   Scenario: Up Core Service
     When the command "package up -n=core" is run
     Then check the CLI output is "up -t swarm core"
