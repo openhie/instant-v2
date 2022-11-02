@@ -36,7 +36,8 @@ func init() {
 	cobra.OnInitialize()
 
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
-	rootCmd.PersistentFlags().StringSliceVarP(&envFiles, "env-file", "e", nil, "env file (default is $WORKING_DIR/.env)")
+	// Note: No shorthand for env-file, saving -e for individual env var declarations 
+	rootCmd.PersistentFlags().StringSliceVar(&envFiles, "env-file", nil, "env file (default is $WORKING_DIR/.env)")
 
 	commands.AddCommands(rootCmd)
 }
