@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bufio"
 	"os"
 	"sort"
 	"strings"
@@ -185,6 +186,8 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 	type cases struct {
 		configFilePath string
 		hookFunc       func(cmd *cobra.Command)
+		wantSpecMatch  bool
+		errorString    string
 	}
 
 	testCases := []cases{
@@ -203,21 +206,62 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 				cmd.Flags().Set("dev", "true")
 				cmd.Flags().Set("only", "true")
 			},
+			wantSpecMatch: true,
+		},
+		// case: return error from not finding env file
+		{
+			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
+			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().Set("name", "pack-1")
+				cmd.Flags().Set("env-file", wd+"/../../features/test-conf/awlikdeuh")
+			},
+			errorString: "no such file or directory",
+		},
+		// case: return no error when not specifying an env-file
+		{
+			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
+			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().Set("name", "pack-1")
+			},
+		},
+		// case: match packageSpec but with default env var file
+		{
+			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
+			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().Set("name", "pack-1")
+				cmd.Flags().Set("name", "pack-2")
+
+				cmd.Flags().Set("custom-path", "disi-on-platform")
+
+				cmd.Flags().Set("dev", "true")
+				cmd.Flags().Set("only", "true")
+			},
+			wantSpecMatch: true,
 		},
 	}
 
 	for _, tc := range testCases {
+		defer os.Remove(wd + "/../../.env")
+		err = copyFile(wd+"/../../features/test-conf/.env.test", wd+"/../../.env")
+		jtest.RequireNil(t, err)
+
 		cmd, config := loadCmdAndConfig(t, tc.configFilePath, tc.hookFunc)
 
 		pSpec, err := getPackageSpecFromParams(cmd, config)
-		jtest.RequireNil(t, err)
-
-		sort.Slice(pSpec.EnvironmentVariables, func(i, j int) bool {
-			return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
-		})
-
-		if !assert.Equal(t, packageSpec, pSpec) {
+		if tc.errorString != "" && !strings.Contains(err.Error(), tc.errorString) {
 			t.FailNow()
+		} else if tc.errorString == "" {
+			jtest.RequireNil(t, err)
+		}
+
+		if tc.wantSpecMatch {
+			sort.Slice(pSpec.EnvironmentVariables, func(i, j int) bool {
+				return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
+			})
+
+			if !assert.Equal(t, packageSpec, pSpec) {
+				t.FailNow()
+			}
 		}
 	}
 }
@@ -232,7 +276,7 @@ func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *co
 	cmd := &cobra.Command{}
 	setPackageActionFlags(cmd)
 
-	cmd.Flags().StringSlice("env-file", []string{".env"}, "")
+	cmd.Flags().StringSlice("env-file", []string{""}, "")
 
 	hookFunc(cmd)
 
@@ -310,4 +354,36 @@ func Test_hasImage(t *testing.T) {
 			t.FailNow()
 		}
 	}
+}
+
+func copyFile(src, dst string) error {
+	file, err := os.OpenFile(src, os.O_RDONLY, 0777)
+	if err != nil {
+		return err
+	}
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
+
+	copiedFile, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, 0777)
+	if err != nil {
+		return err
+	}
+	writer := bufio.NewWriter(copiedFile)
+
+	for fileScanner.Scan() {
+		b := []byte(fileScanner.Text())
+
+		_, err = writer.Write(append(b, []byte("\n")...))
+		if err != nil {
+			return err
+		}
+	}
+	file.Close()
+
+	err = writer.Flush()
+	if err != nil {
+		return err
+	}
+
+	return copiedFile.Close()
 }

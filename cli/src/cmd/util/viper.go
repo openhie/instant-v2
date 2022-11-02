@@ -3,7 +3,7 @@ package util
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/luno/jettison/errors"
@@ -63,17 +63,13 @@ func GetEnvironmentVariableViper(envFiles []string) (*viper.Viper, error) {
 			return nil, errors.Wrap(err, "")
 		}
 
-		envVarViper.AddConfigPath(wd)
+		envVarViper.AddConfigPath(wd+"/../..")
 		envVarViper.SetConfigType("env")
 		envVarViper.SetConfigName(".env")
 
-		_, err = os.Stat(filepath.Join(wd, ".env"))
-		if err != nil {
-			return nil, errors.Wrap(err, "")
-		}
-
 		err = envVarViper.ReadInConfig()
-		if err != nil {
+		if err != nil && !regexp.MustCompile("(Config File).*(Not Found in)").MatchString(err.Error()) {
+			// if err != nil {
 			return nil, errors.Wrap(err, "")
 		}
 	}
