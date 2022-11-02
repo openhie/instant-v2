@@ -4,7 +4,7 @@ Feature: Test Deploy Options Commands
     Then check the CLI output is "init -t swarm --dev core"
 
   Scenario: Initialise Core Service With Custom config.yml and .env File
-    When the command "package init -n=core --config=features/test-conf/config.yml -e=features/test-conf/.env.test" is run
+    When the command "package init -n=core --config=features/test-conf/config.yml --env-file=features/test-conf/.env.test" is run
     Then check the CLI output is "init -t swarm core"
 
   Scenario: Down only Core Service

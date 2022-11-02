@@ -204,14 +204,14 @@ func cleanUp() {
 		fmt.Println("[ERROR]: ", err)
 	}
 
-	err = os.Remove(".env")
+	err = os.Remove(".env.test")
 	if err != nil {
-		fmt.Println("[ERROR]: ", err)
+		fmt.Println("[ERROR]:", err)
 	}
 
 	err = os.Remove("config.yml")
 	if err != nil {
-		fmt.Println("[ERROR]: ", err)
+		fmt.Println("[ERROR]:", err)
 	}
 }
 
