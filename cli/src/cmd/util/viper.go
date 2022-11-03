@@ -3,18 +3,28 @@ package util
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/luno/jettison/errors"
 	"github.com/spf13/viper"
 )
 
-var configViper = viper.New()
+var (
+	ConfigFile  string
+	EnvFiles    []string
+	configViper *viper.Viper
+)
 
 func SetConfigViper(configFile string) (*viper.Viper, error) {
 	configViper = viper.New()
 	if configFile != "" {
-		configViper.SetConfigFile(configFile)
+		absFilePath, err := filepath.Abs(configFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		configViper.SetConfigFile(absFilePath)
 	} else {
 		wd, err := os.Getwd()
 		if err != nil {
@@ -38,6 +48,10 @@ func GetEnvironmentVariableViper(envFiles []string) (*viper.Viper, error) {
 	envVarViper := viper.New()
 
 	for i, envFile := range envFiles {
+		if !filepath.IsAbs(envFile) {
+			envFile = filepath.Join(filepath.Dir(configViper.ConfigFileUsed()), envFile)
+		}
+
 		_, err := os.Stat(envFile)
 		if err != nil {
 			return nil, errors.Wrap(err, "")

@@ -1,12 +1,10 @@
 package pkg
 
 import (
-	viperUtil "cli/cmd/util"
-	"cli/core"
-	"cli/util"
 	"context"
 	"io"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -15,6 +13,10 @@ import (
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	viperUtil "cli/cmd/util"
+	"cli/core"
+	"cli/util"
 )
 
 var (
@@ -231,6 +233,30 @@ func DeclarePackageCommand() *cobra.Command {
 }
 
 func parseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config, error) {
+	if cmd.Flags().Changed("env-file") {
+		envFiles, err := cmd.Flags().GetStringSlice("env-file")
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "")
+		}
+
+		viperUtil.EnvFiles = nil
+
+		for _, envFile := range envFiles {
+			if !filepath.IsAbs(envFile) {
+				absFilePath, err := filepath.Abs(envFile)
+				if err != nil {
+					return nil, nil, errors.Wrap(err, "")
+				}
+
+				viperUtil.EnvFiles = append(viperUtil.EnvFiles, absFilePath)
+				continue
+			}
+
+			viperUtil.EnvFiles = append(viperUtil.EnvFiles, envFile)
+		}
+
+	}
+
 	config, err := getConfigFromParams(cmd)
 	if err != nil {
 		return nil, nil, err

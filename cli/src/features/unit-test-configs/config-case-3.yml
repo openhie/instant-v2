@@ -10,4 +10,4 @@ profiles:
     packages:
       - client
     envFiles:
-      - ./features/test-conf/.env.tests
+      - ../test-conf/.env.tests
