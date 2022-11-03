@@ -89,7 +89,7 @@ func Test_validate(t *testing.T) {
 }
 
 func initCommand(t *testing.T, configFilePath string, hook func(cmd *cobra.Command, config *core.Config)) (*cobra.Command, *core.Config) {
-	configViper, err := viperUtil.GetConfigViper(configFilePath)
+	configViper, err := viperUtil.SetConfigViper(configFilePath)
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)

@@ -9,8 +9,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-func GetConfigViper(configFile string) (*viper.Viper, error) {
-	configViper := viper.New()
+var configViper = viper.New()
+
+func SetConfigViper(configFile string) (*viper.Viper, error) {
+	configViper = viper.New()
 	if configFile != "" {
 		configViper.SetConfigFile(configFile)
 	} else {

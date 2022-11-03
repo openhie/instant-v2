@@ -42,7 +42,7 @@ func Test_unmarshalConfig(t *testing.T) {
 	jtest.RequireNil(t, err)
 
 	// case: match configCaseOne
-	configViper, err := viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-1.yml")
+	configViper, err := viperUtil.SetConfigViper(wd + "/../../features/unit-test-configs/config-case-1.yml")
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)
@@ -51,7 +51,7 @@ func Test_unmarshalConfig(t *testing.T) {
 	assert.Equal(t, configCaseOne, *config)
 
 	// case: return invalid config file syntax error
-	configViper, err = viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-6.yml")
+	configViper, err = viperUtil.SetConfigViper(wd + "/../../features/unit-test-configs/config-case-6.yml")
 	jtest.RequireNil(t, err)
 
 	_, err = unmarshalConfig(core.Config{}, configViper)
@@ -124,7 +124,7 @@ func Test_loadInProfileParams(t *testing.T) {
 }
 
 func setupLoadInProfileParams(t *testing.T, configFilePath string) (*cobra.Command, *core.Config) {
-	configViper, err := viperUtil.GetConfigViper(configFilePath)
+	configViper, err := viperUtil.SetConfigViper(configFilePath)
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)
@@ -155,7 +155,7 @@ func Test_getCustomPackages(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
-	configViper, err := viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-4.yml")
+	configViper, err := viperUtil.SetConfigViper(wd + "/../../features/unit-test-configs/config-case-4.yml")
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)
@@ -267,7 +267,7 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 }
 
 func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *cobra.Command)) (*cobra.Command, *core.Config) {
-	configViper, err := viperUtil.GetConfigViper(configFilePath)
+	configViper, err := viperUtil.SetConfigViper(configFilePath)
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)
