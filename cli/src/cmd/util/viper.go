@@ -3,7 +3,6 @@ package util
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/luno/jettison/errors"
@@ -36,41 +35,24 @@ func GetConfigViper(configFile string) (*viper.Viper, error) {
 func GetEnvironmentVariableViper(envFiles []string) (*viper.Viper, error) {
 	envVarViper := viper.New()
 
-	if len(envFiles) > 0 {
-		for i, envFile := range envFiles {
-			_, err := os.Stat(envFile)
-			if err != nil {
-				return nil, errors.Wrap(err, "")
-			}
-
-			envVarViper.SetConfigType("env")
-			envVarViper.SetConfigFile(envFile)
-			if i == 0 {
-				err = envVarViper.ReadInConfig()
-				if err != nil {
-					return nil, errors.Wrap(err, "")
-				}
-			} else {
-				err := envVarViper.MergeInConfig()
-				if err != nil {
-					return nil, errors.Wrap(err, "")
-				}
-			}
-		}
-	} else {
-		wd, err := os.Getwd()
+	for i, envFile := range envFiles {
+		_, err := os.Stat(envFile)
 		if err != nil {
 			return nil, errors.Wrap(err, "")
 		}
 
-		envVarViper.AddConfigPath(wd+"/../..")
 		envVarViper.SetConfigType("env")
-		envVarViper.SetConfigName(".env")
-
-		err = envVarViper.ReadInConfig()
-		if err != nil && !regexp.MustCompile("(Config File).*(Not Found in)").MatchString(err.Error()) {
-			// if err != nil {
-			return nil, errors.Wrap(err, "")
+		envVarViper.SetConfigFile(envFile)
+		if i == 0 {
+			err = envVarViper.ReadInConfig()
+			if err != nil {
+				return nil, errors.Wrap(err, "")
+			}
+		} else {
+			err := envVarViper.MergeInConfig()
+			if err != nil {
+				return nil, errors.Wrap(err, "")
+			}
 		}
 	}
 

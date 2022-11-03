@@ -166,19 +166,6 @@ func Test_getCustomPackages(t *testing.T) {
 	assert.Equal(t, expectedCustomPackages, gotCustomPackages)
 }
 
-var packageSpec = &core.PackageSpec{
-	Packages: []string{"pack-1", "pack-2"},
-	CustomPackages: []core.CustomPackage{
-		{
-			Id:   "disi-on-platform",
-			Path: "git@github.com:jembi/disi-on-platform.git",
-		},
-	},
-	EnvironmentVariables: []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"},
-	IsDev:                true,
-	IsOnly:               true,
-}
-
 func Test_getPackageSpecFromParams(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
@@ -187,6 +174,7 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		configFilePath string
 		hookFunc       func(cmd *cobra.Command)
 		wantSpecMatch  bool
+		packageSpec    *core.PackageSpec
 		errorString    string
 	}
 
@@ -207,6 +195,18 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 				cmd.Flags().Set("only", "true")
 			},
 			wantSpecMatch: true,
+			packageSpec: &core.PackageSpec{
+				Packages: []string{"pack-1", "pack-2"},
+				CustomPackages: []core.CustomPackage{
+					{
+						Id:   "disi-on-platform",
+						Path: "git@github.com:jembi/disi-on-platform.git",
+					},
+				},
+				EnvironmentVariables: []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"},
+				IsDev:                true,
+				IsOnly:               true,
+			},
 		},
 		// case: return error from not finding env file
 		{
@@ -224,19 +224,19 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 				cmd.Flags().Set("name", "pack-1")
 			},
 		},
-		// case: match packageSpec but with default env var file
+		// case: place .env file in main dir, but don't use its env vars
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
 			hookFunc: func(cmd *cobra.Command) {
 				cmd.Flags().Set("name", "pack-1")
-				cmd.Flags().Set("name", "pack-2")
 
-				cmd.Flags().Set("custom-path", "disi-on-platform")
-
-				cmd.Flags().Set("dev", "true")
 				cmd.Flags().Set("only", "true")
 			},
 			wantSpecMatch: true,
+			packageSpec: &core.PackageSpec{
+				Packages: []string{"pack-1"},
+				IsOnly:   true,
+			},
 		},
 	}
 
@@ -259,7 +259,7 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 				return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
 			})
 
-			if !assert.Equal(t, packageSpec, pSpec) {
+			if !assert.Equal(t, tc.packageSpec, pSpec) {
 				t.FailNow()
 			}
 		}

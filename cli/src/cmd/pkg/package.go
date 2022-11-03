@@ -148,16 +148,19 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 		return nil, errors.Wrap(err, "")
 	}
 
-	envFiles, err := cmd.Flags().GetStringSlice("env-file")
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
+	var envVariables []string
+	if cmd.Flags().Changed("env-file") {
+		envFiles, err := cmd.Flags().GetStringSlice("env-file")
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
 
-	envViper, err := viperUtil.GetEnvironmentVariableViper(envFiles)
-	if err != nil {
-		return nil, err
+		envViper, err := viperUtil.GetEnvironmentVariableViper(envFiles)
+		if err != nil {
+			return nil, err
+		}
+		envVariables = viperUtil.GetEnvVariableString(envViper)
 	}
-	envVariables := viperUtil.GetEnvVariableString(envViper)
 
 	customPackages := getCustomPackages(config, customPackagePaths)
 
