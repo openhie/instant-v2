@@ -1,8 +1,23 @@
 package utils
 
 import (
+	"archive/tar"
+	"bufio"
+	"bytes"
+	"context"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
+	"github.com/luno/jettison/log"
+	"github.com/pkg/errors"
 )
+
+var ErrEmptyContainersObject = errors.New("empty supplied/returned container object")
 
 func GetHelpText(interactive bool, options string) string {
 	if interactive {
@@ -104,4 +119,95 @@ func SliceContainsSubstr(slice []string, element string) bool {
 		}
 	}
 	return false
+}
+
+func TarSource(path string) (io.Reader, error) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	ok := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+
+		header, err := tar.FileInfoHeader(fi, fi.Name())
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+		header.Name = strings.TrimPrefix(strings.Replace(file, path, "", -1), string(filepath.Separator))
+		err = tw.WriteHeader(header)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+
+		f, err := os.Open(file)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+
+		if fi.IsDir() {
+			return nil
+		}
+
+		_, err = io.Copy(tw, f)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+
+		err = f.Close()
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+
+		return nil
+	})
+
+	if ok != nil {
+		return nil, ok
+	}
+
+	err := tw.Close()
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	return bufio.NewReader(&buf), nil
+}
+
+func ListContainerByName(containerName string) (types.Container, error) {
+	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		log.Error(context.Background(), err)
+	}
+
+	filtersPair := filters.KeyValuePair{
+		Key:   "name",
+		Value: containerName,
+	}
+
+	containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: filters.NewArgs(filtersPair),
+		All:     true,
+	})
+	if err != nil {
+		return types.Container{}, errors.Wrap(err, "")
+	}
+
+	return latestContainer(containers, false)
+}
+
+// This code attempts to combat old/dead containers lying around and being selected instead of the new container
+func latestContainer(containers []types.Container, allowAllFails bool) (types.Container, error) {
+	if len(containers) == 0 {
+		return types.Container{}, errors.Wrap(ErrEmptyContainersObject, "")
+	}
+
+	var latestContainer types.Container
+	for _, container := range containers {
+		if container.Created > latestContainer.Created {
+			latestContainer = container
+		}
+	}
+
+	return latestContainer, nil
 }
