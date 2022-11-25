@@ -765,6 +765,7 @@ func defaultMockVariables() {
 }
 
 func TestRunDeployCommand(t *testing.T) {
+
 	type args struct {
 		startupCommands []string
 	}
@@ -782,6 +783,7 @@ func TestRunDeployCommand(t *testing.T) {
 			},
 			wantErr: false,
 			mockRunCommand: func(commandName string, suppressErrors []string, commandSlice ...string) (pathToPackage string, err error) {
+				// empty supplied/returned container object
 				return "", nil
 			},
 			mockMountCustomPackage: func(pathToPackage string) error {
@@ -880,6 +882,8 @@ func TestRunDeployCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			mode = "test"
+
 			RunCommand = tt.mockRunCommand
 			MountCustomPackage = tt.mockMountCustomPackage
 
