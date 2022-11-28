@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/luno/jettison/errors"
 	"golang.org/x/net/context"
@@ -74,7 +73,7 @@ func DebugDocker() error {
 
 	fmt.Println(cwd)
 
-	cli, err := client.NewClientWithOpts()
+	cli, err := utils.NewDockerClient()
 	if err != nil {
 		return err
 	}
@@ -233,7 +232,7 @@ func runDeployCommand(startupCommands []string) error {
 
 			ctx := context.Background()
 
-			cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			cli, err := utils.NewDockerClient()
 			if err != nil {
 				return errors.Wrap(err, "")
 			}
