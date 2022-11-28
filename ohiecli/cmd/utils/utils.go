@@ -6,14 +6,15 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/docker/cli/cli/connhelper"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/luno/jettison/log"
 	"github.com/pkg/errors"
 )
 
@@ -175,9 +176,9 @@ func TarSource(path string) (io.Reader, error) {
 }
 
 func ListContainerByName(containerName string) (types.Container, error) {
-	client, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	client, err := NewDockerClient()
 	if err != nil {
-		log.Error(context.Background(), err)
+		return types.Container{}, err
 	}
 
 	filtersPair := filters.KeyValuePair{
@@ -210,4 +211,37 @@ func latestContainer(containers []types.Container, allowAllFails bool) (types.Co
 	}
 
 	return latestContainer, nil
+}
+
+func NewDockerClient() (*client.Client, error) {
+	var clientOpts []client.Opt
+
+	host := os.Getenv("DOCKER_HOST")
+	if host != "" {
+		helper, err := connhelper.GetConnectionHelper(host)
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				DialContext: helper.Dialer,
+			},
+		}
+
+		clientOpts = append(clientOpts,
+			client.WithHTTPClient(httpClient),
+			client.WithHost(helper.Host),
+			client.WithDialContext(helper.Dialer),
+		)
+	}
+
+	clientOpts = append(clientOpts, client.WithAPIVersionNegotiation())
+
+	cli, err := client.NewClientWithOpts(clientOpts...)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	return cli, nil
 }

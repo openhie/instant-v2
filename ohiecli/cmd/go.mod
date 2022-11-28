@@ -7,7 +7,7 @@ require (
 	github.com/docker/docker v20.10.18+incompatible
 	github.com/fatih/color v1.13.0
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/luno/jettison v0.0.0-20220927134759-09187a35ec8c
+	github.com/luno/jettison v0.0.0-20221009180414-a591f4833ce4
 	github.com/manifoldco/promptui v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.0
@@ -22,6 +22,7 @@ require (
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
 	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/docker/cli v20.10.21+incompatible
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
