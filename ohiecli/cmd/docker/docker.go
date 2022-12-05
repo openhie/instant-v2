@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types"
 	"github.com/fatih/color"
 	"github.com/luno/jettison/errors"
 	"golang.org/x/net/context"
@@ -215,39 +214,9 @@ func runDeployCommand(startupCommands []string) error {
 	}
 
 	if mode != "test" {
-		homeDir, err := os.UserHomeDir()
+		err = utils.CopyCredsToInstantContainer()
 		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		dockerCredsPath := filepath.Join(homeDir, ".docker")
-		_, err = os.Stat(dockerCredsPath)
-		if err != nil && !os.IsNotExist(err) {
-			return errors.Wrap(err, "")
-		} else if !os.IsNotExist(err) {
-			credsFileReader, err := utils.TarSource(dockerCredsPath)
-			if err != nil {
-				return err
-			}
-
-			ctx := context.Background()
-
-			cli, err := utils.NewDockerClient()
-			if err != nil {
-				return errors.Wrap(err, "")
-			}
-
-			instantContainer, err := utils.ListContainerByName("instant-openhie")
-			if err != nil {
-				return err
-			}
-
-			err = cli.CopyToContainer(ctx, instantContainer.ID, "/root/.docker/", credsFileReader, types.CopyToContainerOptions{
-				AllowOverwriteDirWithFile: true,
-			})
-			if err != nil {
-				return errors.Wrap(err, "")
-			}
+			return err
 		}
 	}
 

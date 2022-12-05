@@ -1,11 +1,7 @@
 package utils
 
 import (
-	"archive/tar"
-	"bufio"
-	"bytes"
 	"context"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/pkg/errors"
 )
 
@@ -104,6 +101,63 @@ func GetHelpText(interactive bool, options string) string {
 	}
 }
 
+func CopyCredsToInstantContainer() (err error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	dockerCredsPath := filepath.Join(homeDir, ".docker", "config.json")
+
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Wrap(err, "")
+	} else if os.IsNotExist(err) {
+		return nil
+	}
+
+	client, err := NewDockerClient()
+	if err != nil {
+		return err
+	}
+
+	instantContainer, err := listContainerByName("instant-openhie")
+	if err != nil {
+		return err
+	}
+
+	dstInfo := archive.CopyInfo{
+		Path:   "/root/.docker/",
+		Exists: true,
+		IsDir:  true,
+	}
+
+	srcInfo, err := archive.CopyInfoSourcePath(dockerCredsPath, false)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	srcArchive, err := archive.TarResource(srcInfo)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	defer srcArchive.Close()
+
+	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	defer preparedArchive.Close()
+
+	err = client.CopyToContainer(context.Background(), instantContainer.ID, dstDir, preparedArchive, types.CopyToContainerOptions{
+		AllowOverwriteDirWithFile: false,
+		CopyUIDGID:                true,
+	})
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	return nil
+}
+
 func SliceContains(slice []string, element string) bool {
 	for _, s := range slice {
 		if s == element {
@@ -122,60 +176,7 @@ func SliceContainsSubstr(slice []string, element string) bool {
 	return false
 }
 
-func TarSource(path string) (io.Reader, error) {
-	var buf bytes.Buffer
-	tw := tar.NewWriter(&buf)
-
-	ok := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		header, err := tar.FileInfoHeader(fi, fi.Name())
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-		header.Name = strings.TrimPrefix(strings.Replace(file, path, "", -1), string(filepath.Separator))
-		err = tw.WriteHeader(header)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		f, err := os.Open(file)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		if fi.IsDir() {
-			return nil
-		}
-
-		_, err = io.Copy(tw, f)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		err = f.Close()
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		return nil
-	})
-
-	if ok != nil {
-		return nil, ok
-	}
-
-	err := tw.Close()
-	if err != nil {
-		return nil, errors.Wrap(err, "")
-	}
-
-	return bufio.NewReader(&buf), nil
-}
-
-func ListContainerByName(containerName string) (types.Container, error) {
+func listContainerByName(containerName string) (types.Container, error) {
 	client, err := NewDockerClient()
 	if err != nil {
 		return types.Container{}, err
