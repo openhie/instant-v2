@@ -17,7 +17,7 @@ func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 		return nil, errors.Wrap(err, "")
 	}
 
-	configViper, err := viperUtil.GetConfigViper(configFile)
+	configViper, err := viperUtil.SetConfigViper(configFile)
 	if err != nil {
 		return nil, err
 	}

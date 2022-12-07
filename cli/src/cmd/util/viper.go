@@ -3,17 +3,28 @@ package util
 import (
 	"fmt"
 	"os"
-	"regexp"
+	"path/filepath"
 	"strings"
 
 	"github.com/luno/jettison/errors"
 	"github.com/spf13/viper"
 )
 
-func GetConfigViper(configFile string) (*viper.Viper, error) {
-	configViper := viper.New()
+var (
+	ConfigFile  string
+	EnvFiles    []string
+	configViper *viper.Viper
+)
+
+func SetConfigViper(configFile string) (*viper.Viper, error) {
+	configViper = viper.New()
 	if configFile != "" {
-		configViper.SetConfigFile(configFile)
+		absFilePath, err := filepath.Abs(configFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		configViper.SetConfigFile(absFilePath)
 	} else {
 		wd, err := os.Getwd()
 		if err != nil {
@@ -36,41 +47,28 @@ func GetConfigViper(configFile string) (*viper.Viper, error) {
 func GetEnvironmentVariableViper(envFiles []string) (*viper.Viper, error) {
 	envVarViper := viper.New()
 
-	if len(envFiles) > 0 {
-		for i, envFile := range envFiles {
-			_, err := os.Stat(envFile)
-			if err != nil {
-				return nil, errors.Wrap(err, "")
-			}
-
-			envVarViper.SetConfigType("env")
-			envVarViper.SetConfigFile(envFile)
-			if i == 0 {
-				err = envVarViper.ReadInConfig()
-				if err != nil {
-					return nil, errors.Wrap(err, "")
-				}
-			} else {
-				err := envVarViper.MergeInConfig()
-				if err != nil {
-					return nil, errors.Wrap(err, "")
-				}
-			}
+	for i, envFile := range envFiles {
+		if !filepath.IsAbs(envFile) {
+			envFile = filepath.Join(filepath.Dir(configViper.ConfigFileUsed()), envFile)
 		}
-	} else {
-		wd, err := os.Getwd()
+
+		_, err := os.Stat(envFile)
 		if err != nil {
 			return nil, errors.Wrap(err, "")
 		}
 
-		envVarViper.AddConfigPath(wd+"/../..")
 		envVarViper.SetConfigType("env")
-		envVarViper.SetConfigName(".env")
-
-		err = envVarViper.ReadInConfig()
-		if err != nil && !regexp.MustCompile("(Config File).*(Not Found in)").MatchString(err.Error()) {
-			// if err != nil {
-			return nil, errors.Wrap(err, "")
+		envVarViper.SetConfigFile(envFile)
+		if i == 0 {
+			err = envVarViper.ReadInConfig()
+			if err != nil {
+				return nil, errors.Wrap(err, "")
+			}
+		} else {
+			err := envVarViper.MergeInConfig()
+			if err != nil {
+				return nil, errors.Wrap(err, "")
+			}
 		}
 	}
 

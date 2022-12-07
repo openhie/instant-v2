@@ -22,5 +22,5 @@ profiles:
     packages:
       - dashboard-visualiser-jsreport
     envFiles:
-      - ../../features/test-conf/.env.one
-      - ../../features/test-conf/.env.two
+      - ../test-conf/.env.one
+      - ../test-conf/.env.two

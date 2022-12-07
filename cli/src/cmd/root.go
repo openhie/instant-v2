@@ -3,15 +3,11 @@ package cmd
 import (
 	"context"
 
-	"cli/cmd/commands"
-
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
-)
 
-var (
-	configFile string
-	envFiles   []string
+	"cli/cmd/commands"
+	"cli/cmd/util"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -34,9 +30,9 @@ func init() {
 	// TODO: read the docs for cobra.OnInitialize() and decide if it's needed
 	cobra.OnInitialize()
 
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
-	// Note: No shorthand for env-file, saving -e for individual env var declarations 
-	rootCmd.PersistentFlags().StringSliceVar(&envFiles, "env-file", nil, "env file (default is $WORKING_DIR/.env)")
+	rootCmd.PersistentFlags().StringVar(&util.ConfigFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
+	// Note: No shorthand for env-file, saving -e for individual env var declarations
+	rootCmd.PersistentFlags().StringSliceVar(&util.EnvFiles, "env-file", nil, "env file")
 
 	commands.AddCommands(rootCmd)
 }

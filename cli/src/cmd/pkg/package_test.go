@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"sort"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/luno/jettison/jtest"
+	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -42,7 +44,7 @@ func Test_unmarshalConfig(t *testing.T) {
 	jtest.RequireNil(t, err)
 
 	// case: match configCaseOne
-	configViper, err := viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-1.yml")
+	configViper, err := viperUtil.SetConfigViper(wd + "/../../features/unit-test-configs/config-case-1.yml")
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)
@@ -51,7 +53,7 @@ func Test_unmarshalConfig(t *testing.T) {
 	assert.Equal(t, configCaseOne, *config)
 
 	// case: return invalid config file syntax error
-	configViper, err = viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-6.yml")
+	configViper, err = viperUtil.SetConfigViper(wd + "/../../features/unit-test-configs/config-case-6.yml")
 	jtest.RequireNil(t, err)
 
 	_, err = unmarshalConfig(core.Config{}, configViper)
@@ -63,79 +65,88 @@ func Test_loadInProfileParams(t *testing.T) {
 	jtest.RequireNil(t, err)
 
 	type cases struct {
-		profileName         string
-		boolFlagName        string
 		configFilePath      string
 		expectedErrorString string
+		expectedConfig      *core.PackageSpec
+		hookFunc            func(cmd *cobra.Command)
 	}
 
+	// TODO: throw error if specifying non-existant profile
 	testCases := []cases{
 		// case: return error from non-existant env file directory
 		{
-			profileName:         "bad-env-file-path",
 			configFilePath:      wd + "/../../features/unit-test-configs/config-case-3.yml",
-			expectedErrorString: "stat ./features/test-conf/.env.tests: no such file or directory",
+			expectedErrorString: ".env.tests: no such file or directory",
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("profile", "bad-env-file-path")
+				jtest.RequireNil(t, err)
+			},
 		},
-		// case: no profile specified, dev flag specified, return nil error
+		// case: assert dev profile from config-case-1.yml passed properly
 		{
-			boolFlagName:   "dev",
-			configFilePath: wd + "/../../features/test-conf/config.yml",
+			configFilePath: wd + "/../../features/unit-test-configs/config-case-1.yml",
+			expectedConfig: &core.PackageSpec{
+				EnvironmentVariables: []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"},
+				Packages:             []string{"dashboard-visualiser-jsreport", "disi-on-platform"},
+				IsDev:                true,
+			},
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("profile", "dev")
+				jtest.RequireNil(t, err)
+			},
 		},
-		// case: no profile specified, only flag specified, return nil error
+		// case: assert dev profile from config-case-1.yml passed properly
 		{
-			boolFlagName:   "only",
 			configFilePath: wd + "/../../features/test-conf/config.yml",
+			expectedConfig: &core.PackageSpec{
+				Packages: []string{"core"},
+				IsOnly:   true,
+			},
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("profile", "test-conflicting-dev-flag")
+				jtest.RequireNil(t, err)
+			},
+		},
+		// case: load in environment variables from more than one env file
+		{
+			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
+			expectedConfig: &core.PackageSpec{
+				Packages:             []string{"dashboard-visualiser-jsreport"},
+				EnvironmentVariables: []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"},
+			},
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("profile", "non-only")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("only", "true")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("dev", "true")
+				jtest.RequireNil(t, err)
+			},
 		},
 	}
 
 	for _, tc := range testCases {
-		cmd, config := setupLoadInProfileParams(t, tc.configFilePath)
+		cmd, config := loadCmdAndConfig(t, tc.configFilePath, tc.hookFunc)
 
-		setPackageActionFlags(cmd)
-		if tc.boolFlagName != "" {
-			setupBoolFlags(t, cmd, tc.boolFlagName)
-		}
-
-		if tc.profileName != "" {
-			cmd.Flags().Set("profile", tc.profileName)
-		}
-
-		_, err = loadInProfileParams(cmd, *config, core.PackageSpec{})
-		if err != nil && !assert.Equal(t, tc.expectedErrorString, err.Error()) {
+		pSpec, err := loadInProfileParams(cmd, *config, core.PackageSpec{})
+		if err != nil && !assert.Equal(t, strings.Contains(err.Error(), tc.expectedErrorString), true) {
+			log.Error(context.Background(), err)
 			t.FailNow()
-		} else if tc.expectedErrorString == "" && err != nil {
+		} else if err != nil && !strings.Contains(err.Error(), tc.expectedErrorString) {
+			log.Error(context.Background(), err)
 			t.FailNow()
+		} else if tc.expectedConfig != nil {
+			sort.Slice(pSpec.EnvironmentVariables, func(i, j int) bool {
+				return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
+			})
+
+			if !assert.Equal(t, tc.expectedConfig, pSpec) {
+				t.FailNow()
+			}
 		}
 	}
-
-	// case: load in environment variables from more than one env file
-	cmd, config := setupLoadInProfileParams(t, wd+"/../../features/unit-test-configs/config-case-2.yml")
-	setPackageActionFlags(cmd)
-	cmd.Flags().Set("profile", "non-only")
-
-	packageSpec, err := loadInProfileParams(cmd, *config, core.PackageSpec{})
-	jtest.RequireNil(t, err)
-
-	sort.Slice(packageSpec.EnvironmentVariables, func(i, j int) bool {
-		return strings.Contains(packageSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
-	})
-
-	assert.Equal(t, packageSpec.EnvironmentVariables, []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"})
-}
-
-func setupLoadInProfileParams(t *testing.T, configFilePath string) (*cobra.Command, *core.Config) {
-	configViper, err := viperUtil.GetConfigViper(configFilePath)
-	jtest.RequireNil(t, err)
-
-	config, err := unmarshalConfig(core.Config{}, configViper)
-	jtest.RequireNil(t, err)
-
-	return &cobra.Command{}, config
-}
-
-func setupBoolFlags(t *testing.T, cmd *cobra.Command, boolFlagName string) {
-	err := cmd.Flags().Set(boolFlagName, "true")
-	jtest.RequireNil(t, err)
 }
 
 var (
@@ -155,7 +166,7 @@ func Test_getCustomPackages(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
-	configViper, err := viperUtil.GetConfigViper(wd + "/../../features/unit-test-configs/config-case-4.yml")
+	configViper, err := viperUtil.SetConfigViper(wd + "/../../features/unit-test-configs/config-case-4.yml")
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)
@@ -166,19 +177,6 @@ func Test_getCustomPackages(t *testing.T) {
 	assert.Equal(t, expectedCustomPackages, gotCustomPackages)
 }
 
-var packageSpec = &core.PackageSpec{
-	Packages: []string{"pack-1", "pack-2"},
-	CustomPackages: []core.CustomPackage{
-		{
-			Id:   "disi-on-platform",
-			Path: "git@github.com:jembi/disi-on-platform.git",
-		},
-	},
-	EnvironmentVariables: []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"},
-	IsDev:                true,
-	IsOnly:               true,
-}
-
 func Test_getPackageSpecFromParams(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
@@ -187,6 +185,7 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		configFilePath string
 		hookFunc       func(cmd *cobra.Command)
 		wantSpecMatch  bool
+		packageSpec    *core.PackageSpec
 		errorString    string
 	}
 
@@ -195,6 +194,8 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
 			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().StringSlice("env-file", []string{""}, "")
+
 				cmd.Flags().Set("name", "pack-1")
 				cmd.Flags().Set("name", "pack-2")
 
@@ -207,11 +208,25 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 				cmd.Flags().Set("only", "true")
 			},
 			wantSpecMatch: true,
+			packageSpec: &core.PackageSpec{
+				Packages: []string{"pack-1", "pack-2"},
+				CustomPackages: []core.CustomPackage{
+					{
+						Id:   "disi-on-platform",
+						Path: "git@github.com:jembi/disi-on-platform.git",
+					},
+				},
+				EnvironmentVariables: []string{"FIRST_ENV_VAR=number_one", "SECOND_ENV_VAR=number_two"},
+				IsDev:                true,
+				IsOnly:               true,
+			},
 		},
 		// case: return error from not finding env file
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
 			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().StringSlice("env-file", []string{""}, "")
+
 				cmd.Flags().Set("name", "pack-1")
 				cmd.Flags().Set("env-file", wd+"/../../features/test-conf/awlikdeuh")
 			},
@@ -221,22 +236,26 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
 			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().StringSlice("env-file", []string{""}, "")
+
 				cmd.Flags().Set("name", "pack-1")
 			},
 		},
-		// case: match packageSpec but with default env var file
+		// case: place .env file in main dir, but don't use its env vars
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-2.yml",
 			hookFunc: func(cmd *cobra.Command) {
+				cmd.Flags().StringSlice("env-file", []string{""}, "")
+
 				cmd.Flags().Set("name", "pack-1")
-				cmd.Flags().Set("name", "pack-2")
 
-				cmd.Flags().Set("custom-path", "disi-on-platform")
-
-				cmd.Flags().Set("dev", "true")
 				cmd.Flags().Set("only", "true")
 			},
 			wantSpecMatch: true,
+			packageSpec: &core.PackageSpec{
+				Packages: []string{"pack-1"},
+				IsOnly:   true,
+			},
 		},
 	}
 
@@ -259,7 +278,7 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 				return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
 			})
 
-			if !assert.Equal(t, packageSpec, pSpec) {
+			if !assert.Equal(t, tc.packageSpec, pSpec) {
 				t.FailNow()
 			}
 		}
@@ -267,7 +286,7 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 }
 
 func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *cobra.Command)) (*cobra.Command, *core.Config) {
-	configViper, err := viperUtil.GetConfigViper(configFilePath)
+	configViper, err := viperUtil.SetConfigViper(configFilePath)
 	jtest.RequireNil(t, err)
 
 	config, err := unmarshalConfig(core.Config{}, configViper)
@@ -275,8 +294,6 @@ func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *co
 
 	cmd := &cobra.Command{}
 	setPackageActionFlags(cmd)
-
-	cmd.Flags().StringSlice("env-file", []string{""}, "")
 
 	hookFunc(cmd)
 

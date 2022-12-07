@@ -19,14 +19,14 @@ profiles:
       - core
       - client
     envFiles:
-      - ./features/test-conf/.env.test
+      - ./.env.test
     dev: true
 
   - name: test-custom-package
     packages:
       - custom-package-test
     envFiles:
-      - ./features/test-conf/.env.test
+      - ./.env.test
     dev: false
 
   - name: test-mixed-package
@@ -35,14 +35,14 @@ profiles:
       - client
       - custom-package-test
     envFiles:
-      - ./features/test-conf/.env.test
+      - ./.env.test
     dev: false
 
   - name: test-local-custom-package
     packages:
       - custom-local-package
     envFiles:
-      - ./features/test-conf/.env.test
+      - ./.env.test
     dev: true
     
   - name: test-mixed-custom-package
@@ -51,7 +51,7 @@ profiles:
       - custom-package-test
       - custom-local-package
     envFiles:
-      - ./features/test-conf/.env.test
+      - ./.env.test
     dev: true
 
   - name: test-conflicting-dev-flag
