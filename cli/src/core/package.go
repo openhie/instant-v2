@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -269,7 +268,7 @@ func getInstantCommand(packageSpec PackageSpec) []string {
 func LaunchDeploymentContainer(packageSpec PackageSpec, config Config) error {
 	ctx := context.Background()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := util.NewDockerClient()
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
@@ -320,27 +319,9 @@ func LaunchDeploymentContainer(packageSpec PackageSpec, config Config) error {
 		}
 	}
 
-	homeDir, err := os.UserHomeDir()
+	err = util.CopyCredsToInstantContainer()
 	if err != nil {
-		return errors.Wrap(err, "")
-	}
-
-	dockerCredsPath := filepath.Join(homeDir, ".docker")
-	_, err = os.Stat(dockerCredsPath)
-	if err != nil && !os.IsNotExist(err) {
-		return errors.Wrap(err, "")
-	} else if !os.IsNotExist(err) {
-		credsFileReader, err := util.TarSource(dockerCredsPath)
-		if err != nil {
-			return err
-		}
-
-		err = cli.CopyToContainer(ctx, instantContainer.ID, "/root/.docker/", credsFileReader, types.CopyToContainerOptions{
-			AllowOverwriteDirWithFile: true,
-		})
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
+		return err
 	}
 
 	err = cli.ContainerStart(ctx, instantContainer.ID, types.ContainerStartOptions{})

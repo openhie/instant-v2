@@ -7,8 +7,8 @@ import (
 
 	"cli/cmd"
 	"cli/core"
+	"cli/util"
 
-	"github.com/docker/docker/client"
 	"github.com/luno/jettison/log"
 )
 
@@ -27,7 +27,7 @@ func main() {
 func handleExit() {
 	ctx := context.Background()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := util.NewDockerClient()
 	if err != nil {
 		log.Error(ctx, err)
 	}

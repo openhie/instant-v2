@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
@@ -297,7 +296,7 @@ func parseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config,
 func prepareEnvironment(config core.Config) error {
 	ctx := context.Background()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	cli, err := util.NewDockerClient()
 	if err != nil {
 		return errors.Wrap(err, "")
 	}

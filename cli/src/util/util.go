@@ -5,14 +5,23 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	"context"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/docker/cli/cli/connhelper"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/go-git/go-git/v5"
 	"github.com/luno/jettison/errors"
 )
+
+var ErrEmptyContainersObject = errors.New("empty supplied/returned container object")
 
 func CloneRepo(url, dest string) error {
 	cloneOptions := &git.CloneOptions{
@@ -25,6 +34,135 @@ func CloneRepo(url, dest string) error {
 	}
 
 	return nil
+}
+
+func CopyCredsToInstantContainer() (err error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	dockerCredsPath := filepath.Join(homeDir, ".docker", "config.json")
+
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Wrap(err, "")
+	} else if os.IsNotExist(err) {
+		return nil
+	}
+
+	client, err := NewDockerClient()
+	if err != nil {
+		return err
+	}
+
+	instantContainer, err := listContainerByName("instant-openhie")
+	if err != nil {
+		return err
+	}
+
+	dstInfo := archive.CopyInfo{
+		Path:   "/root/.docker/",
+		Exists: true,
+		IsDir:  true,
+	}
+
+	srcInfo, err := archive.CopyInfoSourcePath(dockerCredsPath, false)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	srcArchive, err := archive.TarResource(srcInfo)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	defer srcArchive.Close()
+
+	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	defer preparedArchive.Close()
+
+	err = client.CopyToContainer(context.Background(), instantContainer.ID, dstDir, preparedArchive, types.CopyToContainerOptions{
+		CopyUIDGID: true,
+	})
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
+	return nil
+}
+
+func listContainerByName(containerName string) (types.Container, error) {
+	client, err := NewDockerClient()
+	if err != nil {
+		return types.Container{}, err
+	}
+
+	filtersPair := filters.KeyValuePair{
+		Key:   "name",
+		Value: containerName,
+	}
+
+	containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: filters.NewArgs(filtersPair),
+		All:     true,
+	})
+	if err != nil {
+		return types.Container{}, errors.Wrap(err, "")
+	}
+
+	return latestContainer(containers, false)
+}
+
+// This code attempts to combat old/dead containers lying around and being selected instead of the new container
+func latestContainer(containers []types.Container, allowAllFails bool) (types.Container, error) {
+	if len(containers) == 0 {
+		return types.Container{}, errors.Wrap(ErrEmptyContainersObject, "")
+	}
+
+	var latestContainer types.Container
+	for _, container := range containers {
+		if container.Created > latestContainer.Created {
+			latestContainer = container
+		}
+	}
+
+	return latestContainer, nil
+}
+
+func NewDockerClient() (*client.Client, error) {
+	var clientOpts []client.Opt
+
+	host := os.Getenv("DOCKER_HOST")
+	if host != "" {
+		helper, err := connhelper.GetConnectionHelper(host)
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				DialContext: helper.Dialer,
+			},
+		}
+
+		clientOpts = append(clientOpts,
+			client.WithHTTPClient(httpClient),
+			client.WithHost(helper.Host),
+			client.WithDialContext(helper.Dialer),
+		)
+	} else {
+		clientOpts = append(clientOpts, client.FromEnv)
+	}
+
+	clientOpts = append(clientOpts, client.WithAPIVersionNegotiation())
+
+	cli, err := client.NewClientWithOpts(clientOpts...)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	return cli, nil
 }
 
 func unzipFile(f *zip.File, destination string) error {
