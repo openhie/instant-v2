@@ -1,5 +1,7 @@
 package main
 
-func main() {
+import "cli/cmd"
 
+func main() {
+	cmd.Execute()
 }
