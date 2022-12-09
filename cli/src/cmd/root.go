@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"cli/cmd/commands"
-	"cli/cmd/config"
+	"cli/core/config"
 )
 
 // rootCmd represents the base command when called without any subcommands
