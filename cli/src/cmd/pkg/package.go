@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setPackageActionFlags(cmd *cobra.Command) {
+func SetPackageActionFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
 	flags.StringSliceP("name", "n", nil, "The name(s) of the package(s)")
 	flags.BoolP("dev", "d", false, "For development related functionality (Passes `dev` as the second argument to your swarm file)")

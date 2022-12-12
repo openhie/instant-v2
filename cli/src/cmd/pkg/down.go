@@ -12,7 +12,7 @@ func packageDownCommand() *cobra.Command {
 		Run:     func(cmd *cobra.Command, args []string) {},
 	}
 
-	setPackageActionFlags(cmd)
+	SetPackageActionFlags(cmd)
 
 	return cmd
 }

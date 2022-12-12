@@ -22,3 +22,14 @@ type Config struct {
 	ProjectName    string          `yaml:"projectName"`
 	PlatformImage  string          `yaml:"platformImage"`
 }
+
+type PackageSpec struct {
+	EnvironmentVariables []string
+	DeployCommand        string
+	Packages             []string
+	IsDev                bool
+	IsOnly               bool
+	CustomPackages       []CustomPackage
+	ImageVersion         string
+	TargetLauncher       string
+}
