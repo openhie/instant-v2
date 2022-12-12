@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/luno/jettison v0.0.0-20221009180414-a591f4833ce4
-	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.8.0

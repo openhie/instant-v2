@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
+	"github.com/luno/jettison/errors"
 	"github.com/spf13/viper"
 )
 
