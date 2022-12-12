@@ -12,5 +12,7 @@ func packageRemoveCommand() *cobra.Command {
 		Run:     func(cmd *cobra.Command, args []string) {},
 	}
 
+	setPackageActionFlags(cmd)
+
 	return cmd
 }
