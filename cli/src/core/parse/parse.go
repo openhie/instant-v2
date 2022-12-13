@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func parseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config, error) {
+func ParseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config, error) {
 	if cmd.Flags().Changed("env-file") {
 		envFiles, err := cmd.Flags().GetStringSlice("env-file")
 		if err != nil {
@@ -42,17 +42,17 @@ func parseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config,
 
 	}
 
-	config, err := GetConfigFromParams(cmd)
+	config, err := getConfigFromParams(cmd)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	packageSpec, err := GetPackageSpecFromParams(cmd, config)
+	packageSpec, err := getPackageSpecFromParams(cmd, config)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	packageSpec, err = GetPackageSpecFromProfile(cmd, *config, *packageSpec)
+	packageSpec, err = getPackageSpecFromProfile(cmd, *config, *packageSpec)
 	if err != nil {
 		return nil, nil, err
 	}

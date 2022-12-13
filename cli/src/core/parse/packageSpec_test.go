@@ -41,7 +41,7 @@ func copyFile(src, dst string) error {
 
 }
 
-func TestGetPackageSpecFromParams(t *testing.T) {
+func Test_getPackageSpecFromParams(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
@@ -130,7 +130,7 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 
 		cmd, config := loadCmdAndConfig(t, tc.configFilePath, tc.hookFunc)
 
-		pSpec, err := GetPackageSpecFromParams(cmd, config)
+		pSpec, err := getPackageSpecFromParams(cmd, config)
 		if tc.errorString != "" && !strings.Contains(err.Error(), tc.errorString) {
 			t.FailNow()
 		} else if tc.errorString == "" {

@@ -30,7 +30,7 @@ func getCustomPackages(config *core.Config, customPackagePaths []string) []core.
 	return customPackages
 }
 
-func GetPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.PackageSpec, error) {
+func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.PackageSpec, error) {
 	packageSpec := core.PackageSpec{}
 
 	packageNames, err := cmd.Flags().GetStringSlice("name")

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetPackageSpecFromProfile(t *testing.T) {
+func Test_getPackageSpecFromProfile(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
@@ -80,7 +80,7 @@ func TestGetPackageSpecFromProfile(t *testing.T) {
 	for _, tc := range testCases {
 		cmd, config := loadCmdAndConfig(t, tc.configFilePath, tc.hookFunc)
 
-		pSpec, err := GetPackageSpecFromProfile(cmd, *config, core.PackageSpec{})
+		pSpec, err := getPackageSpecFromProfile(cmd, *config, core.PackageSpec{})
 		if err != nil {
 			require.Equal(t, strings.Contains(err.Error(), tc.expectedErrorString), true)
 		} else if tc.expectedConfig != nil {
