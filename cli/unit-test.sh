@@ -7,3 +7,6 @@ FILE_PATH=$(
 
 cd "$FILE_PATH"/src/core/parse || exit
 go test .
+
+cd "$FILE_PATH"/src/util/slice || exit
+go test .
