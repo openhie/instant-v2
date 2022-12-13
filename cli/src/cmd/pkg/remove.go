@@ -1,9 +1,10 @@
 package pkg
 
 import (
+	"context"
+
 	"cli/cmd/flags"
 	"cli/core/parse"
-	"context"
 
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
