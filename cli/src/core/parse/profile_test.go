@@ -1,12 +1,13 @@
 package parse
 
 import (
-	"cli/core"
 	"context"
 	"os"
 	"sort"
 	"strings"
 	"testing"
+
+	"cli/core"
 
 	"github.com/luno/jettison/jtest"
 	"github.com/luno/jettison/log"
