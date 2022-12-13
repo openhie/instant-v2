@@ -13,6 +13,7 @@ import (
 	"github.com/luno/jettison/jtest"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func copyFile(src, dst string) error {
@@ -188,5 +189,5 @@ func Test_getCustomPackages(t *testing.T) {
 
 	gotCustomPackages := getCustomPackages(config, []string{"path-to-1", "path-to-2"})
 
-	assert.Equal(t, expectedCustomPackages, gotCustomPackages)
+	require.Equal(t, expectedCustomPackages, gotCustomPackages)
 }
