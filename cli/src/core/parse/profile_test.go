@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"context"
 	"os"
 	"sort"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	"cli/core"
 
 	"github.com/luno/jettison/jtest"
-	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
@@ -85,9 +83,6 @@ func TestGetPackageSpecFromProfile(t *testing.T) {
 		pSpec, err := GetPackageSpecFromProfile(cmd, *config, core.PackageSpec{})
 		if err != nil {
 			require.Equal(t, strings.Contains(err.Error(), tc.expectedErrorString), true)
-		} else if err != nil && !strings.Contains(err.Error(), tc.expectedErrorString) {
-			log.Error(context.Background(), err)
-			t.FailNow()
 		} else if tc.expectedConfig != nil {
 			sort.Slice(pSpec.EnvironmentVariables, func(i, j int) bool {
 				return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
