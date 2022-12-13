@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"cli/cmd/flags"
+
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +14,7 @@ func packageInitCommand() *cobra.Command {
 		Run:     func(cmd *cobra.Command, args []string) {},
 	}
 
-	SetPackageActionFlags(cmd)
+	flags.SetPackageActionFlags(cmd)
 
 	return cmd
 }
