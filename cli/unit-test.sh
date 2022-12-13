@@ -5,11 +5,5 @@ FILE_PATH=$(
   pwd -P
 )
 
-cd "$FILE_PATH"/src/core || exit
-go test .
-
-cd "$FILE_PATH"/src/util || exit
-go test .
-
-cd "$FILE_PATH"/src/cmd/pkg || exit
+cd "$FILE_PATH"/src/core/parse || exit
 go test .
