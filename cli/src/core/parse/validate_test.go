@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"cli/cmd/pkg"
+	"cli/cmd/flags"
 	"cli/core"
 	"cli/core/state"
 
@@ -92,10 +92,10 @@ func initCommand(t *testing.T, configFilePath string, hook func(cmd *cobra.Comma
 	config, err := unmarshalConfig(configViper)
 	jtest.RequireNil(t, err)
 
-	cmd := cobra.Command{}
-	pkg.SetPackageActionFlags(&cmd)
+	cmd := &cobra.Command{}
+	flags.SetPackageActionFlags(cmd)
 
-	hook(&cmd, config)
+	hook(cmd, config)
 
-	return &cmd, config
+	return cmd, config
 }

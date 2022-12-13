@@ -1,14 +1,15 @@
 package parse
 
 import (
-	"cli/cmd/pkg"
-	"cli/core"
-	"cli/core/state"
 	"io"
 	"os"
 	"sort"
 	"strings"
 	"testing"
+
+	"cli/cmd/flags"
+	"cli/core"
+	"cli/core/state"
 
 	"github.com/luno/jettison/jtest"
 	"github.com/spf13/cobra"
@@ -157,7 +158,7 @@ func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *co
 	jtest.RequireNil(t, err)
 
 	cmd := &cobra.Command{}
-	pkg.SetPackageActionFlags(cmd)
+	flags.SetPackageActionFlags(cmd)
 
 	hookFunc(cmd)
 
