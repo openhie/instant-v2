@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cli/cmd/flags"
+	"cli/core/deploy"
 	"cli/core/parse"
 
 	"github.com/luno/jettison/log"
@@ -16,12 +17,18 @@ func packageRemoveCommand() *cobra.Command {
 		Aliases: []string{"r", "destroy"},
 		Short:   "Remove everything related to a package (volumes, configs, etc)",
 		Run: func(cmd *cobra.Command, args []string) {
-			_, _, err := parse.ParseAndPrepareLaunch(cmd)
+			packageSpec, config, err := parse.ParseAndPrepareLaunch(cmd)
 			if err != nil {
 				log.Error(context.Background(), err)
 				panic(err)
 			}
+			packageSpec.DeployCommand = "destroy"
 
+			err = deploy.LaunchDeploymentContainer(packageSpec, config)
+			if err != nil {
+				log.Error(context.Background(), err)
+				panic(err)
+			}
 		},
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cli/cmd/flags"
+	"cli/core/deploy"
 	"cli/core/parse"
 
 	"github.com/luno/jettison/log"
@@ -16,7 +17,13 @@ func packageUpCommand() *cobra.Command {
 		Aliases: []string{"u"},
 		Short:   "Stand a package back up after it has been brought down",
 		Run: func(cmd *cobra.Command, args []string) {
-			_, _, err := parse.ParseAndPrepareLaunch(cmd)
+			packageSpec, config, err := parse.ParseAndPrepareLaunch(cmd)
+			if err != nil {
+				log.Error(context.Background(), err)
+				panic(err)
+			}
+
+			err = deploy.LaunchDeploymentContainer(packageSpec, config)
 			if err != nil {
 				log.Error(context.Background(), err)
 				panic(err)
