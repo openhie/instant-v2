@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"runtime"
+	"os"
 
 	"cli/cmd"
 	"cli/util/docker"
@@ -27,6 +27,9 @@ func handleExit() {
 	docker.RemoveStaleInstantContainer(cli, ctx)
 	docker.RemoveStaleInstantVolume(cli, ctx)
 
-	// runtime.Goexit() ensures all deferred functions are run
-	runtime.Goexit()
+	if recover() != nil {
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 }
