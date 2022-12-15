@@ -12,6 +12,11 @@ import (
 func NewDockerClient() (*client.Client, error) {
 	var clientOpts []client.Opt
 
+	clientOpts = append(clientOpts,
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+	)
+
 	host := os.Getenv("DOCKER_HOST")
 	if host != "" {
 		helper, err := connhelper.GetConnectionHelper(host)
@@ -30,11 +35,7 @@ func NewDockerClient() (*client.Client, error) {
 			client.WithHost(helper.Host),
 			client.WithDialContext(helper.Dialer),
 		)
-	} else {
-		clientOpts = append(clientOpts, client.FromEnv)
 	}
-
-	clientOpts = append(clientOpts, client.WithAPIVersionNegotiation())
 
 	cli, err := client.NewClientWithOpts(clientOpts...)
 	if err != nil {
