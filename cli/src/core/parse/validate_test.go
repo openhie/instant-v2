@@ -38,6 +38,13 @@ func Test_validate(t *testing.T) {
 				config.CustomPackages = []core.CustomPackage{}
 			},
 		},
+		// case: return ErrNoSuchProfile
+		{
+			expectedErrorString: "non-existent-profile: " + ErrNoSuchProfile.Error(),
+			hookFunc: func(cmd *cobra.Command, config *core.Config) {
+				cmd.Flags().Set("profile", "non-existent-profile")
+			},
+		},
 		// case: no packages specified in config file, but in command-line custom-package, return nil
 		{
 			hookFunc: func(cmd *cobra.Command, config *core.Config) {

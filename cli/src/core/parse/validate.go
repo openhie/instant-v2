@@ -15,6 +15,7 @@ var (
 	ErrNoConfigImage            = errors.New("config file missing field 'image'")
 	ErrNoPackages               = errors.New("no packages or custom packages specified")
 	ErrUndefinedProfilePackages = errors.New("packages in profile not in any of packages, custom-packages, or command-line custom-packages")
+	ErrNoSuchProfile            = errors.New("no such profile")
 )
 
 func validate(cmd *cobra.Command, config *core.Config) error {
@@ -29,27 +30,26 @@ func validate(cmd *cobra.Command, config *core.Config) error {
 		return errors.Wrap(ErrNoPackages, "")
 	}
 
+	return validateProfile(cmd, config)
+}
+
+func validateProfile(cmd *cobra.Command, config *core.Config) error {
 	profile, err := cmd.Flags().GetString("profile")
 	if err != nil {
 		return errors.Wrap(err, "")
-	} else {
-		err = validateProfile(cmd, config, profile)
-		if err != nil {
-			return err
-		}
 	}
 
-	return nil
-}
-
-func validateProfile(cmd *cobra.Command, config *core.Config, profile string) error {
 	profilePackagesMap := make(map[string]bool)
-	for _, pack := range config.Profiles {
-		if pack.Name == profile {
-			for _, p := range pack.Packages {
+	for _, prof := range config.Profiles {
+		if prof.Name == profile {
+			for _, p := range prof.Packages {
 				profilePackagesMap[p] = true
 			}
 		}
+	}
+
+	if profile != "" && len(profilePackagesMap) < 1 {
+		return errors.Wrap(ErrNoSuchProfile, profile)
 	}
 
 	for _, profile := range config.Profiles {
