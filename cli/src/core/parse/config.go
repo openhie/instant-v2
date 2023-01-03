@@ -19,11 +19,11 @@ func unmarshalConfig(configViper *viper.Viper) (*core.Config, error) {
 	var config core.Config
 	err := configViper.Unmarshal(&config)
 	if err != nil {
-	    if strings.Contains(err.Error(), "expected type") {
-		return nil, errors.Wrap(ErrInvalidConfigFileSyntax, "")
-	    } else {
-	        return nil, errors.Wrap(err, "")
-	    }
+		if strings.Contains(err.Error(), "expected type") {
+			return nil, errors.Wrap(ErrInvalidConfigFileSyntax, "")
+		} else {
+			return nil, errors.Wrap(err, "")
+		}
 	}
 
 	return &config, nil
