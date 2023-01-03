@@ -59,8 +59,6 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 				cmd.Flags().Set("name", "pack-2")
 
@@ -90,8 +88,6 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 				cmd.Flags().Set("env-file", wd+"/../../features/test-conf/awlikdeuh")
 			},
@@ -101,8 +97,6 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 			},
 		},
@@ -110,8 +104,6 @@ func Test_getPackageSpecFromParams(t *testing.T) {
 		{
 			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 
 				cmd.Flags().Set("only", "true")
@@ -158,6 +150,9 @@ func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *co
 	jtest.RequireNil(t, err)
 
 	cmd := &cobra.Command{}
+	cmd.Flags().StringVar(&state.ConfigFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
+	cmd.Flags().StringSliceVar(&state.EnvFiles, "env-file", nil, "env file")
+
 	flags.SetPackageActionFlags(cmd)
 
 	hookFunc(cmd)
