@@ -57,6 +57,11 @@ func ParseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config,
 		return nil, nil, err
 	}
 
+	packageSpec, err = filterEnvVars(cmd, packageSpec)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	err = validate(cmd, config)
 	if err != nil {
 		return nil, nil, err
@@ -124,4 +129,38 @@ func hasImage(dockerCli *client.Client, imageName string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSpec, error) {
+	var unfilteredEnvVars []string
+	copy(unfilteredEnvVars, pSpec.EnvironmentVariables)
+
+	var envVariables []string
+	if cmd.Flags().Changed("env-file") {
+		envFiles, err := cmd.Flags().GetStringSlice("env-file")
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+
+		envViper, err := state.GetEnvironmentVariableViper(envFiles)
+		if err != nil {
+			return nil, err
+		}
+		envVariables = state.GetEnvVariableString(envViper)
+	}
+
+	envVariablesMap := make(map[string]bool)
+	for _, e := range envVariables {
+		envVariablesMap[e] = true
+	}
+
+	for _, e := range unfilteredEnvVars {
+		if !envVariablesMap[e] {
+			envVariables = append(envVariables, e)
+		}
+	}
+
+	pSpec.EnvironmentVariables = envVariables
+
+	return pSpec, nil
 }
