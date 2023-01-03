@@ -26,8 +26,5 @@ func Execute() {
 }
 
 func init() {
-	// TODO: read the docs for cobra.OnInitialize() and decide if it's needed
-	cobra.OnInitialize()
-
 	commands.AddCommands(rootCmd)
 }
