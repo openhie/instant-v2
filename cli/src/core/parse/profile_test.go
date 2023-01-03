@@ -81,7 +81,11 @@ func Test_getPackageSpecFromProfile(t *testing.T) {
 		cmd, config := loadCmdAndConfig(t, tc.configFilePath, tc.hookFunc)
 
 		pSpec, err := getPackageSpecFromProfile(cmd, *config, core.PackageSpec{})
-		if err != nil {
+		if tc.expectedErrorString != "" {
+			if err == nil {
+				t.FailNow()
+			}
+			
 			require.Equal(t, strings.Contains(err.Error(), tc.expectedErrorString), true)
 		} else if tc.expectedConfig != nil {
 			sort.Slice(pSpec.EnvironmentVariables, func(i, j int) bool {
