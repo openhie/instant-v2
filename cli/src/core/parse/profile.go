@@ -33,11 +33,13 @@ func getPackageSpecFromProfile(cmd *cobra.Command, config core.Config, packageSp
 	if len(profile.Packages) > 0 {
 		packageSpec.Packages = append(profile.Packages, packageSpec.Packages...)
 	}
+
 	if len(profile.EnvFiles) > 0 {
 		envViper, err := state.GetEnvironmentVariableViper(profile.EnvFiles)
 		if err != nil {
 			return nil, err
 		}
+
 		envVariables := state.GetEnvVariableString(envViper)
 		packageSpec.EnvironmentVariables = append(envVariables, packageSpec.EnvironmentVariables...)
 	}
