@@ -27,9 +27,6 @@ func Execute() {
 }
 
 func init() {
-	// TODO: read the docs for cobra.OnInitialize() and decide if it's needed
-	cobra.OnInitialize()
-
 	rootCmd.PersistentFlags().StringVar(&state.ConfigFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
 	// Note: No shorthand for env-file, saving -e for individual env var declarations
 	rootCmd.PersistentFlags().StringSliceVar(&state.EnvFiles, "env-file", nil, "env file")
