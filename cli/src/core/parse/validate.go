@@ -59,7 +59,7 @@ func validateProfile(cmd *cobra.Command, config *core.Config) error {
 			}
 		}
 		for _, pack := range config.CustomPackages {
-			if !slice.SliceContains(profile.Packages, pack.Id) {
+			if slice.SliceContains(profile.Packages, pack.Id) {
 				delete(profilePackagesMap, pack.Id)
 			}
 		}
