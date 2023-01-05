@@ -2,22 +2,13 @@ package main
 
 import (
 	"context"
-	"embed"
 	"os"
 
 	"cli/cmd"
-	"cli/core/generate"
 	"cli/util/docker"
 
 	"github.com/luno/jettison/log"
 )
-
-//go:embed core/generate/template/*
-var templateFs embed.FS
-
-func init() {
-	generate.TemplateFs = templateFs
-}
 
 func main() {
 	defer handleExit()

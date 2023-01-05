@@ -12,15 +12,16 @@ import (
 )
 
 var (
-	TemplateFs       embed.FS
+	//go:embed template/*
+	templateFs       embed.FS
 	ErrInvalidConfig = errors.New("invalid project config, required fields are Image, ProjectName, and PlatformImage")
 )
 
 func createFileFromTemplate(source, destination string, generatePackageSpec core.GeneratePackageSpec) error {
 	destination = path.Join(destination, source)
-	templatePath := path.Join("template/package/", source)
+	templatePath := path.Join("template", "package", source)
 
-	packageTemplate, err := template.New("package").ParseFS(TemplateFs, templatePath)
+	packageTemplate, err := template.New("package").ParseFS(templateFs, templatePath)
 	if err != nil {
 		return errors.Wrap(err, "")
 	}

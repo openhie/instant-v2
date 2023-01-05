@@ -89,8 +89,8 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 		includeDevFile = true
 
 		promptTargetPort := promptui.Prompt{
-			Label:   "Which stack does your package belong to",
-			Default: "instant",
+			Label:   "Which port would you like to target in dev mode?",
+			Default: "8080",
 		}
 		targetPort, err = promptTargetPort.Run()
 		if err != nil {
@@ -98,8 +98,8 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 		}
 
 		promptPublishedPort := promptui.Prompt{
-			Label:   "Which stack does your package belong to",
-			Default: "instant",
+			Label:   "Which port would you like published in dev mode?",
+			Default: "8081",
 		}
 		publishedPort, err = promptPublishedPort.Run()
 		if err != nil {

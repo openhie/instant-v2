@@ -1,7 +1,6 @@
 package generate
 
 import (
-	"embed"
 	"hash/crc32"
 	"os"
 	"path/filepath"
@@ -13,14 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//go:embed template/*
-var templateFs embed.FS
-
 func Test_createFileFromTemplate(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
-
-	TemplateFs = templateFs
 
 	type cases struct {
 		src                 string
