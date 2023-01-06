@@ -54,6 +54,20 @@ func Test_validate(t *testing.T) {
 				cmd.Flags().Set("custom-path", "../cares-on-platform")
 			},
 		},
+		// case: valid command line package specified, return nil
+		{
+			hookFunc: func(cmd *cobra.Command, config *core.Config) {
+				config.Packages = []string{"cares-on-platform"}
+				cmd.Flags().Set("name", "cares-on-platform")
+			},
+		},
+		// case: valid profile specified, return nil
+		{
+			hookFunc: func(cmd *cobra.Command, config *core.Config) {
+				config.Packages = []string{"disi-on-platform"}
+				cmd.Flags().Set("profile", "dev")
+			},
+		},
 		// case: return ErrUndefinedProfilePackages
 		{
 			expectedErrorString: ErrUndefinedProfilePackages.Error(),
