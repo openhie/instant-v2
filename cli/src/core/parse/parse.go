@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"cli/core"
 	"cli/core/state"
@@ -132,7 +133,7 @@ func hasImage(dockerCli *client.Client, imageName string) (bool, error) {
 }
 
 func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSpec, error) {
-	var unfilteredEnvVars []string
+	unfilteredEnvVars := make([]string, len(pSpec.EnvironmentVariables))
 	copy(unfilteredEnvVars, pSpec.EnvironmentVariables)
 
 	var envVariables []string
@@ -148,14 +149,15 @@ func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSp
 		}
 		envVariables = state.GetEnvVariableString(envViper)
 	}
+	pSpec.EnvironmentVariables = envVariables
 
-	envVariablesMap := make(map[string]bool)
+	envVarsKeys := make(map[string]bool)
 	for _, e := range envVariables {
-		envVariablesMap[e] = true
+		envVarsKeys[strings.SplitAfter(e, "=")[0]] = true
 	}
 
 	for _, e := range unfilteredEnvVars {
-		if !envVariablesMap[e] {
+		if !envVarsKeys[strings.SplitAfter(e, "=")[0]] {
 			envVariables = append(envVariables, e)
 		}
 	}
