@@ -1,8 +1,8 @@
 package parse
 
 import (
-	"cli/util/slice"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 
@@ -17,9 +17,8 @@ func TestParseAndPrepareLaunch(t *testing.T) {
 
 	type cases struct {
 		configFilePath       string
-		expectedErrorString  string
 		duplicatedEnvVarName string
-		expectedEnvVarValue  string
+		expectedEnvVars      []string
 		hookFunc             func(cmd *cobra.Command)
 	}
 
@@ -27,9 +26,8 @@ func TestParseAndPrepareLaunch(t *testing.T) {
 		// case: command line env file env vars must overwrite profile env file env vars
 		{
 			configFilePath:       wd + "/../../features/unit-test-configs/config-case-1.yml",
-			expectedErrorString:  ".env.none: no such file or directory",
 			duplicatedEnvVarName: "FIRST_ENV_VAR",
-			expectedEnvVarValue:  "not_number_one",
+			expectedEnvVars:      []string{"FIRST_ENV_VAR=not_number_one", "SECOND_ENV_VAR=number_two"},
 			hookFunc: func(cmd *cobra.Command) {
 				err = cmd.Flags().Set("profile", "dev")
 				jtest.RequireNil(t, err)
@@ -50,7 +48,12 @@ func TestParseAndPrepareLaunch(t *testing.T) {
 		jtest.RequireNil(t, err)
 
 		require.Equal(t, 1, substringInstancesInSlice(pSpec.EnvironmentVariables, tc.duplicatedEnvVarName))
-		require.Equal(t, true, slice.SliceContains(pSpec.EnvironmentVariables, tc.duplicatedEnvVarName+"="+tc.expectedEnvVarValue))
+
+		sort.Slice(pSpec.EnvironmentVariables, func(i, j int) bool {
+			return strings.Contains(pSpec.EnvironmentVariables[i], "FIRST_ENV_VAR")
+		})
+
+		require.Equal(t, tc.expectedEnvVars, pSpec.EnvironmentVariables)
 	}
 }
 
