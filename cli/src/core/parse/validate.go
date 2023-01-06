@@ -30,38 +30,44 @@ func validate(cmd *cobra.Command, config *core.Config) error {
 		return errors.Wrap(ErrNoPackages, "")
 	}
 
-	return validateProfile(cmd, config)
-}
-
-func validateProfile(cmd *cobra.Command, config *core.Config) error {
-	profile, err := cmd.Flags().GetString("profile")
+	profileName, err := cmd.Flags().GetString("profile")
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
 
+	if profileName != "" {
+		return validateProfile(cmd, profileName, config)
+	}
+
+	return nil
+}
+
+func validateProfile(cmd *cobra.Command, profileName string, config *core.Config) error {
 	profilePackagesMap := make(map[string]bool)
+	var profile core.Profile
 	for _, prof := range config.Profiles {
-		if prof.Name == profile {
+		if prof.Name == profileName {
 			for _, p := range prof.Packages {
 				profilePackagesMap[p] = true
+				profile = prof
 			}
+			
+			break
 		}
 	}
 
-	if profile != "" && len(profilePackagesMap) < 1 {
-		return errors.Wrap(ErrNoSuchProfile, profile)
+	if len(profilePackagesMap) < 1 {
+		return errors.Wrap(ErrNoSuchProfile, profileName)
 	}
 
-	for _, profile := range config.Profiles {
-		for _, pack := range profile.Packages {
-			if slice.SliceContains(config.Packages, pack) {
-				delete(profilePackagesMap, pack)
-			}
+	for _, pack := range profile.Packages {
+		if slice.SliceContains(config.Packages, pack) {
+			delete(profilePackagesMap, pack)
 		}
-		for _, pack := range config.CustomPackages {
-			if slice.SliceContains(profile.Packages, pack.Id) {
-				delete(profilePackagesMap, pack.Id)
-			}
+	}
+	for _, pack := range config.CustomPackages {
+		if slice.SliceContains(profile.Packages, pack.Id) {
+			delete(profilePackagesMap, pack.Id)
 		}
 	}
 
