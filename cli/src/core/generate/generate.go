@@ -83,7 +83,7 @@ func GenerateConfigFile(config *core.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
-	data = append(data, []byte("\n")...)
+	data = append(data, '\n')
 
 	secondFields := core.Config{
 		Packages: config.Packages,
@@ -94,7 +94,7 @@ func GenerateConfigFile(config *core.Config) error {
 		return errors.Wrap(err, "")
 	}
 	data = append(data, d...)
-	data = append(data, []byte("\n")...)
+	data = append(data, '\n')
 
 	thirdFields := core.Config{
 		CustomPackages: config.CustomPackages,
@@ -105,7 +105,7 @@ func GenerateConfigFile(config *core.Config) error {
 		return errors.Wrap(err, "")
 	}
 	data = append(data, d...)
-	data = append(data, []byte("\n")...)
+	data = append(data, '\n')
 
 	fourthFields := core.Config{
 		Profiles: config.Profiles,
