@@ -1,10 +1,11 @@
 package project
 
 import (
+	"context"
+
 	pFlags "cli/cmd/flags"
 	"cli/core/deploy"
 	"cli/core/parse"
-	"context"
 
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
