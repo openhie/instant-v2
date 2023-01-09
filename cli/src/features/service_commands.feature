@@ -1,11 +1,11 @@
-Feature: Test Deploy Commands
+Feature: Test Package Deploy Commands
   Scenario: Initialise Core Service
     When the command "package init -n=core" is run
     Then check the CLI output is "init -t swarm core"
 
-  Scenario: Initialise All (Instant Expects Empty String)
-    When the command "package init" is run
-    Then check the CLI output is "init -t swarm"
+  Scenario: Return Error From No Packages Specified
+    When the command "package init" is run in error
+    Then check the CLI output is "no packages selected in any of command-line/profiles, use the 'project' command for project level functions"
 
   Scenario: Up Core Service
     When the command "package up -n=core" is run

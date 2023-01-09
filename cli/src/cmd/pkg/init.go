@@ -23,6 +23,11 @@ func packageInitCommand() *cobra.Command {
 				panic(err)
 			}
 
+			if len(packageSpec.Packages) < 1 {
+				log.Error(context.Background(), ErrNoPackages)
+				panic(err)
+			}
+
 			err = deploy.LaunchDeploymentContainer(packageSpec, config)
 			if err != nil {
 				log.Error(context.Background(), err)

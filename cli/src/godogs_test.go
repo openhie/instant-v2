@@ -37,6 +37,13 @@ func theCommandIsRun(command string) error {
 	return err
 }
 
+func theCommandIsRunInError(command string) error {
+	_, err := runTestCommand(binaryFilePath, strings.Split(command, " ")...)
+	logs = err.Error()
+
+	return nil
+}
+
 func theCommandIsRunWithProfile(command string, packages *godog.Table) error {
 	if len(packages.Rows) > 0 {
 		for i := 1; i < len(packages.Rows); i++ {
@@ -106,6 +113,7 @@ func InitializeScenario(sc *godog.ScenarioContext) {
 
 			sc.Step(`^check the CLI output is "([^"]*)"$`, checkTheCLIOutputIs)
 			sc.Step(`^the command "([^"]*)" is run$`, theCommandIsRun)
+			sc.Step(`^the command "([^"]*)" is run in error$`, theCommandIsRunInError)
 			sc.Step(`^the command "([^"]*)" is run with profile$`, theCommandIsRunWithProfile)
 			sc.Step(`^check that the CLI added custom packages$`, checkCustomPackages)
 		},
@@ -193,8 +201,9 @@ func runTestCommand(commandName string, commandSlice ...string) (string, error) 
 		return "", errors.Wrap(err, string(errStr))
 	}
 
-	if string(errStr) != "" {
-		return "", errors.Wrap(errors.New(string(errStr)), "")
+	errString := string(errStr)
+	if errString != "" {
+		return "", errors.Wrap(errors.New(errString), "")
 	}
 
 	return string(output), nil
