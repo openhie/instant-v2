@@ -1,6 +1,8 @@
 package generate
 
 import (
+	"bufio"
+	"bytes"
 	"hash/crc32"
 	"os"
 	"path/filepath"
@@ -86,5 +88,105 @@ func Test_createFileFromTemplate(t *testing.T) {
 		// ensure removal after each test case
 		err = os.RemoveAll(tc.dst)
 		jtest.RequireNil(t, err)
+	}
+}
+
+func TestGenerateConfigFile(t *testing.T) {
+	wd, err := os.Getwd()
+	jtest.RequireNil(t, err)
+
+	type cases struct {
+		config             core.Config
+		pathToExpectedFile string
+	}
+
+	testCases := []cases{
+		// case: assert config file created as expected
+		{
+			config: core.Config{
+				ProjectName:   "test-project",
+				Image:         "jembi/go-cli-test-image",
+				PlatformImage: "jembi/platform:latest",
+				LogPath:       "/tmp/logs",
+				Packages:      []string{"client", "dashboard-visualiser-jsreport"},
+				CustomPackages: []core.CustomPackage{
+					{
+						Id:   "disi-on-platform",
+						Path: "git@github.com:jembi/disi-on-platform.git",
+					},
+				},
+				Profiles: []core.Profile{
+					{
+						Name:     "dev",
+						Packages: []string{"dashboard-visualiser-jsreport", "disi-on-platform"},
+						EnvFiles: []string{"../test-conf/.env.test"},
+						Dev:      true,
+					},
+				},
+			},
+			pathToExpectedFile: filepath.Join(wd, "..", "..", "features", "unit-test-configs", "config-case-1.yml"),
+		},
+		// case: assert invalid config file, missing field 'Image'
+		{
+			config: core.Config{
+				ProjectName:   "test-project",
+				PlatformImage: "jembi/platform:latest",
+			},
+		},
+		// case: assert invalid config file, missing field 'ProjectName'
+		{
+			config: core.Config{
+				Image:         "jembi/go-cli-test-image",
+				PlatformImage: "jembi/platform:latest",
+			},
+		},
+		// case: assert invalid config file, missing field 'PlatformImage'
+		{
+			config: core.Config{
+				Image:       "jembi/go-cli-test-image",
+				ProjectName: "test-project",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		defer os.Remove("config.yaml")
+
+		err := GenerateConfigFile(&tc.config)
+		if err != nil {
+			require.Equal(t, ErrInvalidConfig.Error(), err.Error())
+			continue
+		}
+
+		expectedConfigFile, err := os.Open(tc.pathToExpectedFile)
+		jtest.RequireNil(t, err)
+
+		expectedScanner := bufio.NewScanner(expectedConfigFile)
+		expectedScanner.Split(bufio.ScanLines)
+
+		var expected []byte
+		for expectedScanner.Scan() {
+			expected = append(expected, bytes.TrimSpace(expectedScanner.Bytes())...)
+			// if expected[len(expected)-1] != 10 {
+			expected = append(expected, []byte("\n")...)
+			// }
+		}
+
+		generatedConfigFile, err := os.Open("config.yaml")
+		jtest.RequireNil(t, err)
+
+		generatedScanner := bufio.NewScanner(generatedConfigFile)
+		generatedScanner.Split(bufio.ScanLines)
+
+		generated := []byte("---\n")
+		for generatedScanner.Scan() {
+			generated = append(generated, bytes.TrimSpace(generatedScanner.Bytes())...)
+			generated = append(generated, []byte("\n")...)
+		}
+
+		expectedText := string(expected)
+		generatedText := string(generated)
+
+		require.Equal(t, expectedText, generatedText)
 	}
 }

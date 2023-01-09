@@ -3,12 +3,14 @@ package generate
 import (
 	"embed"
 	"html/template"
+	"io/ioutil"
 	"os"
 	"path"
 
 	"cli/core"
 
 	"github.com/luno/jettison/errors"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -60,6 +62,64 @@ func GeneratePackage(destination string, generatePackageSpec core.GeneratePackag
 		if err != nil {
 			return errors.Wrap(err, "")
 		}
+	}
+
+	return nil
+}
+
+func GenerateConfigFile(config *core.Config) error {
+	if config.Image == "" || config.ProjectName == "" || config.PlatformImage == "" {
+		return errors.Wrap(ErrInvalidConfig, "")
+	}
+
+	firstFields := core.Config{
+		ProjectName:   config.ProjectName,
+		Image:         config.Image,
+		PlatformImage: config.PlatformImage,
+		LogPath:       config.LogPath,
+	}
+
+	data, err := yaml.Marshal(&firstFields)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	data = append(data, []byte("\n")...)
+
+	secondFields := core.Config{
+		Packages: config.Packages,
+	}
+
+	d, err := yaml.Marshal(&secondFields)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	data = append(data, d...)
+	data = append(data, []byte("\n")...)
+
+	thirdFields := core.Config{
+		CustomPackages: config.CustomPackages,
+	}
+
+	d, err = yaml.Marshal(&thirdFields)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	data = append(data, d...)
+	data = append(data, []byte("\n")...)
+
+	fourthFields := core.Config{
+		Profiles: config.Profiles,
+	}
+
+	d, err = yaml.Marshal(&fourthFields)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+	data = append(data, d...)
+
+	err = ioutil.WriteFile("config.yaml", data, 0600)
+	if err != nil {
+		return errors.Wrap(err, "")
 	}
 
 	return nil

@@ -59,6 +59,7 @@ func Test_unmarshalConfig(t *testing.T) {
 		{
 			configPath: wd + "/../../features/unit-test-configs/config-case-1.yml",
 			expectedConfig: core.Config{
+				ProjectName: "test-project",
 				Image:         "jembi/go-cli-test-image",
 				LogPath:       "/tmp/logs",
 				PlatformImage: "jembi/platform:latest",

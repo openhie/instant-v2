@@ -12,9 +12,13 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	/*
 		What is the id of your package:
 		What is the name of your package:
+		What docker image would you like to use with this project:
 		Provide a description of your package:
 		Which stack does your package belong to:
+		What type best suites your package:
 		Do you want to include a dev compose file:
+		Which port would you like to target in dev mode:
+		Which port would you like published in dev mode:
 	*/
 
 	promptId := promptui.Prompt{
