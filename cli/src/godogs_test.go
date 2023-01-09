@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,7 +9,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/cucumber/godog"
 	"github.com/pkg/errors"
@@ -148,38 +146,58 @@ func copyFiles() {
 
 func runTestCommand(commandName string, commandSlice ...string) (string, error) {
 	cmd := exec.Command(commandName, commandSlice...)
-	cmdReader, err := cmd.StdoutPipe()
+	stdOutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "Error creating stdOutPipe for Cmd.")
 	}
-	defer cmdReader.Close()
+	stdErrReader, err := cmd.StderrPipe()
+	if err != nil {
+		return "", errors.Wrap(err, "Error creating stdErrPipe for Cmd.")
+	}
 
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	var loggedResults string
-	scanner := bufio.NewScanner(cmdReader)
+	var output []rune
+	stdOutScanner := bufio.NewScanner(stdOutReader)
 	go func() {
-		defer wg.Done()
-		for scanner.Scan() {
-			loggedResults += scanner.Text()
+		for stdOutScanner.Scan() {
+			s := stdOutScanner.Text()
+			if s != "" {
+				for _, ss := range s {
+					output = append(output, ss)
+				}
+				output = append(output, '\n')
+			}
+		}
+	}()
+
+	var errStr []rune
+	stdErrScanner := bufio.NewScanner(stdErrReader)
+	go func() {
+		for stdErrScanner.Scan() {
+			s := stdErrScanner.Text()
+			if s != "" {
+				for _, ss := range s {
+					errStr = append(errStr, ss)
+				}
+				errStr = append(errStr, '\n')
+			}
 		}
 	}()
 
 	err = cmd.Start()
 	if err != nil {
-		return "", errors.Wrap(err, "Error starting Cmd. "+stderr.String())
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return "", errors.New(stderr.String())
+		return "", errors.Wrap(err, "")
 	}
 
-	wg.Wait()
-	return loggedResults, nil
+	err = cmd.Wait()
+	if err != nil {
+		return "", errors.Wrap(err, string(errStr))
+	}
+
+	if string(errStr) != "" {
+		return "", errors.Wrap(errors.New(string(errStr)), "")
+	}
+
+	return string(output), nil
 }
 
 func deleteContentAtFilePath(filePath []string, content []string) {
