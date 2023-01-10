@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 
+	"cli/cmd/completion"
 	"cli/cmd/flags"
 	"cli/core/deploy"
 	"cli/core/parse"
@@ -37,6 +38,7 @@ func packageDownCommand() *cobra.Command {
 	}
 
 	flags.SetPackageActionFlags(cmd)
+	completion.FlagCompletion(cmd)
 
 	return cmd
 }

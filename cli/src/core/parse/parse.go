@@ -43,7 +43,7 @@ func ParseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config,
 
 	}
 
-	config, err := getConfigFromParams(cmd)
+	config, err := GetConfigFromParams(cmd)
 	if err != nil {
 		return nil, nil, err
 	}
