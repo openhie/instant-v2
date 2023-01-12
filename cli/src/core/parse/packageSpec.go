@@ -10,7 +10,7 @@ import (
 
 // Match custom packages passed through from the command line to custom
 // packages specified in the config file (if they exist in the config file),
-// otherwise append the custom package path but not ID. This way users can also refer
+// otherwise append the custom package path but not ID.
 func parseCustomPackageFromPath(config *core.Config, customPackagePaths []string) []core.CustomPackage {
 	var customPackages []core.CustomPackage
 	for _, customPackagePath := range customPackagePaths {
