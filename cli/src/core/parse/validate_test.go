@@ -45,6 +45,13 @@ func Test_validate(t *testing.T) {
 				cmd.Flags().Set("profile", "non-existent-profile")
 			},
 		},
+		// case: return ErrNoPackagesInProfile
+		{
+			expectedErrorString: "empty-package-profile: " + ErrNoPackagesInProfile.Error(),
+			hookFunc: func(cmd *cobra.Command, config *core.Config) {
+				cmd.Flags().Set("profile", "empty-package-profile")
+			},
+		},
 		// case: no packages specified in config file, but in command-line custom-package, return nil
 		{
 			hookFunc: func(cmd *cobra.Command, config *core.Config) {
@@ -57,8 +64,8 @@ func Test_validate(t *testing.T) {
 		// case: valid command line package specified, return nil
 		{
 			hookFunc: func(cmd *cobra.Command, config *core.Config) {
-				config.Packages = []string{"cares-on-platform"}
-				cmd.Flags().Set("name", "cares-on-platform")
+				config.Packages = append(config.Packages, "cares-on-platform")
+				cmd.Flags().Set("name", "cares-on-platform,custom-package-2,client")
 			},
 		},
 		// case: valid profile specified, return nil
@@ -68,15 +75,10 @@ func Test_validate(t *testing.T) {
 				cmd.Flags().Set("profile", "dev")
 			},
 		},
-		// case: return ErrUndefinedProfilePackages
+		// case: profile packages not in custom-packages or packages, but in command-line custom-packages, return ErrUndefinedProfilePackages
+		// even when the package is specified as a command-line custom package
 		{
-			expectedErrorString: ErrUndefinedProfilePackages.Error(),
-			hookFunc: func(cmd *cobra.Command, config *core.Config) {
-				cmd.Flags().Set("profile", "dev")
-			},
-		},
-		// case: profile packages not in custom-packages or packages, but in command-line custom-packages, return nil error
-		{
+			expectedErrorString: "disi-on-platform: " + ErrUndefinedProfilePackages.Error(),
 			hookFunc: func(cmd *cobra.Command, config *core.Config) {
 				cmd.Flags().Set("profile", "dev")
 				cmd.Flags().Set("custom-path", "git@github.com:jembi/disi-on-platform.git")
@@ -86,10 +88,11 @@ func Test_validate(t *testing.T) {
 		{
 			hookFunc: func(cmd *cobra.Command, config *core.Config) {},
 		},
-		// case: command-line package specified that isn't in config-file, should return nil
+		// case: command-line package specified that isn't in config-file, return ErrUndefinedProfilePackages
 		{
+			expectedErrorString: "asdfasdfasdf: " + ErrUndefinedPackage.Error(),
 			hookFunc: func(cmd *cobra.Command, config *core.Config) {
-				cmd.Flags().Set("name", "asdfasdfasdf")
+				cmd.Flags().Set("name", "client,asdfasdfasdf")
 			},
 		},
 	}
