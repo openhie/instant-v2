@@ -39,15 +39,15 @@ func copyFile(src, dst string) error {
 	}
 
 	return nil
-
 }
 
 func TestGetPackageSpecFromParams(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
+	configFilePath := wd + "/../../features/unit-test-configs/config-case-3.yml"
+
 	type cases struct {
-		configFilePath string
 		hookFunc       func(cmd *cobra.Command)
 		wantSpecMatch  bool
 		packageSpec    *core.PackageSpec
@@ -57,7 +57,6 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 	testCases := []cases{
 		// case: match packageSpec
 		{
-			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
 				cmd.Flags().StringSlice("env-file", []string{""}, "")
 
@@ -88,7 +87,6 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 		},
 		// case: return error from not finding env file
 		{
-			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
 				cmd.Flags().StringSlice("env-file", []string{""}, "")
 
@@ -99,7 +97,6 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 		},
 		// case: return no error when not specifying an env-file
 		{
-			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
 				cmd.Flags().StringSlice("env-file", []string{""}, "")
 
@@ -108,7 +105,6 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 		},
 		// case: place .env file in main dir, but don't use its env vars
 		{
-			configFilePath: wd + "/../../features/unit-test-configs/config-case-3.yml",
 			hookFunc: func(cmd *cobra.Command) {
 				cmd.Flags().StringSlice("env-file", []string{""}, "")
 
@@ -129,7 +125,7 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 		err = copyFile(wd+"/../../features/test-conf/.env.test", wd+"/../../.env")
 		jtest.RequireNil(t, err)
 
-		cmd, config := loadCmdAndConfig(t, tc.configFilePath, tc.hookFunc)
+		cmd, config := loadCmdAndConfig(t, configFilePath, tc.hookFunc)
 
 		pSpec, err := GetPackageSpecFromParams(cmd, config)
 		if tc.errorString != "" && !strings.Contains(err.Error(), tc.errorString) {
@@ -178,7 +174,7 @@ var (
 	}
 )
 
-func Test_getCustomPackages(t *testing.T) {
+func Test_parseCustomPackageFromPath(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
@@ -188,7 +184,7 @@ func Test_getCustomPackages(t *testing.T) {
 	config, err := unmarshalConfig(configViper)
 	jtest.RequireNil(t, err)
 
-	gotCustomPackages := getCustomPackages(config, []string{"path-to-1", "path-to-2"})
+	gotCustomPackages := parseCustomPackageFromPath(config, []string{"path-to-1", "path-to-2"})
 
 	require.Equal(t, expectedCustomPackages, gotCustomPackages)
 }
