@@ -24,7 +24,7 @@ func packageDownCommand() *cobra.Command {
 				panic(err)
 			}
 
-			if len(packageSpec.Packages) < 1 {
+			if len(packageSpec.Packages) < 1 && len(packageSpec.CustomPackages) < 1 {
 				log.Error(context.Background(), ErrNoPackages)
 				panic(err)
 			}
