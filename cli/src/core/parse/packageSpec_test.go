@@ -178,7 +178,7 @@ var (
 	}
 )
 
-func Test_getCustomPackages(t *testing.T) {
+func Test_parseCustomPackageFromPath(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
@@ -188,7 +188,7 @@ func Test_getCustomPackages(t *testing.T) {
 	config, err := unmarshalConfig(configViper)
 	jtest.RequireNil(t, err)
 
-	gotCustomPackages := getCustomPackages(config, []string{"path-to-1", "path-to-2"})
+	gotCustomPackages := parseCustomPackageFromPath(config, []string{"path-to-1", "path-to-2"})
 
 	require.Equal(t, expectedCustomPackages, gotCustomPackages)
 }
