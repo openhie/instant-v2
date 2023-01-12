@@ -12,6 +12,7 @@ import (
 
 	"github.com/cucumber/godog"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -21,16 +22,19 @@ var (
 	customPackages = make(map[string]bool)
 )
 
-func theCommandIsRun(command string) error {
-	customPackageNames, ok := hasCustomPackage(command)
+func theCommandIsRun(commandOne string) error {
+	customPackageNames, ok, err := hasCustomPackage(commandOne)
+	if err != nil {
+		return err
+	}
 	if ok {
 		for _, customPackageName := range customPackageNames {
 			// TODO: find a way to make the below code OS-agnostic (/tmp is linux specific)
-			go monitorDirFor(filepath.Join("/tmp", "custom-package"), customPackageName)
+			go monitorDirFor(filepath.Join("/", "tmp", "custom-package"), customPackageName)
 		}
 	}
 
-	res, err := runTestCommand(binaryFilePath, strings.Split(command, " ")...)
+	res, err := runTestCommand(binaryFilePath, strings.Split(commandOne, " ")...)
 	if err == nil {
 		logs = res
 	}
@@ -48,7 +52,7 @@ func theCommandIsRunWithProfile(command string, packages *godog.Table) error {
 	if len(packages.Rows) > 0 {
 		for i := 1; i < len(packages.Rows); i++ {
 			// TODO: find a way to make the below code OS-agnostic (/tmp is linux specific)
-			go monitorDirFor(filepath.Join("/tmp", "custom-package"), packages.Rows[i].Cells[0].Value)
+			go monitorDirFor(filepath.Join("/", "tmp", "custom-package"), packages.Rows[i].Cells[0].Value)
 		}
 	}
 
@@ -84,7 +88,6 @@ func checkCustomPackages(packages *godog.Table) error {
 	}
 
 	var v string
-
 	for i := 1; i < len(packages.Rows); i++ {
 		for _, cell := range packages.Rows[i].Cells {
 			if !customPackages[cell.Value] {
@@ -93,7 +96,12 @@ func checkCustomPackages(packages *godog.Table) error {
 		}
 	}
 
-	return errors.New("did not create custom packages:\n" + v)
+	var foundCustomPackages string
+	for k := range customPackages {
+		foundCustomPackages += k + " "
+	}
+
+	return errors.New("did not create custom packages:" + v + " but found '" + foundCustomPackages + "' custom packages")
 }
 
 func compareLogsAndOutputs(inputLogs, expectedOutput string) error {
@@ -242,7 +250,42 @@ func cleanUp() {
 	}
 }
 
-func hasCustomPackage(command string) ([]string, bool) {
+type customPackage struct {
+	Id   string `yaml:"id"`
+	Path string `yaml:"path"`
+}
+
+type projectConfig struct {
+	CustomPackages []customPackage `yaml:"customPackages"`
+}
+
+func unmarshalConfig() (*projectConfig, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	configViper := viper.New()
+	configViper.AddConfigPath(wd)
+	configViper.SetConfigType("yaml")
+	configViper.SetConfigName("config")
+
+	err = configViper.ReadInConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	var config projectConfig
+	err = configViper.Unmarshal(&config)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+
+	}
+
+	return &config, nil
+}
+
+func hasCustomPackage(command string) ([]string, bool, error) {
 	if strings.Contains(command, "-c=") {
 		split := strings.SplitAfter(command, "-c=")
 
@@ -252,7 +295,7 @@ func hasCustomPackage(command string) ([]string, bool) {
 			customPackageNames = append(customPackageNames, strings.TrimSuffix(path.Base(path.Clean(subSplit[0])), path.Ext(subSplit[0])))
 		}
 
-		return customPackageNames, true
+		return customPackageNames, true, nil
 	} else if strings.Contains(command, "--custom-path=") {
 		split := strings.SplitAfter(command, "--custom-path=")
 
@@ -262,10 +305,46 @@ func hasCustomPackage(command string) ([]string, bool) {
 			customPackageNames = append(customPackageNames, strings.TrimSuffix(path.Base(path.Clean(subSplit[0])), path.Ext(subSplit[0])))
 		}
 
-		return customPackageNames, true
+		return customPackageNames, true, nil
 	}
 
-	return nil, false
+	var customPackageNames []string
+	config, err := unmarshalConfig()
+	if err != nil {
+		return nil, false, err
+	}
+	if strings.Contains(command, "-n=") {
+		split := strings.SplitAfter(command, "-n=")
+
+		for _, customPackage := range config.CustomPackages {
+			for i := 1; i < len(split); i++ {
+				subSplit := strings.Split(split[1], " ")
+				packName := strings.TrimSuffix(path.Base(path.Clean(subSplit[0])), path.Ext(subSplit[0]))
+				if packName == customPackage.Id {
+					customPackageNames = append(customPackageNames, customPackage.Id)
+				}
+			}
+		}
+
+		return customPackageNames, true, nil
+
+	} else if strings.Contains(command, "--name=") {
+		split := strings.SplitAfter(command, "--name=")
+
+		for _, customPackage := range config.CustomPackages {
+			for i := 1; i < len(split); i++ {
+				subSplit := strings.Split(split[1], " ")
+				packName := strings.TrimSuffix(path.Base(path.Clean(subSplit[0])), path.Ext(subSplit[0]))
+				if packName == customPackage.Id {
+					customPackageNames = append(customPackageNames, customPackage.Id)
+				}
+			}
+		}
+
+		return customPackageNames, true, nil
+	}
+
+	return nil, false, nil
 }
 
 // This function can run infinitely, the caller must ensure that the goroutine running

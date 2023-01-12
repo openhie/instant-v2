@@ -18,6 +18,13 @@ Feature: Test Deploy Options Commands
       | instant-openhie-template-package |
     Then check the CLI output is "init -t swarm template"
 
+  Scenario: Initialise Custom Package Specified in Config File
+    When the command "package init -n=custom-package-test --env-file=features/test-conf/.env.test" is run
+    Then check that the CLI added custom packages
+      | directory |
+      | custom-package-test |
+    Then check the CLI output is "init -t swarm custom-package-test"
+
   Scenario: Initialise Multiple Services
     When the command "package init -n=covid19immunization -n=client -n=covid19surveillance --custom-path=https://github.com/jembi/covid19-immunization-tracking-package.git -c=https://github.com/jembi/who-covid19-surveillance-package.git" is run
     Then check that the CLI added custom packages
