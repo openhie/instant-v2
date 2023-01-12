@@ -8,7 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getCustomPackages(config *core.Config, customPackagePaths []string) []core.CustomPackage {
+// Match custom packages passed through from the command line to custom
+// packages specified in the config file (if they exist in the config file),
+// otherwise append the custom package path but not ID.
+func parseCustomPackageFromPath(config *core.Config, customPackagePaths []string) []core.CustomPackage {
 	var customPackages []core.CustomPackage
 	for _, customPackagePath := range customPackagePaths {
 		var customPackage core.CustomPackage
@@ -27,6 +30,7 @@ func getCustomPackages(config *core.Config, customPackagePaths []string) []core.
 
 		customPackages = append(customPackages, customPackage)
 	}
+
 	return customPackages
 }
 
@@ -64,7 +68,7 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 		envVariables = state.GetEnvVariableString(envViper)
 	}
 
-	customPackages := getCustomPackages(config, customPackagePaths)
+	customPackages := parseCustomPackageFromPath(config, customPackagePaths)
 
 	packageSpec = core.PackageSpec{
 		Packages:             packageNames,
