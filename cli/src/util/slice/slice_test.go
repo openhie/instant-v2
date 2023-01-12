@@ -39,6 +39,18 @@ func Test_SliceContains(t *testing.T) {
 			matchValue: 4,
 			wantMatch:  false,
 		},
+		{
+			slice:      []int{},
+			typeOf:     "int",
+			matchValue: 0,
+			wantMatch:  false,
+		},
+		{
+			slice:      []string{},
+			typeOf:     "string",
+			matchValue: "",
+			wantMatch:  false,
+		},
 	}
 
 	for _, tc := range testCases {
