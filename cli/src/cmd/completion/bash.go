@@ -22,8 +22,8 @@ func genBashCompletionCommand() *cobra.Command {
 			var filename, binaryName string
 			switch runtime.GOOS {
 			case "linux":
-				filename = "/etc/bash_completion.d/gocli-linux"
-				binaryName = "gocli-linux"
+				filename = "/etc/bash_completion.d/instant-linux"
+				binaryName = "instant-linux"
 
 				err := os.Remove(filename)
 				if err != nil {
@@ -36,8 +36,8 @@ func genBashCompletionCommand() *cobra.Command {
 					log.Error(context.Background(), err)
 					panic(err)
 				}
-				filename = output + "/_gocli-macos"
-				binaryName = "gocli-macos"
+				filename = output + "/_instant-macos"
+				binaryName = "instant-macos"
 
 				err = os.Remove(filename)
 				if err != nil {

@@ -27,8 +27,8 @@ func genZshCompletionCommand() *cobra.Command {
 					log.Error(context.Background(), err)
 					panic(err)
 				}
-				filename = output + "/_gocli-linux"
-				binaryName = "gocli-linux"
+				filename = output + "/_instant-linux"
+				binaryName = "instant-linux"
 
 				err = os.Remove(filename)
 				if err != nil && !os.IsNotExist(err) {
@@ -41,8 +41,8 @@ func genZshCompletionCommand() *cobra.Command {
 					log.Error(context.Background(), err)
 					panic(err)
 				}
-				filename = output + "/_gocli-macos"
-				binaryName = "gocli-macos"
+				filename = output + "/_instant-macos"
+				binaryName = "instant-macos"
 
 				err = os.Remove(filename)
 				if err != nil && !os.IsNotExist(err) {
