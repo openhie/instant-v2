@@ -26,7 +26,7 @@ func genBashCompletionCommand() *cobra.Command {
 				binaryName = "instant-linux"
 
 				err := os.Remove(filename)
-				if err != nil {
+				if err != nil && !os.IsNotExist(err) {
 					log.Error(context.Background(), err)
 					panic(err)
 				}
@@ -40,7 +40,7 @@ func genBashCompletionCommand() *cobra.Command {
 				binaryName = "instant-macos"
 
 				err = os.Remove(filename)
-				if err != nil {
+				if err != nil && !os.IsNotExist(err) {
 					log.Error(context.Background(), err)
 					panic(err)
 				}
