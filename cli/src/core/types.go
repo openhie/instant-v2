@@ -2,10 +2,10 @@ package core
 
 type Profile struct {
 	Name     string   `yaml:"name"`
+	Packages []string `yaml:"packages"`
 	EnvFiles []string `yaml:"envFiles"`
 	Dev      bool     `yaml:"dev"`
 	Only     bool     `yaml:"only"`
-	Packages []string `yaml:"packages"`
 }
 
 type CustomPackage struct {
@@ -14,13 +14,13 @@ type CustomPackage struct {
 }
 
 type Config struct {
-	Image          string          `yaml:"image"`
-	LogPath        string          `yaml:"logPath"`
-	Packages       []string        `yaml:"packages"`
-	CustomPackages []CustomPackage `yaml:"customPackages"`
-	Profiles       []Profile       `yaml:"profiles"`
-	ProjectName    string          `yaml:"projectName"`
-	PlatformImage  string          `yaml:"platformImage"`
+	ProjectName    string          `yaml:"projectName,omitempty"`
+	Image          string          `yaml:"image,omitempty"`
+	PlatformImage  string          `yaml:"platformImage,omitempty"`
+	LogPath        string          `yaml:"logPath,omitempty"`
+	Packages       []string        `yaml:"packages,omitempty"`
+	CustomPackages []CustomPackage `yaml:"customPackages,omitempty"`
+	Profiles       []Profile       `yaml:"profiles,omitempty"`
 }
 
 type PackageSpec struct {

@@ -8,9 +8,8 @@ import (
 )
 
 func AddCommands(cmd *cobra.Command) {
-	// TODO: add commands
 	cmd.AddCommand(
 		pkg.DeclarePackageCommand(),
-		project.ProjectGenerateCommand(),
+		project.DeclareProjectCommand(),
 	)
 }
