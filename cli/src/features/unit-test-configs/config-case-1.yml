@@ -1,0 +1,23 @@
+---
+projectName: test-project
+image: jembi/go-cli-test-image
+platformImage: jembi/platform:latest
+logPath: /tmp/logs
+
+packages:
+  - client
+  - dashboard-visualiser-jsreport
+
+customPackages:
+  - id: disi-on-platform
+    path: git@github.com:jembi/disi-on-platform.git
+
+profiles:
+  - name: dev
+    packages:
+      - dashboard-visualiser-jsreport
+      - disi-on-platform
+    envFiles:
+      - ../test-conf/.env.test
+    dev: true
+    only: false

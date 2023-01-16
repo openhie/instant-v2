@@ -1,0 +1,29 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - client
+
+customPackages:
+  - id: custom-package-1
+    path: "path-to-1"
+
+  - id: custom-package-2
+    path: "path-to-2"
+
+  - id: custom-package-3
+    path: "jembi/some-custom-package"
+
+profiles:
+  - name: dev
+    packages:
+      - disi-on-platform
+    envFiles:
+      - ../test-conf/.env.test
+    dev: true
+
+  - name: empty-package-profile
+    envFiles:
+      - ../test-conf/.env.test
+    dev: true
