@@ -1,0 +1,67 @@
+---
+image: 'jembi/go-cli-test-image'
+logPath: /tmp/logs
+
+packages:
+  - core
+  - client
+  - dashboard-visualiser-jsreport
+
+customPackages:
+  - id: custom-package-test
+    path: "git@github.com:jembi/custom-package-test.git"
+  - id: custom-local-package
+    path: ./features/custom-local-package
+
+profiles:
+  - name: test-dev
+    packages:
+      - core
+      - client
+    envFiles:
+      - ./.env.test
+    dev: true
+
+  - name: test-custom-package
+    packages:
+      - custom-package-test
+    envFiles:
+      - ./.env.test
+    dev: false
+
+  - name: test-mixed-package
+    packages:
+      - core
+      - client
+      - custom-package-test
+    envFiles:
+      - ./.env.test
+    dev: false
+
+  - name: test-local-custom-package
+    packages:
+      - custom-local-package
+    envFiles:
+      - ./.env.test
+    dev: true
+    
+  - name: test-mixed-custom-package
+    packages:
+      - core
+      - custom-package-test
+      - custom-local-package
+    envFiles:
+      - ./.env.test
+    dev: true
+
+  - name: test-conflicting-dev-flag
+    packages:
+      - core
+    dev: false
+    only: true
+
+  - name: test-conflicting-only-flag
+    packages:
+      - core
+    dev: true
+    only: false

@@ -11,5 +11,8 @@ go test .
 cd "$FILE_PATH"/src/util/slice || exit
 go test .
 
+cd "$FILE_PATH"/src/core/deploy || exit
+go test .
+
 cd "$FILE_PATH"/src/util/file || exit
 go test .
