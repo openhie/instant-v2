@@ -6,7 +6,9 @@ require (
 	github.com/cucumber/godog v0.12.5
 	github.com/docker/cli v20.10.21+incompatible
 	github.com/docker/docker v20.10.21+incompatible
+	github.com/iancoleman/strcase v0.2.0
 	github.com/luno/jettison v0.0.0-20221009180414-a591f4833ce4
+	github.com/manifoldco/promptui v0.9.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
@@ -16,6 +18,7 @@ require (
 	github.com/Microsoft/hcsshim v0.9.6 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20221026131551-cf6655e29de4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/containerd v1.6.12 // indirect
