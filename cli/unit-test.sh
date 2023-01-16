@@ -5,11 +5,14 @@ FILE_PATH=$(
   pwd -P
 )
 
-cd "$FILE_PATH"/src/core || exit
+cd "$FILE_PATH"/src/core/parse || exit
 go test .
 
-cd "$FILE_PATH"/src/util || exit
+cd "$FILE_PATH"/src/util/slice || exit
 go test .
 
-cd "$FILE_PATH"/src/cmd/pkg || exit
+cd "$FILE_PATH"/src/core/deploy || exit
+go test .
+
+cd "$FILE_PATH"/src/util/file || exit
 go test .

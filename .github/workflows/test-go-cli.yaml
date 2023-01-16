@@ -1,7 +1,7 @@
 name: Run Go CLI unit tests and Godog functional tests
 
 on:
-  pull_request:
+  push:
 
 jobs:
   unit-tests:

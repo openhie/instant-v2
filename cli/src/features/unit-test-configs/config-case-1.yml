@@ -1,7 +1,8 @@
 ---
-image: 'jembi/go-cli-test-image'
-logPath: /tmp/logs
+projectName: test-project
+image: jembi/go-cli-test-image
 platformImage: jembi/platform:latest
+logPath: /tmp/logs
 
 packages:
   - client
@@ -9,7 +10,7 @@ packages:
 
 customPackages:
   - id: disi-on-platform
-    path: "git@github.com:jembi/disi-on-platform.git"
+    path: git@github.com:jembi/disi-on-platform.git
 
 profiles:
   - name: dev
@@ -19,3 +20,4 @@ profiles:
     envFiles:
       - ../test-conf/.env.test
     dev: true
+    only: false

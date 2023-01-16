@@ -1,0 +1,9 @@
+{
+  "id": "test-package",
+  "name": "Test Package",
+  "description": "A package for testing",
+  "type": "infrastructure",
+  "version": "0.0.1",
+  "dependencies": [],
+  "environmentVariables": {}
+}

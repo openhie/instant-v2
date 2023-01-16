@@ -4,10 +4,23 @@ logPath: /tmp/logs
 
 packages:
   - client
+  - dashboard-visualiser-jsreport
+
+customPackages:
+  - id: disi-on-platform
+    path: "git@github.com:jembi/disi-on-platform.git"
 
 profiles:
-  - name: bad-env-file-path
+  - name: non-dev
     packages:
-      - client
+      - dashboard-visualiser-jsreport
+      - disi-on-platform
     envFiles:
-      - ../test-conf/.env.tests
+      - ../test-conf/.env.test
+
+  - name: non-only
+    packages:
+      - dashboard-visualiser-jsreport
+    envFiles:
+      - ../test-conf/.env.one
+      - ../test-conf/.env.two
