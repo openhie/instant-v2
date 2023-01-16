@@ -41,7 +41,7 @@ func copyFile(src, dst string) error {
 	return nil
 }
 
-func TestGetPackageSpecFromParams(t *testing.T) {
+func Test_getPackageSpecFromParams(t *testing.T) {
 	wd, err := os.Getwd()
 	jtest.RequireNil(t, err)
 
@@ -58,8 +58,6 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 		// case: match packageSpec
 		{
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 				cmd.Flags().Set("name", "pack-2")
 
@@ -88,8 +86,6 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 		// case: return error from not finding env file
 		{
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 				cmd.Flags().Set("env-file", wd+"/../../features/test-conf/awlikdeuh")
 			},
@@ -98,16 +94,12 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 		// case: return no error when not specifying an env-file
 		{
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 			},
 		},
 		// case: place .env file in main dir, but don't use its env vars
 		{
 			hookFunc: func(cmd *cobra.Command) {
-				cmd.Flags().StringSlice("env-file", []string{""}, "")
-
 				cmd.Flags().Set("name", "pack-1")
 
 				cmd.Flags().Set("only", "true")
@@ -127,7 +119,7 @@ func TestGetPackageSpecFromParams(t *testing.T) {
 
 		cmd, config := loadCmdAndConfig(t, configFilePath, tc.hookFunc)
 
-		pSpec, err := GetPackageSpecFromParams(cmd, config)
+		pSpec, err := getPackageSpecFromParams(cmd, config)
 		if tc.errorString != "" && !strings.Contains(err.Error(), tc.errorString) {
 			t.FailNow()
 		} else if tc.errorString == "" {
@@ -154,6 +146,9 @@ func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *co
 	jtest.RequireNil(t, err)
 
 	cmd := &cobra.Command{}
+	cmd.Flags().StringVar(&state.ConfigFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
+	cmd.Flags().StringSliceVar(&state.EnvFiles, "env-file", nil, "env file")
+
 	flags.SetPackageActionFlags(cmd)
 
 	hookFunc(cmd)

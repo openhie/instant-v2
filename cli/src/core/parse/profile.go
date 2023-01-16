@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GetPackageSpecFromProfile(cmd *cobra.Command, config core.Config, packageSpec core.PackageSpec) (*core.PackageSpec, error) {
+func getPackageSpecFromProfile(cmd *cobra.Command, config core.Config, packageSpec core.PackageSpec) (*core.PackageSpec, error) {
 	profile := core.Profile{}
 	profileName, err := cmd.Flags().GetString("profile")
 	if err != nil {
