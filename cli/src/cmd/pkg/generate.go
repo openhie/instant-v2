@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 
 	"cli/core"
-	prompt "cli/prompt/package"
+	"cli/core/generate"
+	"cli/core/prompt"
 
 	"github.com/luno/jettison/log"
 	"github.com/spf13/cobra"
 )
 
-// TODO(MarkL): Write tests for this once this functionality is introduced
-func PackageGenerateCommand() *cobra.Command {
+func packageGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "generate",
 		Aliases: []string{"g"},
@@ -22,21 +22,19 @@ func PackageGenerateCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 
-			ex, err := os.Executable()
-			if err != nil {
-				log.Error(ctx, err)
-				panic(err)
-			}
-
-			pwd := filepath.Dir(ex)
-
 			resp, err := prompt.GeneratePackagePrompt()
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)
 			}
 
-			packagePath := path.Join(pwd, resp.Id)
+			ex, err := os.Executable()
+			if err != nil {
+				log.Error(ctx, err)
+				panic(err)
+			}
+
+			packagePath := path.Join(filepath.Dir(ex), resp.Id)
 			err = os.Mkdir(packagePath, os.ModePerm)
 			if err != nil {
 				log.Error(ctx, err)
@@ -51,7 +49,7 @@ func PackageGenerateCommand() *cobra.Command {
 				Type:           resp.Type,
 				IncludeDevFile: resp.IncludeDevFile,
 			}
-			err = core.GeneratePackage(packagePath, generatePackageSpec)
+			err = generate.GeneratePackage(packagePath, generatePackageSpec)
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)

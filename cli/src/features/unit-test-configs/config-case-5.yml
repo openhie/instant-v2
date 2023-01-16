@@ -5,14 +5,34 @@ logPath: /tmp/logs
 packages:
   - client
 
-customPackages:
-  - id: custom-package-1
-    path: "path-to-1"
-
 profiles:
+  - name: bad-env-file-path
+    packages:
+      - client
+    envFiles:
+      - ../test-conf/.env.none
+
   - name: dev
     packages:
-      - cares-on-platform
+      - dashboard-visualiser-jsreport
+      - disi-on-platform
     envFiles:
       - ../test-conf/.env.test
     dev: true
+
+  - name: only
+    packages:
+      - dashboard-visualiser-jsreport
+      - disi-on-platform
+      - core
+    envFiles:
+      - ../test-conf/.env.test
+    only: true
+
+  - name: dev-and-only
+    packages:
+      - core
+    envFiles:
+      - ../test-conf/.env.test
+    dev: true
+    only: true

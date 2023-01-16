@@ -2,6 +2,9 @@ FROM node:gallium-bullseye-slim AS base
 
 ENV NODE_ENV production
 
+RUN mkdir -p /root/.docker/
+RUN chmod +x /root/.docker
+
 WORKDIR /instant
 
 # install curl

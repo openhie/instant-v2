@@ -1,10 +1,17 @@
 #!/bin/bash
-# This script builds Linux, Windows and MacOS binaries into the cli/bin directory
-mkdir -p bin
 
-cd src || exit
+FILE_PATH=$(
+  cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+  pwd -P
+)
+export FILE_PATH
 
-GOOS=darwin GOARCH=amd64 go build -o ../bin/gocli-macos
-GOOS=linux GOARCH=amd64 go build -o ../bin/gocli-linux
-GOOS=windows GOARCH=amd64 go build -o ../bin/gocli.exe
+mkdir -p "$FILE_PATH"/bin
+
+cd "$FILE_PATH"/src || exit
+
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o "$FILE_PATH"/bin/gocli-macos
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "$FILE_PATH"/bin/gocli-linux
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$FILE_PATH"/bin/gocli-win.exe
+
 go clean
