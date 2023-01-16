@@ -37,7 +37,7 @@ func appendTag(config *core.Config) {
 	}
 }
 
-func getConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
+func GetConfigFromParams(cmd *cobra.Command) (*core.Config, error) {
 	configFile, err := cmd.Flags().GetString("config")
 	if err != nil {
 		return nil, errors.Wrap(err, "")
