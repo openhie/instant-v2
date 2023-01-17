@@ -4,6 +4,7 @@ import (
 	"cli/cmd/completion"
 	"cli/cmd/pkg"
 	"cli/cmd/project"
+	"cli/cmd/version"
 
 	"github.com/spf13/cobra"
 )
@@ -13,5 +14,6 @@ func AddCommands(cmd *cobra.Command) {
 		pkg.DeclarePackageCommand(),
 		project.DeclareProjectCommand(),
 		completion.GenCompletionCommand(),
+		version.VersionCommand(),
 	)
 }
