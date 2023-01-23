@@ -167,9 +167,7 @@ func TestGenerateConfigFile(t *testing.T) {
 		var expected []byte
 		for expectedScanner.Scan() {
 			expected = append(expected, bytes.TrimSpace(expectedScanner.Bytes())...)
-			// if expected[len(expected)-1] != 10 {
-			expected = append(expected, []byte("\n")...)
-			// }
+			expected = append(expected, '\n')
 		}
 
 		generatedConfigFile, err := os.Open("config.yaml")

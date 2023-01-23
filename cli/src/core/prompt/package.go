@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"cli/core"
 	"fmt"
 
 	"github.com/iancoleman/strcase"
@@ -8,7 +9,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
+func GeneratePackagePrompt() (core.GeneratePackageSpec, error) {
 	/*
 		What is the id of your package:
 		What is the name of your package:
@@ -27,7 +28,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	}
 	id, err := promptId.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "")
+		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
 
 	promptName := promptui.Prompt{
@@ -36,7 +37,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	}
 	name, err := promptName.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "")
+		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
 
 	promptImage := promptui.Prompt{
@@ -45,7 +46,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	}
 	image, err := promptImage.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "")
+		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
 
 	promptDescription := promptui.Prompt{
@@ -54,7 +55,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	}
 	description, err := promptDescription.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "")
+		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
 
 	promptStack := promptui.Prompt{
@@ -63,7 +64,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	}
 	stack, err := promptStack.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "")
+		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
 
 	promptType := promptui.Select{
@@ -72,7 +73,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	}
 	index, packageType, err := promptType.Run()
 	if err != nil || index == -1 {
-		return nil, errors.Wrap(err, "")
+		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
 
 	promptDev := promptui.Select{
@@ -81,7 +82,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 	}
 	index, Dev, err := promptDev.Run()
 	if err != nil || index == -1 {
-		return nil, errors.Wrap(err, "")
+		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
 
 	var (
@@ -98,7 +99,7 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 		}
 		targetPort, err = promptTargetPort.Run()
 		if err != nil {
-			return nil, errors.Wrap(err, "")
+			return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 		}
 
 		promptPublishedPort := promptui.Prompt{
@@ -107,11 +108,11 @@ func GeneratePackagePrompt() (*generatePackagePromptResponse, error) {
 		}
 		publishedPort, err = promptPublishedPort.Run()
 		if err != nil {
-			return nil, errors.Wrap(err, "")
+			return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 		}
 	}
 
-	promptResponse := &generatePackagePromptResponse{
+	promptResponse := core.GeneratePackageSpec{
 		Id:             id,
 		Name:           name,
 		Image:          image,

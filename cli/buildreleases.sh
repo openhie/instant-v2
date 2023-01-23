@@ -10,8 +10,8 @@ mkdir -p "$FILE_PATH"/bin
 
 cd "$FILE_PATH"/src || exit
 
-CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o "$FILE_PATH"/bin/gocli-macos
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "$FILE_PATH"/bin/gocli-linux
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$FILE_PATH"/bin/gocli-win.exe
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o "$FILE_PATH"/bin/instant-macos
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "$FILE_PATH"/bin/instant-linux
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$FILE_PATH"/bin/instant-win.exe
 
 go clean

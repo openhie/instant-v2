@@ -6,7 +6,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"cli/core"
 	"cli/core/generate"
 	"cli/core/prompt"
 
@@ -41,15 +40,7 @@ func packageGenerateCommand() *cobra.Command {
 				panic(err)
 			}
 
-			generatePackageSpec := core.GeneratePackageSpec{
-				Id:             resp.Id,
-				Name:           resp.Name,
-				Stack:          resp.Stack,
-				Description:    resp.Description,
-				Type:           resp.Type,
-				IncludeDevFile: resp.IncludeDevFile,
-			}
-			err = generate.GeneratePackage(packagePath, generatePackageSpec)
+			err = generate.GeneratePackage(packagePath, resp)
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)
