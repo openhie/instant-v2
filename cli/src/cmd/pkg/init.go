@@ -34,7 +34,6 @@ func packageInitCommand() *cobra.Command {
 				log.Error(context.Background(), err)
 				panic(err)
 			}
-
 		},
 	}
 
