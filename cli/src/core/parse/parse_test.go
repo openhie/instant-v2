@@ -23,7 +23,7 @@ func TestParseAndPrepareLaunch(t *testing.T) {
 	}
 
 	testCases := []cases{
-		// case: command line env file env vars must overwrite profile env file env vars
+		// case: command-line env file env vars must overwrite profile env file env vars
 		{
 			configFilePath:       wd + "/../../features/unit-test-configs/config-case-1.yml",
 			duplicatedEnvVarName: "FIRST_ENV_VAR",
@@ -36,6 +36,57 @@ func TestParseAndPrepareLaunch(t *testing.T) {
 				jtest.RequireNil(t, err)
 
 				err = cmd.Flags().Set("env-file", wd+"/../../features/test-conf/.env.three")
+				jtest.RequireNil(t, err)
+			},
+		},
+		// case: command-line env-vars must overwrite profile env file env vars
+		{
+			configFilePath:       wd + "/../../features/unit-test-configs/config-case-1.yml",
+			duplicatedEnvVarName: "FIRST_ENV_VAR",
+			expectedEnvVars:      []string{"FIRST_ENV_VAR=command_line_value", "SECOND_ENV_VAR=number_two"},
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("profile", "dev")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("config", wd+"/../../features/unit-test-configs/config-case-1.yml")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("env-var", "FIRST_ENV_VAR=command_line_value")
+				jtest.RequireNil(t, err)
+			},
+		},
+		// case: command-line env-vars must overwrite command-line env file env vars
+		{
+			configFilePath:       wd + "/../../features/unit-test-configs/config-case-1.yml",
+			duplicatedEnvVarName: "FIRST_ENV_VAR",
+			expectedEnvVars:      []string{"FIRST_ENV_VAR=command_line_value"},
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("config", wd+"/../../features/unit-test-configs/config-case-1.yml")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("env-file", wd+"/../../features/test-conf/.env.three")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("env-var", "FIRST_ENV_VAR=command_line_value")
+				jtest.RequireNil(t, err)
+			},
+		},
+		// case: command-line env-vars must overwrite profile env file env vars and command-line env file env vars
+		{
+			configFilePath:       wd + "/../../features/unit-test-configs/config-case-1.yml",
+			duplicatedEnvVarName: "FIRST_ENV_VAR",
+			expectedEnvVars:      []string{"FIRST_ENV_VAR=command_line_value", "SECOND_ENV_VAR=number_two"},
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("profile", "dev")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("config", wd+"/../../features/unit-test-configs/config-case-1.yml")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("env-file", wd+"/../../features/test-conf/.env.three")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("env-var", "FIRST_ENV_VAR=command_line_value")
 				jtest.RequireNil(t, err)
 			},
 		},

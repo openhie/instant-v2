@@ -39,4 +39,5 @@ func setCommonActionFlags(cmd *cobra.Command) {
 	flags.BoolP("only", "o", false, "Ignore package dependencies")
 	flags.StringSliceVar(&state.EnvFiles, "env-file", nil, "env file")
 	flags.StringVar(&state.ConfigFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
+	flags.StringSliceP("env-var", "e", nil, "Env var(s) to set or overwrite")
 }
