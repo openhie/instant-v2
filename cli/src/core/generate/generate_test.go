@@ -83,7 +83,10 @@ func Test_createFileFromTemplate(t *testing.T) {
 		actualData, err := os.ReadFile(filepath.Join(tc.dst, tc.src))
 		jtest.RequireNil(t, err)
 
-		require.Equal(t, crc32.ChecksumIEEE(expectedData), crc32.ChecksumIEEE(actualData))
+		expected := crc32.ChecksumIEEE(expectedData)
+		actual := crc32.ChecksumIEEE(actualData)
+
+		require.Equal(t, expected, actual)
 
 		// ensure removal after each test case
 		err = os.RemoveAll(tc.dst)
@@ -117,14 +120,14 @@ func TestGenerateConfigFile(t *testing.T) {
 				},
 				Profiles: []core.Profile{
 					{
-						Name:     "dev",
+						Name:     "env-var-test",
 						Packages: []string{"dashboard-visualiser-jsreport", "disi-on-platform"},
-						EnvFiles: []string{"../test-conf/.env.test"},
-						Dev:      true,
+						EnvVars:  []string{"SECOND=env_var_two_overwrite"},
+						EnvFiles: []string{"../test-conf/.env.four"},
 					},
 				},
 			},
-			pathToExpectedFile: filepath.Join(wd, "..", "..", "features", "unit-test-configs", "config-case-1.yml"),
+			pathToExpectedFile: filepath.Join(wd, "..", "..", "features", "unit-test-configs", "config-case-6.yml"),
 		},
 		// case: assert invalid config file, missing field 'Image'
 		{

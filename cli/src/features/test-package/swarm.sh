@@ -1,46 +1,80 @@
 #!/bin/bash
 
-readonly ACTION=$1
-readonly MODE=$2
+declare ACTION=""
+declare MODE=""
+declare COMPOSE_FILE_PATH=""
+declare UTILS_PATH=""
+declare SERVICE_NAMES=()
 
-PACKAGE_PATH=$(
+function init_vars() {
+  ACTION=$1
+  MODE=$2
+
+  COMPOSE_FILE_PATH=$(
     cd "$(dirname "${BASH_SOURCE[0]}")" || exit
     pwd -P
-)
-readonly PACKAGE_PATH
+  )
 
-ROOT_PATH="${PACKAGE_PATH}/.."
-readonly ROOT_PATH
+  UTILS_PATH="${COMPOSE_FILE_PATH}/../utils"
 
-. "${ROOT_PATH}/utils/config-utils.sh"
-. "${ROOT_PATH}/utils/docker-utils.sh"
-. "${ROOT_PATH}/utils/log.sh"
+  SERVICE_NAMES=(
+    "test-package"
+  )
+
+  readonly ACTION
+  readonly MODE
+  readonly COMPOSE_FILE_PATH
+  readonly UTILS_PATH
+  readonly SERVICE_NAMES
+}
+
+# shellcheck disable=SC1091
+function import_sources() {
+  source "${UTILS_PATH}/docker-utils.sh"
+  source "${UTILS_PATH}/log.sh"
+}
+
+function initialize_package() {
+  local package_dev_compose_filename=""
+  if [[ "${MODE}" == "dev" ]]; then
+    log info "Running package in DEV mode"
+    package_dev_compose_filename="docker-compose.dev.yml"
+  else
+    log info "Running package in PROD mode"
+  fi
+
+  (
+    docker::deploy_service "${COMPOSE_FILE_PATH}" "$package_dev_compose_filename"
+    docker::deploy_sanity "${SERVICE_NAMES[@]}"
+  ) || {
+    log error "Failed to deploy package"
+    exit 1
+  }
+}
+
+function destroy_package() {
+  docker::service_destroy "${SERVICE_NAMES[@]}"
+}
 
 main() {
-    if [[ "${MODE}" == "dev" ]]; then
-        log info "Running test-package in DEV mode"
-        dev_compose_file="-c ${PACKAGE_PATH}/docker-compose.dev.yml"
-    else
-        log info "Running test-package in PROD mode"
-        dev_compose_file=""
-    fi
+  init_vars "$@"
+  import_sources
 
-    if [[ "${ACTION}" == "init" ]] || [[ "${ACTION}" == "up" ]]; then
-        config::set_config_digests "${PACKAGE_PATH}"/docker-compose.yml
-        try "docker stack deploy -c ${PACKAGE_PATH}/docker-compose.yml $dev_compose_file test-stack" "Failed to deploy test-package"
+  if [[ "${ACTION}" == "init" ]] || [[ "${ACTION}" == "up" ]]; then
+    log info "Running package in Single node mode"
 
-        docker::await_container_startup test-package
-        docker::await_container_status test-package Running
+    initialize_package
+  elif [[ "${ACTION}" == "down" ]]; then
+    log info "Scaling down package"
 
-    elif [[ "${ACTION}" == "down" ]]; then
-        try "docker service scale test-stack_test-package=0" "Failed to scale down test-package"
+    docker::scale_services_down "${SERVICE_NAMES[@]}"
+  elif [[ "${ACTION}" == "destroy" ]]; then
+    log info "Destroying package"
 
-    elif [[ "${ACTION}" == "destroy" ]]; then
-        docker::service_destroy test-package
-
-    else
-        log error "Valid options are: init, up, down, or destroy"
-    fi
+    destroy_package
+  else
+    log error "Valid options are: init, up, down, or destroy"
+  fi
 }
 
 main "$@"

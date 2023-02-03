@@ -3,8 +3,8 @@ package core
 type Profile struct {
 	Name     string   `yaml:"name"`
 	Packages []string `yaml:"packages"`
+	EnvVars  []string `yaml:"envVars,omitempty"`
 	EnvFiles []string `yaml:"envFiles"`
-	EnvVars  []string `yaml:"envVars"`
 	Dev      bool     `yaml:"dev"`
 	Only     bool     `yaml:"only"`
 }

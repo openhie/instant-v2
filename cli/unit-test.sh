@@ -16,3 +16,6 @@ go test .
 
 cd "$FILE_PATH"/src/util/file || exit
 go test .
+
+cd "$FILE_PATH"/src/core/generate || exit
+go test .
