@@ -13,15 +13,6 @@ customPackages:
     path: git@github.com:jembi/disi-on-platform.git
 
 profiles:
-  - name: dev
-    packages:
-      - dashboard-visualiser-jsreport
-      - disi-on-platform
-    envFiles:
-      - ../test-conf/.env.test
-    dev: true
-    only: false
-
   - name: env-var-test
     packages:
       - dashboard-visualiser-jsreport
