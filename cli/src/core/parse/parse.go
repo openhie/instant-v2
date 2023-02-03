@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"cli/core"
 	"cli/core/state"
@@ -144,7 +143,7 @@ func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSp
 	}
 
 	envVarsMap := make(map[string]string)
-	envVarsMap = appendToMapFromSlice(envVarsMap, paramsEnvVars)
+	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvVars)
 
 	var paramsEnvFileEnvVars []string
 	if cmd.Flags().Changed("env-file") {
@@ -160,8 +159,8 @@ func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSp
 		paramsEnvFileEnvVars = state.GetEnvVariableString(envViper)
 	}
 
-	envVarsMap = appendToMapFromSlice(envVarsMap, paramsEnvFileEnvVars)
-	envVarsMap = appendToMapFromSlice(envVarsMap, pSpec.EnvironmentVariables)
+	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvFileEnvVars)
+	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, pSpec.EnvironmentVariables)
 
 	pSpec.EnvironmentVariables = []string{}
 	for k, v := range envVarsMap {
@@ -169,16 +168,4 @@ func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSp
 	}
 
 	return pSpec, nil
-}
-
-func appendToMapFromSlice(m map[string]string, sl []string) map[string]string {
-	for _, s := range sl {
-		splitEnvVar := strings.SplitAfter(s, "=")
-
-		if _, ok := m[splitEnvVar[0]]; !ok {
-			m[splitEnvVar[0]] = splitEnvVar[1]
-		}
-	}
-
-	return m
 }

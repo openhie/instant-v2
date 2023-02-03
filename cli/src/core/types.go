@@ -4,6 +4,7 @@ type Profile struct {
 	Name     string   `yaml:"name"`
 	Packages []string `yaml:"packages"`
 	EnvFiles []string `yaml:"envFiles"`
+	EnvVars  []string `yaml:"envVars"`
 	Dev      bool     `yaml:"dev"`
 	Only     bool     `yaml:"only"`
 }
