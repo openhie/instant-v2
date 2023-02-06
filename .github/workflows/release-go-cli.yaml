@@ -17,13 +17,13 @@ jobs:
         go-version: 1.18
 
     - name: Build go-cli binary releases
-      run:  cd ./ohiecli && ./buildreleases.sh
+      run:  cd ./cli && ./buildreleases.sh
 
     - name: Create release
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: ./ohiecli/bin/gocli-linux,./ohiecli/bin/gocli-macos,./ohiecli/bin/gocli.exe
+        artifacts: ./cli/bin/instant-linux,./cli/bin/instant-macos,./cli/bin/instant.exe
         tag: latest
         commit: main
 
@@ -31,6 +31,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./ohiecli/bin/gocli-linux
-          ./ohiecli/bin/gocli-macos
-          ./ohiecli/bin/gocli.exe
+          ./cli/bin/instant-linux
+          ./cli/bin/instant-macos
+          ./cli/bin/instant.exe
