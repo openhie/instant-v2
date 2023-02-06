@@ -1,0 +1,23 @@
+---
+projectName: test-project
+image: jembi/go-cli-test-image
+platformImage: jembi/platform:latest
+logPath: /tmp/logs
+
+packages:
+  - client
+  - dashboard-visualiser-jsreport
+
+customPackages:
+  - id: disi-on-platform
+    path: git@github.com:jembi/disi-on-platform.git
+
+profiles:
+  - name: env-var-test
+    packages:
+      - dashboard-visualiser-jsreport
+      - disi-on-platform
+    envVars: 
+      - SECOND=env_var_two_overwrite
+    envFiles:
+      - ../test-conf/.env.four

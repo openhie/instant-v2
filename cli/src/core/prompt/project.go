@@ -93,6 +93,7 @@ func GenerateProjectPrompt() (core.Config, error) {
 		profiles = append(profiles, core.Profile{
 			Name:     "<<profile-name>>",
 			EnvFiles: []string{"<<env-file-1>>", "<<env-file-2>>"},
+			EnvVars: []string{"<<env-var-1>>", "<<env-var-2>>"},
 			Packages: []string{"<<profile-package-id-1>>", "<<profile-package-id-2>>"},
 		})
 	}

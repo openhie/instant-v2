@@ -146,8 +146,6 @@ func loadCmdAndConfig(t *testing.T, configFilePath string, hookFunc func(cmd *co
 	jtest.RequireNil(t, err)
 
 	cmd := &cobra.Command{}
-	cmd.Flags().StringVar(&state.ConfigFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
-	cmd.Flags().StringSliceVar(&state.EnvFiles, "env-file", nil, "env file")
 
 	flags.SetPackageActionFlags(cmd)
 

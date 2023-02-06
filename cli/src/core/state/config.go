@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// TODO: EnvFiles might not be necessary
 var (
 	ConfigFile  string
 	EnvFiles    []string

@@ -3,6 +3,7 @@ package parse
 import (
 	"cli/core"
 	"cli/core/state"
+	"cli/util/slice"
 
 	"github.com/luno/jettison/errors"
 	"github.com/spf13/cobra"
@@ -34,6 +35,11 @@ func getPackageSpecFromProfile(cmd *cobra.Command, config core.Config, packageSp
 		packageSpec.Packages = append(profile.Packages, packageSpec.Packages...)
 	}
 
+	envVarsMap := make(map[string]string)
+	if len(profile.EnvVars) > 0 {
+		envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, profile.EnvVars)
+	}
+
 	if len(profile.EnvFiles) > 0 {
 		envViper, err := state.GetEnvironmentVariableViper(profile.EnvFiles)
 		if err != nil {
@@ -41,7 +47,11 @@ func getPackageSpecFromProfile(cmd *cobra.Command, config core.Config, packageSp
 		}
 
 		envVariables := state.GetEnvVariableString(envViper)
-		packageSpec.EnvironmentVariables = append(envVariables, packageSpec.EnvironmentVariables...)
+		envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, envVariables)
+	}
+
+	for k, v := range envVarsMap {
+		packageSpec.EnvironmentVariables = append(packageSpec.EnvironmentVariables, k+v)
 	}
 
 	return &packageSpec, nil

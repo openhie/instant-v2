@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"cli/core"
 	"cli/core/state"
@@ -40,7 +39,6 @@ func ParseAndPrepareLaunch(cmd *cobra.Command) (*core.PackageSpec, *core.Config,
 
 			state.EnvFiles = append(state.EnvFiles, envFile)
 		}
-
 	}
 
 	config, err := GetConfigFromParams(cmd)
@@ -132,11 +130,22 @@ func hasImage(dockerCli *client.Client, imageName string) (bool, error) {
 	return false, nil
 }
 
+// filterEnvVars checks for env vars that could have been set be prior functions (like in --profile),
+// and ensures that env vars parsed are taken in order of precedence of --env-var >> --env-file >> profile env files
 func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSpec, error) {
-	unfilteredEnvVars := make([]string, len(pSpec.EnvironmentVariables))
-	copy(unfilteredEnvVars, pSpec.EnvironmentVariables)
+	var paramsEnvVars []string
+	if cmd.Flags().Changed("env-var") {
+		envVars, err := cmd.Flags().GetStringSlice("env-var")
+		if err != nil {
+			return nil, errors.Wrap(err, "")
+		}
+		paramsEnvVars = envVars
+	}
 
-	var envVariables []string
+	envVarsMap := make(map[string]string)
+	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvVars)
+
+	var paramsEnvFileEnvVars []string
 	if cmd.Flags().Changed("env-file") {
 		envFiles, err := cmd.Flags().GetStringSlice("env-file")
 		if err != nil {
@@ -147,22 +156,16 @@ func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSp
 		if err != nil {
 			return nil, err
 		}
-		envVariables = state.GetEnvVariableString(envViper)
-	}
-	pSpec.EnvironmentVariables = envVariables
-
-	envVarsKeys := make(map[string]bool)
-	for _, e := range envVariables {
-		envVarsKeys[strings.SplitAfter(e, "=")[0]] = true
+		paramsEnvFileEnvVars = state.GetEnvVariableString(envViper)
 	}
 
-	for _, e := range unfilteredEnvVars {
-		if !envVarsKeys[strings.SplitAfter(e, "=")[0]] {
-			envVariables = append(envVariables, e)
-		}
-	}
+	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvFileEnvVars)
+	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, pSpec.EnvironmentVariables)
 
-	pSpec.EnvironmentVariables = envVariables
+	pSpec.EnvironmentVariables = []string{}
+	for k, v := range envVarsMap {
+		pSpec.EnvironmentVariables = append(pSpec.EnvironmentVariables, k+v)
+	}
 
 	return pSpec, nil
 }
