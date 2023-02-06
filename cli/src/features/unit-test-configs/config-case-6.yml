@@ -21,5 +21,3 @@ profiles:
       - SECOND=env_var_two_overwrite
     envFiles:
       - ../test-conf/.env.four
-    dev: false
-    only: false

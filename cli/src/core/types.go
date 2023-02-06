@@ -4,9 +4,9 @@ type Profile struct {
 	Name     string   `yaml:"name"`
 	Packages []string `yaml:"packages"`
 	EnvVars  []string `yaml:"envVars,omitempty"`
-	EnvFiles []string `yaml:"envFiles"`
-	Dev      bool     `yaml:"dev"`
-	Only     bool     `yaml:"only"`
+	EnvFiles []string `yaml:"envFiles,omitempty"`
+	Dev      bool     `yaml:"dev,omitempty"`
+	Only     bool     `yaml:"only,omitempty"`
 }
 
 type CustomPackage struct {
