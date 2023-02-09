@@ -24,3 +24,7 @@ A package's metadata is defined in a `package-metadata.json` file
 }
 ```
 {% endcode %}
+
+{% hint style="warning" %}
+Environment Variables in the `environmentVariables` section will be used as defaults, but will be overridden by matching variables in an environment variable file
+{% endhint %}

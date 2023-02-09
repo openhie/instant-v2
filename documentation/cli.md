@@ -1,48 +1,82 @@
+---
+description: >-
+  The CLI is supported for Linux, MacOS, and partially for Windows, although
+  functionality is not guaranteed for Windows.
+---
+
 # CLI
 
 ## Usage
 
+{% hint style="warning" %}
+The CLI must be named 'instant-linux' for Linux, and 'instant-macos' for MacOS for autocomplete to work
+{% endhint %}
+
+## Main Commands
+
 ```
-cli <deploy command> [custom flags] <package ids>
+completion    Generate the autocompletion script for the specified shell
+package       Package level commands
+project       Project level commands
+help          Help about any command
 ```
 
+## Sub Commands
+
+### package
+
+The package sub command includes commands:
+
+```
+init          Initialize a package with relevant configs, volumes and setup
+up            Stand a package back up after it has been brought down
+down          Bring a package down without removing volumes or configs
+remove        Remove everything related to a package (volumes, configs, etc)
+generate      Generate a new package
+```
+
+The package level commands, as shown, are there to control packages within a project, as well as generate the skeleton for a new package.
+
+For information about flags associated to any one of the package commands, do `instant-linux package [command] --help`
+
 {% hint style="info" %}
-Use \`cli --help\` for more information on how to use the cli
+After generating a new package, remember to add the package ID to the config file
 {% endhint %}
 
 {% hint style="warning" %}
-CLI usage requires a [config.md](config.md "mention") file in the directory where the cli is being called
+* Packages in a project can only be started if included in the config file
+* Command line arguments like `--dev` and `--only` will overwrite those specified in the config file profiles when using that particular profile
+* Env vars in `--profile` env var files are appended to by env var files specified in the command line, or overwritten by the command line env var files if there are conflicting env vars
+* Custom packages in a profile must be specified in the customPackages section of the config file
 {% endhint %}
 
-## Commands
+### project
+
+The project sub command includes commands:
 
 ```
-init        Initializing a service
-up          Start up a service that has been shut down or update a service
-down        Destroy a service
-destroy     Bring down a running service
-help        Help info
+init          Initialize all packages in a project
+up            Up all packages in the project
+down          Down all packages in the project
+destroy       Destroy all packages in the project
+generate      Generate a new project
 ```
 
-## Flags
+The project level commands, as shown, are there to simultaneously perform commands on all packages in a project, as well as generate the config file for a new project, in the desired format.
 
-<pre><code>--dev                    Specifies the development mode in which all service ports are exposed
---only, -o               Used to specify a single service for services that have dependencies. 
-                         For cases where one wants to shut down or destroy a service without affecting its dependencies
-<strong>-e                       For specifying an environment variable
-</strong>--env-file               For specifying the path to an environment variables file
---custom-package, -c     Specifies path or url to a custom package. Git ssh urls are supported
---image-version          The version of the project used for the deploy. Defaults to 'latest'
--t                       Specifies the target to deploy to. Options are docker, swarm (docker swarm) and k8s (kubernetes) - project dependant
--*, --*                  Unrecognised flags are passed through uninterpreted</code></pre>
+For information about flags associated to any one of the project commands, do `instant-linux project [command] --help`
 
-## Examples
+### completion
 
-```bash
-{your_binary_file} init -t=swarm --dev -e="NODE_ENV=prod" --env-file="../env.dev" -c="../customPackage1" -c="<git@github.com/customPackage2>"  interoperability-layer-openhim customPackage1_id customPackage2_id
+The completion sub command includes commands:
+
+```
+bash          Generate the autocompletion script for bash
+zsh           Generate the autocompletion script for zsh
 ```
 
-```bash
-{your_binary_file} down -t=docker --only elastic_analytics
-```
+The project level commands, as shown, are there to enable autocomplete for the specified shell.
 
+{% hint style="warning" %}
+Remember to reload your shell after generating the autocomplete script
+{% endhint %}
