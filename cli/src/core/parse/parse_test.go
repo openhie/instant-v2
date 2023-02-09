@@ -171,6 +171,21 @@ func TestParseAndPrepareLaunch(t *testing.T) {
 				jtest.RequireNil(t, err)
 			},
 		},
+		// case: env-vars can contain equals symbol in their value
+		{
+			configFilePath:       wd + "/../../features/unit-test-configs/config-case-6.yml",
+			duplicatedEnvVarName: "FIRST",
+			expectedEnvVars: []string{
+				"FIRST=env_file_var_one=test",
+			},
+			hookFunc: func(cmd *cobra.Command) {
+				err = cmd.Flags().Set("env-var", "FIRST=env_file_var_one=test")
+				jtest.RequireNil(t, err)
+
+				err = cmd.Flags().Set("config", wd+"/../../features/unit-test-configs/config-case-6.yml")
+				jtest.RequireNil(t, err)
+			},
+		},
 	}
 
 	for _, tc := range testCases {
