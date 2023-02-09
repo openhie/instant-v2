@@ -23,7 +23,7 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: ./cli/bin/instant-linux,./cli/bin/instant-macos,./cli/bin/instant.exe
+        artifacts: ./cli/bin/instant-linux,./cli/bin/instant-macos,./cli/bin/instant-win.exe
         tag: latest
         commit: main
 
@@ -33,4 +33,4 @@ jobs:
         files: |
           ./cli/bin/instant-linux
           ./cli/bin/instant-macos
-          ./cli/bin/instant.exe
+          ./cli/bin/instant-win.exe
