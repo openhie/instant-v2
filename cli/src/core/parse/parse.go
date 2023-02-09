@@ -143,7 +143,9 @@ func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSp
 	}
 
 	envVarsMap := make(map[string]string)
-	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvVars)
+	if len(paramsEnvVars) > 0 {
+		envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvVars)
+	}
 
 	var paramsEnvFileEnvVars []string
 	if cmd.Flags().Changed("env-file") {
@@ -158,9 +160,12 @@ func filterEnvVars(cmd *cobra.Command, pSpec *core.PackageSpec) (*core.PackageSp
 		}
 		paramsEnvFileEnvVars = state.GetEnvVariableString(envViper)
 	}
-
-	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvFileEnvVars)
-	envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, pSpec.EnvironmentVariables)
+	if len(paramsEnvFileEnvVars) > 0 {
+		envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, paramsEnvFileEnvVars)
+	}
+	if len(pSpec.EnvironmentVariables) > 0 {
+		envVarsMap = slice.AppendUniqueToMapFromSlice(envVarsMap, pSpec.EnvironmentVariables)
+	}
 
 	pSpec.EnvironmentVariables = []string{}
 	for k, v := range envVarsMap {

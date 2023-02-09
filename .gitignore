@@ -85,3 +85,6 @@ typings/
 /ohiecli/features/test-platform-linux
 /ohiecli/features/test-platform-macos
 /ohiecli/features/test-platform.exe
+
+# local dev binaries
+/cli/bin
