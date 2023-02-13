@@ -136,6 +136,7 @@ func copyCredsToInstantContainer() (err error) {
 	}
 	dockerCredsPath := filepath.Join(homeDir, ".docker", "config.json")
 
+	_, err = os.Stat(dockerCredsPath)
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Wrap(err, "")
 	} else if os.IsNotExist(err) {
