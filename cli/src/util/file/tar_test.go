@@ -133,7 +133,7 @@ func Test_tarSource(t *testing.T) {
 		re, err := TarSource(tc.contentFileName)
 		if err != nil {
 			expectedErr := fs.PathError{
-				Op:  "lstat",
+				Op:  "stat",
 				Err: unix.ENOENT,
 			}
 
