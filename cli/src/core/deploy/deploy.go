@@ -111,7 +111,7 @@ func mountCustomPackage(ctx context.Context, cli *client.Client, customPackage c
 		}
 	}
 
-	customPackageReader, err := file.TarSource(CUSTOM_PACKAGE_LOCAL_PATH)
+	customPackageReader, err := file.TarSource(customPackageTmpLocation)
 	if err != nil {
 		return err
 	}
