@@ -22,7 +22,6 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/log"
@@ -112,7 +111,7 @@ func mountCustomPackage(ctx context.Context, cli *client.Client, customPackage c
 		}
 	}
 
-	customPackageReader, err := file.TarSource(CUSTOM_PACKAGE_LOCAL_PATH)
+	customPackageReader, err := file.TarSource(customPackageTmpLocation)
 	if err != nil {
 		return err
 	}
@@ -153,30 +152,12 @@ func copyCredsToInstantContainer() (err error) {
 		return err
 	}
 
-	dstInfo := archive.CopyInfo{
-		Path:   "/root/.docker/",
-		Exists: true,
-		IsDir:  true,
-	}
-
-	srcInfo, err := archive.CopyInfoSourcePath(dockerCredsPath, false)
+	preparedArchive, err := file.TarSource(dockerCredsPath)
 	if err != nil {
-		return errors.Wrap(err, "")
+		return err
 	}
 
-	srcArchive, err := archive.TarResource(srcInfo)
-	if err != nil {
-		return errors.Wrap(err, "")
-	}
-	defer srcArchive.Close()
-
-	dstDir, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
-	if err != nil {
-		return errors.Wrap(err, "")
-	}
-	defer preparedArchive.Close()
-
-	err = client.CopyToContainer(context.Background(), instantContainer.ID, dstDir, preparedArchive, types.CopyToContainerOptions{
+	err = client.CopyToContainer(context.Background(), instantContainer.ID, "/root/.docker/", preparedArchive, types.CopyToContainerOptions{
 		CopyUIDGID: true,
 	})
 	if err != nil {

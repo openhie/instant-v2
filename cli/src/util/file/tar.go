@@ -2,67 +2,42 @@ package file
 
 import (
 	"archive/tar"
-	"bufio"
-	"bytes"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
+	"github.com/docker/docker/pkg/archive"
 	"github.com/luno/jettison/errors"
 )
 
 func TarSource(path string) (io.Reader, error) {
-	var buf bytes.Buffer
-	tw := tar.NewWriter(&buf)
-
-	ok := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		header, err := tar.FileInfoHeader(fi, fi.Name())
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-		header.Name = strings.TrimPrefix(strings.Replace(file, path, "", -1), string(filepath.Separator))
-		err = tw.WriteHeader(header)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		f, err := os.Open(file)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		if fi.IsDir() {
-			return nil
-		}
-
-		_, err = io.Copy(tw, f)
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		err = f.Close()
-		if err != nil {
-			return errors.Wrap(err, "")
-		}
-
-		return nil
-	})
-
-	if ok != nil {
-		return nil, ok
+	dstInfo := archive.CopyInfo{
+		Exists: true,
+		IsDir:  true,
 	}
 
-	err := tw.Close()
+	_, err := os.Stat(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "")
 	}
 
-	return bufio.NewReader(&buf), nil
+	srcInfo, err := archive.CopyInfoSourcePath(path, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	srcArchive, err := archive.TarResource(srcInfo)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+
+	_, preparedArchive, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
+	defer preparedArchive.Close()
+
+	return preparedArchive, nil
 }
 
 func UntarSource(source, destination string) error {
