@@ -16,7 +16,7 @@ import (
 var (
 	//go:embed template/*
 	templateFs       embed.FS
-	ErrInvalidConfig = errors.New("invalid project config, required fields are Image, ProjectName, and PlatformImage")
+	ErrInvalidConfig = errors.New("invalid project config, required fields are Image and ProjectName")
 )
 
 func createFileFromTemplate(source, destination string, generatePackageSpec core.GeneratePackageSpec) error {
@@ -68,15 +68,14 @@ func GeneratePackage(destination string, generatePackageSpec core.GeneratePackag
 }
 
 func GenerateConfigFile(config *core.Config) error {
-	if config.Image == "" || config.ProjectName == "" || config.PlatformImage == "" {
+	if config.Image == "" || config.ProjectName == "" {
 		return errors.Wrap(ErrInvalidConfig, "")
 	}
 
 	firstFields := core.Config{
-		ProjectName:   config.ProjectName,
-		Image:         config.Image,
-		PlatformImage: config.PlatformImage,
-		LogPath:       config.LogPath,
+		ProjectName: config.ProjectName,
+		Image:       config.Image,
+		LogPath:     config.LogPath,
 	}
 
 	data, err := yaml.Marshal(&firstFields)
