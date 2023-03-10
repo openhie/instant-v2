@@ -1,4 +1,4 @@
-# Insant OpenHIE - v2
+# Instant OpenHIE - v2
 
 This is the second iteration of the Instant OpenHIE project. Instant OpenHIE aims to allow Health Information Exchange components to be packages up, deployed, operated and scaled via a simple CLI.
 
