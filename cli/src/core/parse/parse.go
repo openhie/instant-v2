@@ -2,6 +2,7 @@ package parse
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"path/filepath"
@@ -99,6 +100,7 @@ func prepareEnvironment(config core.Config) error {
 	}
 
 	if !hasImage {
+		fmt.Println("> Image", config.Image, "can't be found locally .. Pulling from docker")
 		reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
 		if err != nil {
 			return errors.Wrap(err, "")
