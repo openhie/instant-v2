@@ -212,6 +212,12 @@ func LaunchDeploymentContainer(packageSpec *core.PackageSpec, config *core.Confi
 	}
 
 	if config.LogPath != "" {
+		if _, err := os.Stat("/tmp/logs"); os.IsNotExist(err) {
+			if err := os.MkdirAll("/tmp/logs", os.ModePerm); err != nil {
+				return errors.Wrap(err, "")
+			}
+		}
+
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: config.LogPath,
