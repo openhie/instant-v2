@@ -213,7 +213,6 @@ func LaunchDeploymentContainer(packageSpec *core.PackageSpec, config *core.Confi
 
 	if config.LogPath != "" {
 		if _, err := os.Stat("/tmp/logs"); os.IsNotExist(err) {
-			// /tmp/logs does not exist
 			if err := os.MkdirAll("/tmp/logs", os.ModePerm); err != nil {
 				return errors.Wrap(err, "")
 			}
