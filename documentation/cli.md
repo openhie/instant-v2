@@ -37,6 +37,23 @@ generate      Generate a new package
 
 The package level commands, as shown, are there to control packages within a project, as well as generate the skeleton for a new package.
 
+Each of these sub commands accept the following flags:
+
+```
+Flags:
+      --config string         config file (default is $WORKING_DIR/config.yaml)
+  -c, --custom-path strings   Path(s) to custom package(s)
+  -d, --dev dev               For development related functionality (Passes dev as the second argument to your swarm file)
+      --env-file strings      env file
+  -e, --env-var strings       Env var(s) to set or overwrite
+  -h, --help                  help for down
+  -n, --name strings          The name(s) of the package(s)
+  -o, --only                  Ignore package dependencies
+  -p, --profile string        The profile name to load parameters from (defined in config.yml)
+```
+
+E.g. `./instant package init -n interoperability-layer-openhim`
+
 For information about flags associated to any one of the package commands, do `instant-linux package [command] --help`
 
 {% hint style="info" %}
@@ -63,6 +80,19 @@ generate      Generate a new project
 ```
 
 The project level commands, as shown, are there to simultaneously perform commands on all packages in a project, as well as generate the config file for a new project, in the desired format.
+
+Each of these sub commands accept the following flags:
+
+```
+Flags:
+      --config string         config file (default is $WORKING_DIR/config.yaml)
+  -c, --custom-path strings   Path(s) to custom package(s)
+  -d, --dev dev               For development related functionality (Passes dev as the second argument to your swarm file)
+      --env-file strings      env file
+  -e, --env-var strings       Env var(s) to set or overwrite
+  -h, --help                  help for destroy
+  -o, --only                  Ignore package dependencies
+```
 
 For information about flags associated to any one of the project commands, do `instant-linux project [command] --help`
 

@@ -15,13 +15,13 @@ The binary may be download via the terminal with the following url based on your
 Download the binary
 
 ```bash
-curl -L https://github.com/openhie/package-starter-kit/releases/download/0.6.0/gocli-linux -o platform-linux
+curl -L https://github.com/openhie/instant-v2/releases/latest/download/instant-linux -o instant
 ```
 
 Grant the binary executable permissions
 
 ```bash
-chmod +x ./platform-linux
+chmod +x ./instant
 ```
 {% endtab %}
 
@@ -29,13 +29,13 @@ chmod +x ./platform-linux
 Download the binary
 
 ```bash
-curl -L https://github.com/openhie/package-starter-kit/releases/download/0.6.0/gocli-macos -o platform-macos
+curl -L https://github.com/openhie/instant-v2/releases/latest/download/instant-macos -o instant
 ```
 
 Grant the binary executable permissions
 
 ```bash
-chmod +x ./platform-macos
+chmod +x ./instant
 ```
 {% endtab %}
 
@@ -43,37 +43,33 @@ chmod +x ./platform-macos
 Download the binary
 
 ```bash
-curl -L https://github.com/openhie/package-starter-kit/releases/download/0.6.0/gocli.exe -o platform.exe
+curl -L https://github.com/openhie/package-starter-kit/releases/download/0.6.0/instant-win.exe -o instant.exe
 ```
 {% endtab %}
 {% endtabs %}
 
-Or
-
-The binary may be downloaded with go
-
-Golang would need to be installed on your machine to be able to download the package with go. Follow the steps [here](https://go.dev/doc/install) to get `go` set up on your machine
-
-Thereafter run&#x20;
-
-```bash
-go install github.com/openhie/package-starter-kit/cli@latest
-```
-
-Ensure the following lines are in your \~/.bashrc or \~/.zshrc file
+Run the executable with no commands to see the help text.
 
 ```
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+$ ./instant
+A cli to assist with package deployment and management
+
+Usage:
+  cli [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  package     Package level commands
+  project     Project level commands
+  version     Print the CLI version
+
+Flags:
+  -h, --help   help for cli
+
+Use "cli [command] --help" for more information about a command.
 ```
 
-The run `source ~/.bashrc` or `source ~/.zshrc` to load the changes
+Next, you would want to configure which packages Instant can deploy for your particular needs. Instant doesn't ship with any default packages to deploy. Jembi has curated a set of packages that we commonly use which you may be interested in. To get started with that pre-configured package set see the [Jembi Platform docs](https://jembi.gitbook.io/jembi-platform/).
 
-Now the CLI should be available in your terminal and accessable by running `cli --help`
-
-
-
-## Set up
-
-Create a new project directory `mkdir my-project`
-
+Otherwise, you may create your own config for your own set of packages. Continue to config section to find out how.

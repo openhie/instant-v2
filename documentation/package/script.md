@@ -8,6 +8,8 @@ Two arguments are passed by default into the swarm script\
 
 Due to this script running in the instant container, all references made to files within the package folder would need to be prefixed with the `PACKAGE_PATH` variable
 
+To supply config option to your package, make use of env vars which will be made available to this script and therefore to any docker command that you execute (so you may use env vars in your compose files for example). There are varies option on the CLI via flags or the config file to supply env var files or env vars themselves.
+
 As a coding standard we encourage use of the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html)
 
 Should you use VS Code for editing we suggest the `pinage404.bash-extension-pack`&#x20;
