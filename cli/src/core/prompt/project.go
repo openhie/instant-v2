@@ -2,11 +2,9 @@ package prompt
 
 import (
 	"cli/core"
-	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/iancoleman/strcase"
 	"github.com/luno/jettison/errors"
 	"github.com/manifoldco/promptui"
 )
@@ -37,18 +35,9 @@ func GenerateProjectPrompt() (core.Config, error) {
 
 	promptProjectImage := promptui.Prompt{
 		Label:   "What docker image would you like to use with this project",
-		Default: strcase.ToKebab(fmt.Sprintf("organisation/%v", projectName)),
-	}
-	projectImage, err := promptProjectImage.Run()
-	if err != nil {
-		return core.Config{}, errors.Wrap(err, "")
-	}
-
-	promptPlatformImage := promptui.Prompt{
-		Label:   "What Platform image is this project based on",
 		Default: "jembi/platform",
 	}
-	platformImage, err := promptPlatformImage.Run()
+	projectImage, err := promptProjectImage.Run()
 	if err != nil {
 		return core.Config{}, errors.Wrap(err, "")
 	}
@@ -75,7 +64,7 @@ func GenerateProjectPrompt() (core.Config, error) {
 	if withCustomPackages == "Yes" {
 		customPackages = append(customPackages, core.CustomPackage{
 			Id:   "<<custom-package-id>>",
-			Path: "<<custom-package-path>>",
+			Path: "<<local-path-or-github-url>>",
 		})
 	}
 
@@ -93,7 +82,7 @@ func GenerateProjectPrompt() (core.Config, error) {
 		profiles = append(profiles, core.Profile{
 			Name:     "<<profile-name>>",
 			EnvFiles: []string{"<<env-file-1>>", "<<env-file-2>>"},
-			EnvVars: []string{"<<env-var-1>>", "<<env-var-2>>"},
+			EnvVars:  []string{"<<env-var-1>>", "<<env-var-2>>"},
 			Packages: []string{"<<profile-package-id-1>>", "<<profile-package-id-2>>"},
 		})
 	}
@@ -101,7 +90,6 @@ func GenerateProjectPrompt() (core.Config, error) {
 	return core.Config{
 		Image:          projectImage,
 		ProjectName:    projectName,
-		PlatformImage:  platformImage,
 		LogPath:        logPath,
 		Packages:       []string{"<<package-id>>"},
 		CustomPackages: customPackages,

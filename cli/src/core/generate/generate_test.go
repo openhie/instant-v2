@@ -107,11 +107,10 @@ func TestGenerateConfigFile(t *testing.T) {
 		// case: assert config file created as expected
 		{
 			config: core.Config{
-				ProjectName:   "test-project",
-				Image:         "jembi/go-cli-test-image",
-				PlatformImage: "jembi/platform:latest",
-				LogPath:       "/tmp/logs",
-				Packages:      []string{"client", "dashboard-visualiser-jsreport"},
+				ProjectName: "test-project",
+				Image:       "jembi/go-cli-test-image",
+				LogPath:     "/tmp/logs",
+				Packages:    []string{"client", "dashboard-visualiser-jsreport"},
 				CustomPackages: []core.CustomPackage{
 					{
 						Id:   "disi-on-platform",
@@ -132,22 +131,13 @@ func TestGenerateConfigFile(t *testing.T) {
 		// case: assert invalid config file, missing field 'Image'
 		{
 			config: core.Config{
-				ProjectName:   "test-project",
-				PlatformImage: "jembi/platform:latest",
+				ProjectName: "test-project",
 			},
 		},
 		// case: assert invalid config file, missing field 'ProjectName'
 		{
 			config: core.Config{
-				Image:         "jembi/go-cli-test-image",
-				PlatformImage: "jembi/platform:latest",
-			},
-		},
-		// case: assert invalid config file, missing field 'PlatformImage'
-		{
-			config: core.Config{
-				Image:       "jembi/go-cli-test-image",
-				ProjectName: "test-project",
+				Image: "jembi/go-cli-test-image",
 			},
 		},
 	}

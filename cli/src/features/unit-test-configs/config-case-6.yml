@@ -1,7 +1,6 @@
 ---
 projectName: test-project
 image: jembi/go-cli-test-image
-platformImage: jembi/platform:latest
 logPath: /tmp/logs
 
 packages:

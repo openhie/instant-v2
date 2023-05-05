@@ -17,7 +17,6 @@ type CustomPackage struct {
 type Config struct {
 	ProjectName    string          `yaml:"projectName,omitempty"`
 	Image          string          `yaml:"image,omitempty"`
-	PlatformImage  string          `yaml:"platformImage,omitempty"`
 	LogPath        string          `yaml:"logPath,omitempty"`
 	Packages       []string        `yaml:"packages,omitempty"`
 	CustomPackages []CustomPackage `yaml:"customPackages,omitempty"`
