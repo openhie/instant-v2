@@ -65,6 +65,8 @@ Jembi has developed a set of packages called the [OpenHIM Platform](https://jemb
 The key changes from original Instant OpenHIE are:
 
 * A rewrite of the original CLI - the commands and parameters have changed
-* Docker swarm is now the only supported target - this allow us to scale services across servers
+* Docker swarm is now the only supported target - this allows us to scale services across servers
 * A set of bash init function are included to help implementers create package deployment scripts
 * The entry point bash script for packages is now named `swarm.sh`
+* The `instant.json` file is now renamed to `package-metadata.json`
+* No packages are included by default, these are left up to the community to provide and maintain. Instant OpenHIE simply becomes the packaging specification and deployment tool.
