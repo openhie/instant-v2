@@ -1,6 +1,6 @@
 # Package Metadata
 
-A package's metadata is defined in a `package-metadata.json` file
+A package's metadata is defined in a `package-metadata.json` file. This file allows a package to be detected as an Instnat OpenHIE package and gives key metadata that Instant OpenHIE needs.
 
 ### Example
 
@@ -10,7 +10,7 @@ A package's metadata is defined in a `package-metadata.json` file
   "id": "dashboard-visualiser-kibana",
   "name": "Dashboard Visualiser Kibana",
   "description": "A dashboard to interpret the data from the ElasticSearch data store",
-  "type": "infrastructure",
+  "type": "infrastructure|use-case",
   "version": "0.0.1",
   "dependencies": ["analytics-datastore-elastic-search"],
   "environmentVariables": {

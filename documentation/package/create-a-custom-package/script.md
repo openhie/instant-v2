@@ -8,13 +8,13 @@ Two arguments are passed by default into the swarm script\
 
 Due to this script running in the instant container, all references made to files within the package folder would need to be prefixed with the `PACKAGE_PATH` variable
 
-To supply config option to your package, make use of env vars which will be made available to this script and therefore to any docker command that you execute (so you may use env vars in your compose files for example). There are varies option on the CLI via flags or the config file to supply env var files or env vars themselves.
+To supply config option to your package, make use of env vars which will be made available to this script and therefore to any docker command that you execute (so you may use env vars in your compose files for example). There are various options on the CLI via flags or the config file to supply env var files or env vars themselves.
 
 As a coding standard we encourage use of the [Shell Style Guide](https://google.github.io/styleguide/shellguide.html)
 
 Should you use VS Code for editing we suggest the `pinage404.bash-extension-pack`&#x20;
 
-### Example
+## Example
 
 {% code title="swarm.sh" lineNumbers="true" %}
 ```bash
@@ -53,7 +53,7 @@ main "$@"
 ```
 {% endcode %}
 
-#### Breakdown
+## Breakdown
 
 * Lines 2 & 3 extract the two arguments that instant provides to this script during any deploy command involving this package ie. the ACTION and MODE respectively.
 * Lines 6-9 retrieve the current path to this swarm.sh file which should exist at the root of your package. This path may then be used to reference any files within the package eg. docker-compose.yml.
@@ -63,3 +63,7 @@ main "$@"
 * Line 22 deploys all services specified in the docker compose files provided and assign them to the `instant` stack. The dev docker compose file is only used if the MODE argument was received as "dev".
 * Line 24 scales down the specified services to 0. This stops all containers but keeps their volumes and configs intact which will allow you to perform maintenance without losing data.
 * Line 26 removes the service which will also stop and remove any of it's containers. Volume removal may also occur here
+
+## Utility function
+
+A number of bash utility functions are also provided for more complex tasks relating to docker or common tasks that are made simpler. Please see the [utils folder in the source code](https://github.com/jembi/platform/tree/main/utils) for a list of all available utility functions.

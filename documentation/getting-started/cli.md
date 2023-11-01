@@ -1,14 +1,12 @@
 ---
-description: >-
-  The CLI is supported for Linux, MacOS, and partially for Windows, although
-  functionality is not guaranteed for Windows.
+description: The CLI is supported for Linux and MacOS
 ---
 
-# CLI
+# CLI reference
 
 ## Usage
 
-{% hint style="warning" %}
+{% hint style="info" %}
 The CLI must be named 'instant-linux' for Linux, and 'instant-macos' for MacOS for autocomplete to work
 {% endhint %}
 
