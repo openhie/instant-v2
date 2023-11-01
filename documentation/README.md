@@ -50,7 +50,11 @@ Instant OpenHIE provides an easy way to setup, explore and develop with the Open
 
 ## Packages
 
-The fundamental concept of Instant OpenHIE is that it can be extended to support additional use cases and workflows. This is achieved through packages. No packages are included by default in Instant OpenHIE, packages are provided and maintained by the community. Jembi has developed a set of packages called the [OpenHIM Platform](https://jembi.gitbook.io/openhim-platform/) which allow you to get foundational health information exchange setup in an instant.
+The fundamental concept of Instant OpenHIE is that it can be extended to support additional use cases and workflows. This is achieved through packages. No packages are included by default in Instant OpenHIE, packages are provided and maintained by the community.
+
+{% hint style="info" %}
+Jembi has developed a set of packages called the [OpenHIM Platform](https://jembi.gitbook.io/openhim-platform/) which allow you to get a foundational health information exchange setup in an instant.
+{% endhint %}
 
 {% content-ref url="package/" %}
 [package](package/)
