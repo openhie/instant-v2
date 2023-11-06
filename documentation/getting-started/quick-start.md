@@ -66,6 +66,6 @@ Use "cli [command] --help" for more information about a command.
 
 Next, you would want to configure which packages Instant can deploy for your particular needs.
 
-Instant doesn't ship with any default packages to deploy. Packages are expected to be created by the community and in time there will be many option available. Jembi has curated a set of packages that we commonly use to help implementer to get started with a foundational set of health information exchange components. To get started with that pre-configured package set see the [Jembi Platform docs](https://jembi.gitbook.io/jembi-platform/).
+Instant doesn't ship with any default packages to deploy. Packages are expected to be created by the community and in time there will be many option available. Jembi has curated a set of packages that we commonly use to help implementer to get started with a foundational set of health information exchange components. To get started with that pre-configured package set, see the [OpenHIM Platform docs](https://jembi.gitbook.io/jembi-platform/).
 
 Otherwise, you may create your own config for your [own set of packages](../package/create-a-custom-package/). Continue to config section to find out how.
