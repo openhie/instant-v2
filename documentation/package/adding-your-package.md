@@ -1,6 +1,6 @@
 # Adding your package
 
-Packages can be added in tow different ways. These are described below.
+Packages can be added in two different ways. These are described below.
 
 ## Using a custom package config
 
