@@ -61,7 +61,7 @@ If you want to launch all the packages listed in a profile with the specified co
 
 ## Launching entire projects
 
-Instead of individual packages, you can also launch everything define in your project config by using the [`./instant project <init|up|down|remove>` command](cli.md#project).
+Instead of individual packages, you can also launch everything defined in your project config by using the [`./instant project <init|up|down|remove>` command](cli.md#project).
 
 ## Changing the default banner displayed in the CLI
 
