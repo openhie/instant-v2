@@ -266,7 +266,7 @@ const main = async () => {
       case 'swarm':
         for (const id of chosenPackageIds) {
           setEnvVars(allPackages[id])
-          await runBashScript(`${allPackages[id].path}/`, 'swarm.sh', [
+          await runBashScript(`${allPackages[id].path}`, 'swarm.sh', [
             main.command,
             mainOptions.mode
           ])
