@@ -12,14 +12,16 @@ The binary may be download via the terminal with the following url based on your
 {% tab title="Linux" %}
 Download the binary
 
+{% code fullWidth="false" %}
 ```bash
-curl -L https://github.com/openhie/instant-v2/releases/latest/download/instant-linux -o instant
+sudo curl -L https://github.com/openhie/instant-v2/releases/latest/download/instant-linux -o /usr/local/bin/instant
 ```
+{% endcode %}
 
 Grant the binary executable permissions
 
 ```bash
-chmod +x ./instant
+sudo chmod +x /usr/local/bin/instant
 ```
 {% endtab %}
 
@@ -27,13 +29,13 @@ chmod +x ./instant
 Download the binary
 
 ```bash
-curl -L https://github.com/openhie/instant-v2/releases/latest/download/instant-macos -o instant
+sudo curl -L https://github.com/openhie/instant-v2/releases/latest/download/instant-macos -o /usr/local/bin/instant
 ```
 
 Grant the binary executable permissions
 
 ```bash
-chmod +x ./instant
+sudo chmod +x /usr/local/bin/instant
 ```
 {% endtab %}
 
