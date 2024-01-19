@@ -20,6 +20,9 @@ RUN chmod +x /usr/local/bin/docker-compose
 # remove orphan container warning
 ENV COMPOSE_IGNORE_ORPHANS=1
 
+# default ENV vars for instant container
+ENV CLUSTERED_MODE false
+
 # install node deps
 ADD package.json .
 ADD yarn.lock .
@@ -27,5 +30,8 @@ RUN yarn --production --frozen-lockfile
 
 # add entrypoint script
 ADD instant.ts .
+
+# add util function scripts
+ADD utils ./utils
 
 ENTRYPOINT [ "yarn", "instant" ]
