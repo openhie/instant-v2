@@ -64,6 +64,6 @@ main "$@"
 * Line 24 scales down the specified services to 0. This stops all containers but keeps their volumes and configs intact which will allow you to perform maintenance without losing data.
 * Line 26 removes the service which will also stop and remove any of it's containers. Volume removal may also occur here
 
-## Utility function
+## Utility functions
 
-A number of bash utility functions are also provided for more complex tasks relating to docker or common tasks that are made simpler. Please see the [utils folder in the source code](https://github.com/jembi/platform/tree/main/utils) for a list of all available utility functions.
+A number of bash utility functions are also provided for more complex tasks relating to docker or common tasks that are made simpler. Please see the [utils folder in the source code](https://github.com/openhie/instant-v2/tree/main/utils) for a list of all available utility functions.
