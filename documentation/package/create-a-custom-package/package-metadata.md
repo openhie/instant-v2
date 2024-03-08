@@ -1,6 +1,6 @@
 # Package Metadata
 
-A package's metadata is defined in a `package-metadata.json` file. This file allows a package to be detected as an Instnat OpenHIE package and gives key metadata that Instant OpenHIE needs.
+A package's metadata is defined in a `package-metadata.json` file. This file allows a package to be detected as an Instant OpenHIE package and gives key metadata that Instant OpenHIE needs.
 
 ### Example
 
