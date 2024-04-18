@@ -98,41 +98,75 @@ async function runTests(path: string) {
   }
 }
 
-const orderPackageIds = (allPackages, chosenPackageIds) => {
-  function resolveDeps(id, currentStack) {
-    if (currentStack.includes(id))
-      throw Error(`Circular dependency present for id ${id}`)
-    currentStack.push(id)
+const createDependencyTree = (allPackages, chosenPackageIds) => {
+  const tree = {}
+  const addDependencies = (id, node) => {
+    if (!allPackages[id] || !allPackages[id].metadata) return
+    const deps = allPackages[id].metadata.dependencies || []
+    deps.forEach((dep) => {
+      if (!node[dep]) {
+        node[dep] = {}
+        addDependencies(dep, node[dep])
+      }
+    })
+  }
+  chosenPackageIds.forEach((id) => {
+    if (!tree[id]) {
+      tree[id] = {}
+      addDependencies(id, tree[id])
+    }
+  })
+  return tree
+}
 
-    if (allPackages[id] && allPackages[id].metadata) {
-      if (
-        !allPackages[id].metadata.dependencies ||
-        !allPackages[id].metadata.dependencies.length
-      )
-        return [id]
-    } else {
-      throw Error(`Package ${id} does not exist or the metadata is invalid`)
+const walkDependencyTree = async (tree, preOrPost, action) => {
+  const visitNode = async (node) => {
+    await Promise.all(
+      Object.keys(node).map(async (key) => {
+        if (preOrPost === 'pre') await action(key)
+        await visitNode(node[key])
+        if (preOrPost === 'post') await action(key)
+      })
+    )
+  }
+  await visitNode(tree)
+}
+
+const concurrentifyAction = (
+  action: (id: string) => Promise<void>,
+  maxConcurrentActions: number
+) => {
+  const idToPromiseMap: Map<string, Promise<void>> = new Map()
+  const activePromises: Promise<void>[] = []
+
+  const concurrentAction = async (
+    id: string,
+    action: (id: string) => Promise<void>
+  ) => {
+    // Wait until there's space to start a new action
+    while (activePromises.length >= maxConcurrentActions) {
+      await Promise.race(activePromises)
     }
 
-    const orderedIds = [] as string[]
-    const currentStackClone = currentStack.slice()
-
-    allPackages[id].metadata.dependencies.forEach((dependency) => {
-      const ids: string[] = resolveDeps(dependency, currentStackClone)
-      orderedIds.push(...ids)
-    })
-    orderedIds.push(id)
-    return orderedIds
+    if (!idToPromiseMap.has(id)) {
+      console.log(`Executing action for ${id}`)
+      const promise = action(id).then(() => {
+        console.log(`Done ${id}`)
+        // Remove itself from activePromises once done
+        activePromises.splice(activePromises.indexOf(promise), 1)
+      })
+      activePromises.push(promise)
+      idToPromiseMap.set(id, promise)
+      return promise
+    } else {
+      console.log(`Returning existing promise for ${id}`)
+      return idToPromiseMap.get(id)
+    }
   }
 
-  let orderedPackageIds = [] as string[]
-  chosenPackageIds.forEach((packageId) => {
-    let packageIds = orderedPackageIds.concat(resolveDeps(packageId, []))
-    orderedPackageIds = packageIds.filter(
-      (id, index) => packageIds.indexOf(id) == index
-    )
-  })
-  return orderedPackageIds
+  return async (id: string) => {
+    return concurrentAction(id, action)
+  }
 }
 
 const setEnvVars = (packageInfo: PackageInfo) => {
@@ -224,56 +258,62 @@ const main = async () => {
       chosenPackageIds = Object.keys(allPackages)
     }
 
-    if (!mainOptions.only) {
-      // Order the packages such that the dependencies are instantiated first
-      chosenPackageIds = orderPackageIds(allPackages, chosenPackageIds)
-    }
-
     if (mainOptions.dev) {
       mainOptions.mode = 'dev'
     } else {
       mainOptions.mode = 'prod'
     }
 
-    if (['destroy', 'down'].includes(main.command)) {
-      chosenPackageIds.reverse()
-    }
-
     console.log(
       `Selected package IDs to operate on: ${chosenPackageIds.join(', ')}`
     )
 
-    switch (mainOptions.target) {
-      case 'docker':
-        for (const id of chosenPackageIds) {
-          setEnvVars(allPackages[id])
-          await runBashScript(`${allPackages[id].path}docker/`, 'compose.sh', [
-            main.command
-          ])
-        }
-        break
-      case 'k8s':
-      case 'kubernetes':
-        for (const id of chosenPackageIds) {
-          setEnvVars(allPackages[id])
-          await runBashScript(
-            `${allPackages[id].path}kubernetes/main/`,
-            'k8s.sh',
-            [main.command]
-          )
-        }
-        break
-      case 'swarm':
-        for (const id of chosenPackageIds) {
-          setEnvVars(allPackages[id])
-          await runBashScript(`${allPackages[id].path}`, 'swarm.sh', [
-            main.command,
-            mainOptions.mode
-          ])
-        }
-        break
-      default:
-        throw new Error("Unknown value given for option 'target'")
+    const dependencyTree = createDependencyTree(allPackages, chosenPackageIds)
+    console.log(JSON.stringify(dependencyTree, null, 2))
+    const CONCURRENT_ACTIONS = 10
+
+    const action = async (id) => {
+      setEnvVars(allPackages[id])
+      let scriptPath, scriptName
+      switch (mainOptions.target) {
+        case 'docker':
+          scriptPath = `${allPackages[id].path}docker/`
+          scriptName = 'compose.sh'
+          break
+        case 'k8s':
+        case 'kubernetes':
+          scriptPath = `${allPackages[id].path}kubernetes/main/`
+          scriptName = 'k8s.sh'
+          break
+        default:
+          scriptPath = `${allPackages[id].path}`
+          scriptName = 'swarm.sh'
+      }
+      const scriptArgs =
+        mainOptions.target === 'swarm'
+          ? [main.command, mainOptions.mode]
+          : [main.command]
+      await runBashScript(scriptPath, scriptName, scriptArgs)
+    }
+
+    // execute action
+    console.log(mainOptions)
+    if (mainOptions.only) {
+      for (const id of chosenPackageIds) {
+        await action(id)
+      }
+    } else if (['destroy', 'down'].includes(main.command)) {
+      walkDependencyTree(
+        dependencyTree,
+        'pre',
+        concurrentifyAction(action, CONCURRENT_ACTIONS)
+      )
+    } else {
+      walkDependencyTree(
+        dependencyTree,
+        'post',
+        concurrentifyAction(action, CONCURRENT_ACTIONS)
+      )
     }
   }
 
@@ -311,7 +351,16 @@ const main = async () => {
     }
 
     // Order the packages such that the dependencies are instantiated first
-    chosenPackageIds = orderPackageIds(allPackages, chosenPackageIds)
+    const orderedIds: string[] = []
+    const orderIdsAction = (id: string) => {
+      if (!orderedIds.includes(id)) {
+        orderedIds.push(id)
+      }
+    }
+
+    const dependencyTree = createDependencyTree(allPackages, chosenPackageIds)
+    walkDependencyTree(dependencyTree, 'post', orderIdsAction)
+    chosenPackageIds = orderedIds
 
     console.log(`Running tests for packages: ${chosenPackageIds.join(', ')}`)
     console.log(`Using host: ${testOptions.host}:${testOptions.port}`)
