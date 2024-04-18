@@ -98,10 +98,21 @@ async function runTests(path: string) {
   }
 }
 
-const createDependencyTree = (allPackages, chosenPackageIds) => {
+export const createDependencyTree = (allPackages, chosenPackageIds) => {
   const tree = {}
+  const visited = new Set()
+
   const addDependencies = (id, node) => {
-    if (!allPackages[id] || !allPackages[id].metadata) return
+    if (visited.has(id)) {
+      throw new Error(
+        `Circular dependency detected: ${id} has already been visited.`
+      )
+    }
+    if (!allPackages[id] || !allPackages[id].metadata) {
+      throw new Error(`Invalid package ID: ${id}`)
+    }
+
+    visited.add(id)
     const deps = allPackages[id].metadata.dependencies || []
     deps.forEach((dep) => {
       if (!node[dep]) {
@@ -109,7 +120,9 @@ const createDependencyTree = (allPackages, chosenPackageIds) => {
         addDependencies(dep, node[dep])
       }
     })
+    visited.delete(id)
   }
+
   chosenPackageIds.forEach((id) => {
     if (!tree[id]) {
       tree[id] = {}
@@ -119,7 +132,7 @@ const createDependencyTree = (allPackages, chosenPackageIds) => {
   return tree
 }
 
-const walkDependencyTree = async (tree, preOrPost, action) => {
+export const walkDependencyTree = async (tree, preOrPost, action) => {
   const visitNode = async (node) => {
     await Promise.all(
       Object.keys(node).map(async (key) => {
@@ -132,7 +145,7 @@ const walkDependencyTree = async (tree, preOrPost, action) => {
   await visitNode(tree)
 }
 
-const concurrentifyAction = (
+export const concurrentifyAction = (
   action: (id: string) => Promise<void>,
   maxConcurrentActions: number
 ) => {
@@ -149,9 +162,7 @@ const concurrentifyAction = (
     }
 
     if (!idToPromiseMap.has(id)) {
-      console.log(`Executing action for ${id}`)
       const promise = action(id).then(() => {
-        console.log(`Done ${id}`)
         // Remove itself from activePromises once done
         activePromises.splice(activePromises.indexOf(promise), 1)
       })
@@ -159,7 +170,6 @@ const concurrentifyAction = (
       idToPromiseMap.set(id, promise)
       return promise
     } else {
-      console.log(`Returning existing promise for ${id}`)
       return idToPromiseMap.get(id)
     }
   }
@@ -269,7 +279,6 @@ const main = async () => {
     )
 
     const dependencyTree = createDependencyTree(allPackages, chosenPackageIds)
-    console.log(JSON.stringify(dependencyTree, null, 2))
     const CONCURRENT_ACTIONS = 10
 
     const action = async (id) => {
@@ -297,7 +306,6 @@ const main = async () => {
     }
 
     // execute action
-    console.log(mainOptions)
     if (mainOptions.only) {
       for (const id of chosenPackageIds) {
         await action(id)
@@ -372,12 +380,14 @@ const main = async () => {
   }
 }
 
-// Entry point IIFE with base error handling
-;(async () => {
-  try {
-    await main()
-  } catch (error) {
-    console.log(error)
-    process.exit(1)
-  }
-})()
+if (process.env.NODE_ENV !== 'test') {
+  // Entry point IIFE with base error handling
+  ;(async () => {
+    try {
+      await main()
+    } catch (error) {
+      console.log(error)
+      process.exit(1)
+    }
+  })()
+}

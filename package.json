@@ -17,10 +17,16 @@
   },
   "scripts": {
     "instant": "ts-node instant.ts",
-    "docker:build": "docker build -t openhie/package-base:latest ."
+    "docker:build": "docker build -t openhie/package-base:latest .",
+    "test": "jest"
   },
   "devDependencies": {
+    "@babel/core": "^7.24.4",
+    "@babel/preset-env": "^7.24.4",
+    "@babel/preset-typescript": "^7.24.1",
     "axios": "^0.21.4",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
     "prettier": "^2.0.5"
   }
 }
