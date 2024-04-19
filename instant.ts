@@ -246,6 +246,12 @@ const main = async () => {
           name: 'dev',
           alias: 'd',
           type: Boolean
+        },
+        {
+          name: 'concurrency',
+          alias: 'c',
+          type: Number,
+          defaultValue: 5
         }
       ],
       { argv, stopAtFirstUnknown: true }
@@ -279,7 +285,6 @@ const main = async () => {
     )
 
     const dependencyTree = createDependencyTree(allPackages, chosenPackageIds)
-    const CONCURRENT_ACTIONS = 10
 
     const action = async (id) => {
       setEnvVars(allPackages[id])
@@ -314,13 +319,13 @@ const main = async () => {
       walkDependencyTree(
         dependencyTree,
         'pre',
-        concurrentifyAction(action, CONCURRENT_ACTIONS)
+        concurrentifyAction(action, mainOptions.concurrency)
       )
     } else {
       walkDependencyTree(
         dependencyTree,
         'post',
-        concurrentifyAction(action, CONCURRENT_ACTIONS)
+        concurrentifyAction(action, mainOptions.concurrency)
       )
     }
   }
