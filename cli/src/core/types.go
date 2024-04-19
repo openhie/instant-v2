@@ -32,6 +32,7 @@ type PackageSpec struct {
 	CustomPackages       []CustomPackage
 	ImageVersion         string
 	TargetLauncher       string
+	Concurrency          string
 }
 
 type GeneratePackageSpec struct {

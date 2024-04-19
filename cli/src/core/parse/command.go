@@ -26,6 +26,10 @@ func GetInstantCommand(packageSpec core.PackageSpec) []string {
 		instantCommand = append(instantCommand, "--only")
 	}
 
+	if packageSpec.Concurrency != "" {
+		instantCommand = append(instantCommand, "--concurrency", packageSpec.Concurrency)
+	}
+
 	instantCommand = append(instantCommand, packageSpec.Packages...)
 
 	for _, customPackage := range packageSpec.CustomPackages {
