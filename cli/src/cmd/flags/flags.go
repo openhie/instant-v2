@@ -40,4 +40,5 @@ func setCommonActionFlags(cmd *cobra.Command) {
 	flags.StringSliceVar(&state.EnvFiles, "env-file", nil, "env file")
 	flags.StringVar(&state.ConfigFile, "config", "", "config file (default is $WORKING_DIR/config.yaml)")
 	flags.StringSliceP("env-var", "e", nil, "Env var(s) to set or overwrite")
+	flags.StringP("concurrency", "", "", "The concurrency level to use for executing actions on packages (default 5)")
 }

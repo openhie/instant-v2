@@ -36,11 +36,9 @@
     "dependencies": {
       "type": "array",
       "description": "A list of all packages that are required to start up before this package",
-      "items": [
-        {
-          "type": "string"
-        }
-      ],
+      "items": {
+        "type": "string"
+      },
       "uniqueItems": true
     },
     "environmentVariables": {
@@ -49,11 +47,9 @@
     "sharedConfigs": {
       "type": "array",
       "description": "A list of all files or directories that should be copied over into the package container",
-      "items": [
-        {
-          "type": "string"
-        }
-      ]
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [

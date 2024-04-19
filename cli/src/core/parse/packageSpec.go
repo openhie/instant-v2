@@ -53,6 +53,10 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 	if err != nil {
 		return nil, errors.Wrap(err, "")
 	}
+	concurrency, err := cmd.Flags().GetString("concurrency")
+	if err != nil {
+		return nil, errors.Wrap(err, "")
+	}
 
 	var envVariables []string
 	if cmd.Flags().Changed("env-file") {
@@ -77,6 +81,7 @@ func getPackageSpecFromParams(cmd *cobra.Command, config *core.Config) (*core.Pa
 		IsDev:                isDev,
 		IsOnly:               isOnly,
 		DeployCommand:        cmd.Use,
+		Concurrency:          concurrency,
 	}
 
 	return &packageSpec, nil
