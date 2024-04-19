@@ -7,6 +7,11 @@ import * as child from 'child_process'
 import * as util from 'util'
 import * as path from 'path'
 import { env } from 'process'
+import Ajv from 'ajv'
+
+const schema = require('./schema/package-metadata.schema.json')
+const ajv = new Ajv()
+const validate = ajv.compile(schema)
 
 const exec = util.promisify(child.exec)
 
@@ -46,18 +51,33 @@ function getInstantOHIEPackages(): PackagesMap {
   }
 
   for (const path of paths) {
+    let metadata
     try {
-      const metadata = JSON.parse(fs.readFileSync(path).toString())
-      packages[metadata.id] = {
-        metadata,
-        path:
-          path.includes('instant.json') === true
-            ? path.replace('instant.json', '')
-            : path.replace('package-metadata.json', '')
-      }
+      metadata = JSON.parse(fs.readFileSync(path).toString())
     } catch (err) {
-      console.error(`Failed to parse package metadata for ${path}.`)
+      console.error(`❌ Failed to parse package metadata for ${path}.`)
       throw err
+    }
+
+    const isValid = validate(metadata)
+
+    if (!isValid) {
+      console.error(
+        `❌ Package metadata for ${metadata.id} is invalid: ${(
+          validate.errors || []
+        )
+          .map((error) => error.message)
+          .join(', ')}`
+      )
+      throw new Error(`Invalid package metadata for ${metadata.id}`)
+    }
+
+    packages[metadata.id] = {
+      metadata,
+      path:
+        path.includes('instant.json') === true
+          ? path.replace('instant.json', '')
+          : path.replace('package-metadata.json', '')
     }
   }
 

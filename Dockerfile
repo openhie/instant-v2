@@ -34,4 +34,7 @@ ADD instant.ts .
 # add util function scripts
 ADD utils ./utils
 
+# add schema
+ADD schema ./schema
+
 ENTRYPOINT [ "yarn", "instant" ]
