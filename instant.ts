@@ -28,8 +28,7 @@ interface PackagesMap {
 
 type EnvironmentVar = {
   'Environment Variable': string
-  'Default Value': string
-  'Updated Value': string | undefined
+  'Current Value': string | undefined
 }
 
 function getInstantOHIEPackages(): PackagesMap {
@@ -193,8 +192,7 @@ const setEnvVars = (packageInfo: PackageInfo) => {
 
     envVars.push({
       'Environment Variable': envVar,
-      'Default Value': defaultEnv,
-      'Updated Value': env[envVar]
+      'Current Value': env[envVar]
     })
   }
 
