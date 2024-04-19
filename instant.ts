@@ -34,7 +34,7 @@ type EnvironmentVar = {
 function getInstantOHIEPackages(): PackagesMap {
   const packages: PackagesMap = {}
   let metaPathRegex = 'package-metadata.json'
-  let pathRegex = 'instant.json' //Keeping the instant.json logic to ensure backward compatibility
+  let pathRegex = 'instant.json' // Keeping the instant.json logic to ensure backward compatibility
   let paths = [] as string[]
   let nestingLevel = 0
 
@@ -64,19 +64,21 @@ function getInstantOHIEPackages(): PackagesMap {
   return packages
 }
 
+let error = false
+
 async function runBashScript(path: string, filename: string, args: string[]) {
   const cmd = `bash ${path}${filename} ${args.join(' ')}`
-  console.log(`Executing: ${cmd}`)
 
   try {
     const promise = exec(cmd)
     if (promise.child) {
-      promise.child.stdout?.on('data', (data) => console.log(data))
-      promise.child.stderr?.on('data', (data) => console.error(data))
+      promise.child.stdout?.on('data', (data) => console.log('\t' + data))
+      promise.child.stderr?.on('data', (data) => console.error('\t' + data))
     }
     await promise
   } catch (err) {
-    console.error(`Script ${path}${filename} returned an error`)
+    console.error(`❌ Script ${path}${filename} returned an error`)
+    error = true
   }
 }
 
@@ -179,9 +181,6 @@ export const concurrentifyAction = (
 }
 
 const setEnvVars = (packageInfo: PackageInfo) => {
-  console.log(
-    `------------------------------------------------------------\nConfig Details: ${packageInfo.metadata.name} (${packageInfo.metadata.id})\n------------------------------------------------------------`
-  )
   const envVars = [] as EnvironmentVar[]
 
   for (let envVar in packageInfo.metadata.environmentVariables) {
@@ -197,7 +196,23 @@ const setEnvVars = (packageInfo: PackageInfo) => {
   }
 
   if (envVars?.length > 0) {
-    console.table(envVars)
+    console.log(
+      `🛠️ Config set for ${packageInfo.metadata.name} (${packageInfo.metadata.id}):`
+    )
+    console.table(
+      envVars.map(
+        ({ 'Environment Variable': envVar, 'Current Value': currVal }) => ({
+          'Environment Variable':
+            envVar.length > 50
+              ? `${envVar.substring(0, 50)}...[trunc]`
+              : envVar,
+          'Current Value':
+            currVal && currVal.length > 50
+              ? `${currVal.substring(0, 50)}...[trunc]`
+              : currVal
+        })
+      )
+    )
   }
 }
 
@@ -205,7 +220,7 @@ const setEnvVars = (packageInfo: PackageInfo) => {
 const main = async () => {
   const allPackages = getInstantOHIEPackages()
   console.log(
-    `Found ${Object.keys(allPackages).length} packages: ${Object.values(
+    `📦 Found ${Object.keys(allPackages).length} packages: ${Object.values(
       allPackages
     )
       .map((p) => p.metadata.id)
@@ -255,7 +270,8 @@ const main = async () => {
       { argv, stopAtFirstUnknown: true }
     )
 
-    console.log(`Target environment is: ${mainOptions.target}`)
+    console.log(`🎯 Target environment is: ${mainOptions.target}`)
+    console.log(`🔀 Running using concurrency of ${mainOptions.concurrency}`)
 
     argv = mainOptions._unknown || []
     let chosenPackageIds = argv
@@ -279,12 +295,39 @@ const main = async () => {
     }
 
     console.log(
-      `Selected package IDs to operate on: ${chosenPackageIds.join(', ')}`
+      `👉 Selected package IDs to operate on: ${chosenPackageIds.join(', ')}\n`
     )
 
     const dependencyTree = createDependencyTree(allPackages, chosenPackageIds)
 
     const action = async (id) => {
+      switch (main.command) {
+        case 'init':
+          console.log(
+            `🚀 Initializing package ${allPackages[id].metadata.name} (${id})...`
+          )
+          break
+        case 'up':
+          console.log(
+            `🚀 Starting package ${allPackages[id].metadata.name} (${id})...`
+          )
+          break
+        case 'down':
+          console.log(
+            `🛑 Stopping package ${allPackages[id].metadata.name} (${id})...`
+          )
+          break
+        case 'destroy':
+          console.log(
+            `🧨 Destroying package ${allPackages[id].metadata.name} (${id})...`
+          )
+          break
+        default:
+          console.log(
+            `🚀 Performing action on package ${allPackages[id].metadata.name} (${id})...`
+          )
+      }
+
       setEnvVars(allPackages[id])
       let scriptPath, scriptName
       switch (mainOptions.target) {
@@ -314,17 +357,23 @@ const main = async () => {
         await action(id)
       }
     } else if (['destroy', 'down'].includes(main.command)) {
-      walkDependencyTree(
+      await walkDependencyTree(
         dependencyTree,
         'pre',
         concurrentifyAction(action, mainOptions.concurrency)
       )
     } else {
-      walkDependencyTree(
+      await walkDependencyTree(
         dependencyTree,
         'post',
         concurrentifyAction(action, mainOptions.concurrency)
       )
+    }
+
+    if (error) {
+      console.log('\n❌ Some scripts returned errors')
+    } else {
+      console.log('\n🟢 Success!')
     }
   }
 
