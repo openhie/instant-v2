@@ -180,6 +180,12 @@ export const concurrentifyAction = (
   }
 }
 
+const truncateString = (str: string, maxLength: number) => {
+  return str.length > maxLength
+    ? `${str.substring(0, maxLength - 10)}...[trunc]`
+    : str
+}
+
 const setEnvVars = (packageInfo: PackageInfo) => {
   const envVars = [] as EnvironmentVar[]
 
@@ -202,14 +208,8 @@ const setEnvVars = (packageInfo: PackageInfo) => {
     console.table(
       envVars.map(
         ({ 'Environment Variable': envVar, 'Current Value': currVal }) => ({
-          'Environment Variable':
-            envVar.length > 50
-              ? `${envVar.substring(0, 50)}...[trunc]`
-              : envVar,
-          'Current Value':
-            currVal && currVal.length > 50
-              ? `${currVal.substring(0, 50)}...[trunc]`
-              : currVal
+          'Environment Variable': truncateString(envVar, 50),
+          'Current Value': truncateString(currVal || '', 50)
         })
       )
     )
