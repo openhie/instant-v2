@@ -186,7 +186,10 @@ overwrite() {
     if [ "${DEBUG}" -eq 1 ]; then
         log info "${MESSAGE}"
     else
-        log info "${CLEAR_PREV_LINE}${MESSAGE}"
+        # We need to find a way to do this that works with concurrency
+        # It might not be possible, disable for now
+        # log info "${CLEAR_PREV_LINE}${MESSAGE}"
+        log info "${MESSAGE}"
     fi
 }
 
