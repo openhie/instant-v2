@@ -116,12 +116,12 @@ function log() {
 
     local -A emoticons
     emoticons['DEBUG']='🔷'
-    emoticons['INFO']='❕'
+    emoticons['INFO']='ℹ️ '
     emoticons['NOTICE']='💡'
     emoticons['WARN']='🔶'
     emoticons['ERROR']='❌'
     emoticons['CRIT']='⛔'
-    emoticons['ALERT']='❗❗'
+    emoticons['ALERT']='❗'
     emoticons['EMERG']='🚨'
     emoticons['DEFAULT']=''
 
