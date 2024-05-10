@@ -140,15 +140,15 @@ function log() {
     # Standard Output (Pretty)
     case "${level}" in
     'default' | 'info' | 'warn')
-        echo -e "${std_line}"
+        echo -en "${std_line}"
         ;;
     'debug')
         if [ "${debug_level}" -gt 0 ]; then
-            echo -e "${std_line}"
+            echo -en "${std_line}"
         fi
         ;;
     'error')
-        echo -e "${std_line}" >&2
+        echo -en "${std_line}" >&2
         ;;
     *)
         log 'error' "Undefined log level trying to log: ${@}"
