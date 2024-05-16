@@ -116,12 +116,12 @@ function log() {
 
     local -A emoticons
     emoticons['DEBUG']='🔷'
-    emoticons['INFO']='❕'
+    emoticons['INFO']='ℹ️ '
     emoticons['NOTICE']='💡'
     emoticons['WARN']='🔶'
     emoticons['ERROR']='❌'
     emoticons['CRIT']='⛔'
-    emoticons['ALERT']='❗❗'
+    emoticons['ALERT']='❗'
     emoticons['EMERG']='🚨'
     emoticons['DEFAULT']=''
 
@@ -140,15 +140,15 @@ function log() {
     # Standard Output (Pretty)
     case "${level}" in
     'default' | 'info' | 'warn')
-        echo -e "${std_line}"
+        echo -en "${std_line}"
         ;;
     'debug')
         if [ "${debug_level}" -gt 0 ]; then
-            echo -e "${std_line}"
+            echo -en "${std_line}"
         fi
         ;;
     'error')
-        echo -e "${std_line}" >&2
+        echo -en "${std_line}" >&2
         ;;
     *)
         log 'error' "Undefined log level trying to log: ${@}"
@@ -186,7 +186,10 @@ overwrite() {
     if [ "${DEBUG}" -eq 1 ]; then
         log info "${MESSAGE}"
     else
-        log info "${CLEAR_PREV_LINE}${MESSAGE}"
+        # We need to find a way to do this that works with concurrency
+        # It might not be possible, disable for now
+        # log info "${CLEAR_PREV_LINE}${MESSAGE}"
+        log info "${MESSAGE}"
     fi
 }
 

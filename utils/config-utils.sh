@@ -159,7 +159,7 @@ config::await_service_running() {
 
     docker service rm "$STACK_NAME"_await-helper &>/dev/null
 
-    try "docker stack deploy -c $AWAIT_HELPER_FILE_PATH $STACK_NAME" throw "Failed to deploy await helper"
+    try "docker stack deploy -d -c $AWAIT_HELPER_FILE_PATH $STACK_NAME" throw "Failed to deploy await helper"
     until [[ $(docker service ls -f name="$STACK_NAME"_"$SERVICE_NAME" --format "{{.Replicas}}") == *"$SERVICE_INSTANCES/$SERVICE_INSTANCES"* ]]; do
         config::timeout_check "$start_time" "$SERVICE_NAME to start" "$exit_time" "$warning_time"
         sleep 1
