@@ -1,12 +1,13 @@
 # Quick start
 
-To get started with Instant OpenHIE you will first need to download the CLI tool.
+Prerequisites:
 
-The latest binary may be downloaded from the [releases page of the github repo](https://github.com/openhie/package-starter-kit/releases)
+* Install docker
+  * On linux: [install the docker package](https://docs.docker.com/engine/install/ubuntu/)
+  * On OSX or Windows: [Install docker desktop](https://www.docker.com/products/docker-desktop/)
+* Enable swarm mode in docker: `docker swarm init`
 
-Or
-
-The binary may be download via the terminal with the following url based on your operating system
+To get started with Instant OpenHIE you will first need to download the CLI tool. The binary may be download via the terminal with the following url based on your operating system
 
 {% tabs %}
 {% tab title="Linux" %}
@@ -36,6 +37,12 @@ Grant the binary executable permissions
 
 ```bash
 sudo chmod +x /usr/local/bin/instant
+```
+
+Ensure docker desktop is using the default context else Instant won't be able to run docker containers
+
+```bash
+docker context use default
 ```
 {% endtab %}
 

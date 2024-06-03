@@ -1,7 +1,7 @@
 ---
 description: Instantly deploy complex HIE components
 cover: .gitbook/assets/iohie-logo-darkbg-transparent.svg
-coverY: 0
+coverY: 183.41333333333333
 layout:
   cover:
     visible: true
