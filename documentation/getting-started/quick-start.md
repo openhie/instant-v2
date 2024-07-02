@@ -47,14 +47,14 @@ docker context use default
 {% endtab %}
 
 {% tab title="Windows" %}
-For Windows it is recommend to install the [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) tools and continue to follow the linux instructurions.
+For Windows it is recommend to install the [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) tools and install an Ubuntu vm. From there continue to follow the linux instructions. Ensure that you have [Docker Desktop support enabled](https://docs.docker.com/desktop/wsl/#enabling-docker-support-in-wsl-2-distros) for your WSL instance.
 {% endtab %}
 {% endtabs %}
 
 To test that the binary works, run the executable with no commands to see the help text.
 
 ```
-$ ./instant
+$ instant
 A cli to assist with package deployment and management
 
 Usage:
