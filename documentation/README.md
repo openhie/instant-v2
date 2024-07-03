@@ -1,11 +1,11 @@
 ---
-description: Instantly deploy complex HIE components
-cover: .gitbook/assets/iohie-logo-darkbg-transparent.svg
-coverY: 183.41333333333333
+cover: >-
+  https://images.unsplash.com/photo-1511149755252-35875b273fd6?crop=entropy&cs=srgb&fm=jpg&ixid=M3wxOTcwMjR8MHwxfHNlYXJjaHw5fHxsaWdodG5pbmd8ZW58MHx8fHwxNzE5OTk1MTkxfDA&ixlib=rb-4.0.3&q=85
+coverY: 0
 layout:
   cover:
     visible: true
-    size: hero
+    size: full
   title:
     visible: false
   description:
@@ -19,6 +19,12 @@ layout:
 ---
 
 # Landing
+
+<div data-full-width="false">
+
+<figure><img src=".gitbook/assets/image.png" alt=""><figcaption><p>Instantly deploy complex HIE components</p></figcaption></figure>
+
+</div>
 
 Instant OpenHIE aims to allow Health Information Exchange components to be packaged up, deployed, operated and scaled via a simple CLI.
 

@@ -14,4 +14,4 @@ Each package will contain the following types of technical artefacts:
 
 The below diagram shows how packages will extend off of each other to add use cases of increasing complexity.
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
