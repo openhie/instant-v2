@@ -171,7 +171,7 @@ docker::stack_destroy() {
         "Failed to remove $STACK_NAME"
 
     local start_time=$(date +%s)
-    while [[ -n "$(docker stack ps $STACK_NAME 2>/dev/null)" ]] ; do
+    while [[ -n "$(docker stack ps $STACK_NAME 2>/dev/null)" ]]; do
         config::timeout_check "${start_time}" "${STACK_NAME} to be destroyed"
         sleep 1
     done
@@ -215,7 +215,7 @@ docker::prune_volumes() {
             local timeDiff=$(($(date +%s) - $start_time))
             until [[ $timeDiff -ge 10 ]]; do
                 timeDiff=$(($(date +%s) - $start_time))
-                if [[ -n $(docker ps -a -q --filter volume=$volume) ]]; then 
+                if [[ -n $(docker ps -a -q --filter volume=$volume) ]]; then
                     sleep 1
                 else
                     should_ignore=false
@@ -299,7 +299,7 @@ docker::check_images_existence() {
 # - $2 : docker compose path (eg. /instant/monitoring)
 # - $3 : docker compose file (eg. docker-compose.yml or docker-compose.cluster.yml)
 # - $@ : (optional) list of docker compose files (eg. docker-compose.cluster.yml docker-compose.dev.yml)
-# - $@:4:n : (optional) a marker 'defer-sanity' used to defer deploy::sanity to the caller, can appear anywhere in the optional list 
+# - $@:4:n : (optional) a marker 'defer-sanity' used to defer deploy::sanity to the caller, can appear anywhere in the optional list
 #
 docker::deploy_service() {
     local -r STACK_NAME="${1:?$(missing_param "deploy_service" "STACK_NAME")}"
@@ -371,8 +371,10 @@ docker::deploy_config_importer() {
             throw \
             "Wrong configuration in $CONFIG_COMPOSE_PATH"
 
-        log info "Waiting to give core config importer time to run before cleaning up service"
+        log info "Waiting to give config importer time to run before cleaning up service"
+        docker::await_service_status "$STACK_NAME" "$SERVICE_NAME" "Complete"
 
+        log info "Cleaning up config importer service"
         config::remove_config_importer "$STACK_NAME" "$SERVICE_NAME"
         config::await_service_removed "$STACK_NAME" "$SERVICE_NAME"
 
@@ -393,7 +395,7 @@ docker::deploy_config_importer() {
 #
 docker::deploy_sanity() {
     local -r STACK_NAME="${1:?$(missing_param "deploy_sanity" "STACK_NAME")}"
-    # shift off the stack name to get the subset of services to check  
+    # shift off the stack name to get the subset of services to check
     shift
 
     if [[ -z "$*" ]]; then
@@ -403,9 +405,9 @@ docker::deploy_sanity() {
 
     local services=()
     for compose_file in "$@"; do
-    # yq 'keys' returns:"- foo - bar" if you have yml with a foo: and bar: service definition
-    # which is why we remove the "- " before looping
-    # it will also return '#' as a key if you have a comment, so we clean them with ' ... comments="" ' first
+        # yq 'keys' returns:"- foo - bar" if you have yml with a foo: and bar: service definition
+        # which is why we remove the "- " before looping
+        # it will also return '#' as a key if you have a comment, so we clean them with ' ... comments="" ' first
         local compose_services=$(yq '... comments="" | .services | keys' $compose_file)
         compose_services=${compose_services//- /}
         for service in ${compose_services[@]}; do
@@ -456,7 +458,7 @@ docker::ensure_external_networks_existence() {
         if [[ $(yq '.networks' $compose_file) == "null" ]]; then
             continue
         fi
-        
+
         local network_keys=$(yq '... comments="" | .networks | keys' $compose_file)
         local networks=(${network_keys//- /})
         if [[ "${networks[*]}" != "null" ]]; then
@@ -468,7 +470,7 @@ docker::ensure_external_networks_existence() {
                     if [[ $name == "null" ]]; then
                         name=$network_name
                     fi
-                    
+
                     # network with the name already exists so no need to create it
                     if docker network ls | awk '{print $2}' | grep -q -w "$name"; then
                         continue
@@ -535,8 +537,7 @@ docker::join_network() {
 # Arguments:
 # - $@ : fully qualified path to the compose file(s) to check (eg. /instant/interoperability-layer-openhim/docker-compose.yml)
 #
-docker::prepare_config_digests()
-{
+docker::prepare_config_digests() {
     if [[ -z "$*" ]]; then
         log error "$(missing_param "prepare_config_digests", "[COMPOSE_FILES]")"
         exit 1
@@ -556,8 +557,7 @@ docker::prepare_config_digests()
 # Arguments:
 # - $@ : fully qualified path to the compose file(s) to check (eg. /instant/interoperability-layer-openhim/docker-compose.yml)
 #
-docker::cleanup_stale_configs()
-{
+docker::cleanup_stale_configs() {
     if [[ -z "$*" ]]; then
         log error "$(missing_param "cleanup_stale_configs", "[COMPOSE_FILES]")"
         exit 1
