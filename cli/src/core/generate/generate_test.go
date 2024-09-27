@@ -28,7 +28,6 @@ func Test_createFileFromTemplate(t *testing.T) {
 	generatePackSpec := core.GeneratePackageSpec{
 		Id:             "test-package",
 		Name:           "Test Package",
-		Stack:          "test-stack",
 		Image:          "test/image",
 		Description:    "A package for testing",
 		Type:           "infrastructure",
