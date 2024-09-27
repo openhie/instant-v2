@@ -6,7 +6,6 @@ require (
 	github.com/cucumber/godog v0.12.5
 	github.com/docker/cli v20.10.21+incompatible
 	github.com/docker/docker v20.10.21+incompatible
-	github.com/iancoleman/strcase v0.2.0
 	github.com/luno/jettison v0.0.0-20221009180414-a591f4833ce4
 	github.com/manifoldco/promptui v0.9.0
 	github.com/spf13/cobra v1.6.1

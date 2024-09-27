@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path"
-	"path/filepath"
 
 	"cli/core/generate"
 	"cli/core/prompt"
@@ -27,13 +26,14 @@ func packageGenerateCommand() *cobra.Command {
 				panic(err)
 			}
 
-			ex, err := os.Executable()
+			// Get the current working directory
+			cwd, err := os.Getwd()
 			if err != nil {
 				log.Error(ctx, err)
 				panic(err)
 			}
 
-			packagePath := path.Join(filepath.Dir(ex), resp.Id)
+			packagePath := path.Join(cwd, resp.Id)
 			err = os.Mkdir(packagePath, os.ModePerm)
 			if err != nil {
 				log.Error(ctx, err)

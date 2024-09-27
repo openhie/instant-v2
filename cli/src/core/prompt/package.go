@@ -2,9 +2,7 @@ package prompt
 
 import (
 	"cli/core"
-	"fmt"
 
-	"github.com/iancoleman/strcase"
 	"github.com/luno/jettison/errors"
 	"github.com/manifoldco/promptui"
 )
@@ -15,11 +13,10 @@ func GeneratePackagePrompt() (core.GeneratePackageSpec, error) {
 		What is the name of your package:
 		What docker image would you like to use with this project:
 		Provide a description of your package:
-		Which stack does your package belong to:
 		What type best suites your package:
 		Do you want to include a dev compose file:
-		Which port would you like to target in dev mode:
-		Which port would you like published in dev mode:
+		Which port would you like to target on the container in dev mode:
+		Which port would you like published on the host in dev mode:
 	*/
 
 	promptId := promptui.Prompt{
@@ -41,8 +38,8 @@ func GeneratePackagePrompt() (core.GeneratePackageSpec, error) {
 	}
 
 	promptImage := promptui.Prompt{
-		Label:   "What docker image would you like to use with this project",
-		Default: strcase.ToKebab(fmt.Sprintf("organisation/%v", name)),
+		Label:   "What docker image would you like to use with this package",
+		Default: "nginx",
 	}
 	image, err := promptImage.Run()
 	if err != nil {
@@ -54,15 +51,6 @@ func GeneratePackagePrompt() (core.GeneratePackageSpec, error) {
 		Default: "A package to be used with the platform",
 	}
 	description, err := promptDescription.Run()
-	if err != nil {
-		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
-	}
-
-	promptStack := promptui.Prompt{
-		Label:   "Which stack does your package belong to",
-		Default: "instant",
-	}
-	stack, err := promptStack.Run()
 	if err != nil {
 		return core.GeneratePackageSpec{}, errors.Wrap(err, "")
 	}
@@ -94,8 +82,8 @@ func GeneratePackagePrompt() (core.GeneratePackageSpec, error) {
 		includeDevFile = true
 
 		promptTargetPort := promptui.Prompt{
-			Label:   "Which port would you like to target in dev mode?",
-			Default: "8080",
+			Label:   "Which port would you like to target on the container in dev mode?",
+			Default: "80",
 		}
 		targetPort, err = promptTargetPort.Run()
 		if err != nil {
@@ -103,8 +91,8 @@ func GeneratePackagePrompt() (core.GeneratePackageSpec, error) {
 		}
 
 		promptPublishedPort := promptui.Prompt{
-			Label:   "Which port would you like published in dev mode?",
-			Default: "8081",
+			Label:   "Which port would you like published on the host in dev mode?",
+			Default: "8080",
 		}
 		publishedPort, err = promptPublishedPort.Run()
 		if err != nil {
@@ -117,7 +105,6 @@ func GeneratePackagePrompt() (core.GeneratePackageSpec, error) {
 		Name:           name,
 		Image:          image,
 		Description:    description,
-		Stack:          stack,
 		Type:           packageType,
 		IncludeDevFile: includeDevFile,
 		TargetPort:     targetPort,
