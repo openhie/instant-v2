@@ -24,7 +24,7 @@ profiles:
 
   - name: test-custom-package
     packages:
-      - custom-package-test
+      - instant-openhie-template-package
     envFiles:
       - ./.env.test
     dev: false
@@ -33,7 +33,7 @@ profiles:
     packages:
       - core
       - client
-      - custom-package-test
+      - instant-openhie-template-package
     envFiles:
       - ./.env.test
     dev: false
@@ -48,7 +48,7 @@ profiles:
   - name: test-mixed-custom-package
     packages:
       - core
-      - custom-package-test
+      - instant-openhie-template-package
       - custom-local-package
     envFiles:
       - ./.env.test
