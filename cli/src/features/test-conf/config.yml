@@ -8,7 +8,7 @@ packages:
   - dashboard-visualiser-jsreport
 
 customPackages:
-  - id: custom-package-test
+  - id: instant-openhie-template-package
     path: "git@github.com:jembi/instant-openhie-template-package.git"
   - id: custom-local-package
     path: ./features/custom-local-package
