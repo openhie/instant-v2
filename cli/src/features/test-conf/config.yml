@@ -9,7 +9,7 @@ packages:
 
 customPackages:
   - id: custom-package-test
-    path: "git@github.com:jembi/custom-package-test.git"
+    path: "git@github.com:jembi/instant-openhie-template-package.git"
   - id: custom-local-package
     path: ./features/custom-local-package
 
