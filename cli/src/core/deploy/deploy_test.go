@@ -38,7 +38,7 @@ func Test_attachUntilRemoved(t *testing.T) {
 			hookFunc: func() {
 				mockApiClient.On("ContainerAttach").Return(nil)
 
-				mockApiClient.On("ContainerWait").Return(_container.ContainerWaitOKBody{
+				mockApiClient.On("ContainerWait").Return(_container.WaitResponse{
 					StatusCode: 0,
 					Error:      nil,
 				}, nil).Once()
@@ -77,7 +77,7 @@ type MockApiClient struct {
 	client.ContainerAPIClient
 }
 
-func (mock *MockApiClient) ContainerAttach(ctx context.Context, container string, options types.ContainerAttachOptions) (types.HijackedResponse, error) {
+func (mock *MockApiClient) ContainerAttach(ctx context.Context, container string, options _container.AttachOptions) (types.HijackedResponse, error) {
 	args := mock.Called()
 
 	response := types.HijackedResponse{
@@ -93,15 +93,15 @@ func (mock *MockApiClient) ContainerAttach(ctx context.Context, container string
 	return response, err
 }
 
-func (mock *MockApiClient) ContainerWait(ctx context.Context, container string, condition _container.WaitCondition) (<-chan _container.ContainerWaitOKBody, <-chan error) {
+func (mock *MockApiClient) ContainerWait(ctx context.Context, container string, condition _container.WaitCondition) (<-chan _container.WaitResponse, <-chan error) {
 	args := mock.Called()
 
-	newChan := make(chan _container.ContainerWaitOKBody)
+	newChan := make(chan _container.WaitResponse)
 
-	var containerWaitBody _container.ContainerWaitOKBody
+	var containerWaitBody _container.WaitResponse
 	b := args.Get(0)
 	if b != nil {
-		containerWaitBody = args.Get(0).(_container.ContainerWaitOKBody)
+		containerWaitBody = args.Get(0).(_container.WaitResponse)
 
 		go func() {
 			newChan <- containerWaitBody

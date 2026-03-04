@@ -12,7 +12,7 @@ import (
 	"cli/util/docker"
 	"cli/util/slice"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/luno/jettison/errors"
 	"github.com/spf13/cobra"
@@ -101,7 +101,7 @@ func prepareEnvironment(config core.Config) error {
 
 	if !hasImage {
 		fmt.Println("> Image", config.Image, "can't be found locally .. Pulling from docker")
-		reader, err := cli.ImagePull(ctx, config.Image, types.ImagePullOptions{})
+		reader, err := cli.ImagePull(ctx, config.Image, image.PullOptions{})
 		if err != nil {
 			return errors.Wrap(err, "")
 		}
@@ -118,7 +118,7 @@ func prepareEnvironment(config core.Config) error {
 }
 
 func hasImage(dockerCli *client.Client, imageName string) (bool, error) {
-	images, err := dockerCli.ImageList(context.Background(), types.ImageListOptions{})
+	images, err := dockerCli.ImageList(context.Background(), image.ListOptions{})
 	if err != nil {
 		return false, errors.Wrap(err, "")
 	}

@@ -3,7 +3,8 @@ package docker
 import (
 	"context"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/luno/jettison/errors"
@@ -13,7 +14,7 @@ import (
 var ErrEmptyContainersObject = errors.New("empty supplied/returned container object")
 
 func RemoveStaleInstantContainer(cli *client.Client, ctx context.Context) {
-	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
+	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
 		log.Error(ctx, err)
 	}
@@ -22,12 +23,12 @@ func RemoveStaleInstantContainer(cli *client.Client, ctx context.Context) {
 		for _, name := range _container.Names {
 			if name == "/instant-openhie" {
 				if _container.State == "running" {
-					err = cli.ContainerStop(ctx, _container.ID, nil)
+					err = cli.ContainerStop(ctx, _container.ID, container.StopOptions{})
 					if err != nil {
 						log.Error(ctx, err)
 					}
 				}
-				err = cli.ContainerRemove(ctx, _container.ID, types.ContainerRemoveOptions{})
+				err = cli.ContainerRemove(ctx, _container.ID, container.RemoveOptions{})
 				if err != nil {
 					log.Error(ctx, err)
 				}
@@ -39,7 +40,7 @@ func RemoveStaleInstantContainer(cli *client.Client, ctx context.Context) {
 }
 
 func RemoveStaleInstantVolume(cli *client.Client, ctx context.Context) {
-	volumes, err := cli.VolumeList(ctx, filters.Args{})
+	volumes, err := cli.VolumeList(ctx, volume.ListOptions{})
 	if err != nil {
 		log.Error(ctx, err)
 	}
@@ -57,12 +58,12 @@ func RemoveStaleInstantVolume(cli *client.Client, ctx context.Context) {
 }
 
 // This code attempts to combat old/dead containers lying around and being selected instead of the new container
-func latestContainer(containers []types.Container, allowAllFails bool) (types.Container, error) {
+func latestContainer(containers []container.Summary, allowAllFails bool) (container.Summary, error) {
 	if len(containers) == 0 {
-		return types.Container{}, errors.Wrap(ErrEmptyContainersObject, "")
+		return container.Summary{}, errors.Wrap(ErrEmptyContainersObject, "")
 	}
 
-	var latestContainer types.Container
+	var latestContainer container.Summary
 	for _, container := range containers {
 		if container.Created > latestContainer.Created {
 			latestContainer = container
@@ -72,10 +73,10 @@ func latestContainer(containers []types.Container, allowAllFails bool) (types.Co
 	return latestContainer, nil
 }
 
-func ListContainerByName(containerName string) (types.Container, error) {
+func ListContainerByName(containerName string) (container.Summary, error) {
 	client, err := NewDockerClient()
 	if err != nil {
-		return types.Container{}, err
+		return container.Summary{}, err
 	}
 
 	filtersPair := filters.KeyValuePair{
@@ -83,12 +84,12 @@ func ListContainerByName(containerName string) (types.Container, error) {
 		Value: containerName,
 	}
 
-	containers, err := client.ContainerList(context.Background(), types.ContainerListOptions{
+	containers, err := client.ContainerList(context.Background(), container.ListOptions{
 		Filters: filters.NewArgs(filtersPair),
 		All:     true,
 	})
 	if err != nil {
-		return types.Container{}, errors.Wrap(err, "")
+		return container.Summary{}, errors.Wrap(err, "")
 	}
 
 	return latestContainer(containers, false)

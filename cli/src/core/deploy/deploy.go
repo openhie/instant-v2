@@ -17,7 +17,6 @@ import (
 	"cli/util/file"
 	"cli/util/git"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
@@ -115,7 +114,7 @@ func mountCustomPackage(ctx context.Context, cli *client.Client, customPackage c
 	if err != nil {
 		return err
 	}
-	err = cli.CopyToContainer(ctx, instantContainerId, "/instant/", customPackageReader, types.CopyToContainerOptions{})
+	err = cli.CopyToContainer(ctx, instantContainerId, "/instant/", customPackageReader, container.CopyToContainerOptions{})
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
@@ -157,7 +156,7 @@ func copyCredsToInstantContainer() (err error) {
 		return err
 	}
 
-	err = client.CopyToContainer(context.Background(), instantContainer.ID, "/root/.docker/", preparedArchive, types.CopyToContainerOptions{
+	err = client.CopyToContainer(context.Background(), instantContainer.ID, "/root/.docker/", preparedArchive, container.CopyToContainerOptions{
 		CopyUIDGID: true,
 	})
 	if err != nil {
@@ -169,7 +168,7 @@ func copyCredsToInstantContainer() (err error) {
 
 // Attaches a container's STDOUT until that container has been removed
 func attachUntilRemoved(cli client.ContainerAPIClient, ctx context.Context, instantContainerId string) error {
-	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, types.ContainerAttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
+	attachResponse, err := cli.ContainerAttach(ctx, instantContainerId, container.AttachOptions{Stdout: true, Stream: true, Logs: true, Stderr: true})
 	if err != nil {
 		return err
 	}
@@ -260,7 +259,7 @@ func LaunchDeploymentContainer(packageSpec *core.PackageSpec, config *core.Confi
 		return err
 	}
 
-	err = cli.ContainerStart(ctx, instantContainer.ID, types.ContainerStartOptions{})
+	err = cli.ContainerStart(ctx, instantContainer.ID, container.StartOptions{})
 	if err != nil {
 		return errors.Wrap(err, "")
 	}
