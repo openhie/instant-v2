@@ -2,7 +2,6 @@ module cli
 
 go 1.23.0
 
-
 require (
 	github.com/cucumber/godog v0.12.5
 	github.com/docker/cli v26.1.3+incompatible
